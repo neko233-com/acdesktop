@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     branches: [main]
+    tags: ['v*']
     paths: [Cargo.toml]
   workflow_dispatch:
 
@@ -29,12 +30,12 @@ jobs:
       should_release: ${{ steps.prepare.outputs.should_release }}
       needs_github_release: ${{ steps.prepare.outputs.needs_github_release }}
     steps:
-      - name: Require main
+      - name: Require main or version tag
         env:
           RELEASE_REF: ${{ github.ref }}
         run: |
-          if [ "$RELEASE_REF" != "refs/heads/main" ]; then
-            echo "Release must run from main" >&2
+          if [ "$RELEASE_REF" != "refs/heads/main" ] && [[ ! "$RELEASE_REF" =~ ^refs/tags/v[0-9] ]]; then
+            echo "Release must run from main or a version tag (got $RELEASE_REF)" >&2
             exit 1
           fi
 
