@@ -18,6 +18,7 @@ use crate::{
 
 mod bounded_json;
 mod execution;
+mod execution_parallel;
 mod preparation;
 mod result_entry;
 
@@ -39,7 +40,11 @@ pub(crate) fn execute(
     permission_report: &PermissionReport,
     context: &CommandContext,
 ) -> Result<Value, AppError> {
-    execution::execute(args, adapter, permission_report, context)
+    if args.parallel {
+        execution_parallel::execute_parallel(args, adapter, permission_report, context)
+    } else {
+        execution::execute(args, adapter, permission_report, context)
+    }
 }
 
 pub(crate) fn parse_command(item: BatchCommand) -> Result<Commands, AppError> {
