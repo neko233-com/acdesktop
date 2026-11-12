@@ -98,6 +98,16 @@ pub fn install_private_file_ops(
     INSTALLED_OPS.set(ops)
 }
 
+/// Writes application-owned state through the installed platform protection.
+pub fn write_private_atomic(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
+    with_active_ops(|ops| ops.write_atomic(path, bytes))
+}
+
+/// Reads a bounded application-owned file through the installed platform protection.
+pub fn read_private_bounded(path: &Path, max_bytes: u64) -> std::io::Result<Vec<u8>> {
+    with_active_ops(|ops| ops.read_private_bounded(path, max_bytes))
+}
+
 pub(crate) fn with_active_ops<R>(operate: impl FnOnce(&dyn PrivateFileOps) -> R) -> R {
     #[cfg(test)]
     if let Some(ops) = TEST_OPS_OVERRIDE.with(|cell| cell.borrow().clone()) {

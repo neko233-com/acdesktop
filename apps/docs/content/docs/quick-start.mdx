@@ -11,8 +11,8 @@ Start GNOME Calculator in your graphical session, and run the commands from a te
 ## 1. Check the install
 
 ```bash
-agent-desktop status                 # permissions, supported_surfaces, state_root
-agent-desktop skills get platform    # the guide for this OS, in data.content
+acdesktop status                 # permissions, supported_surfaces, state_root
+acdesktop skills get platform    # the guide for this OS, in data.content
 ```
 
 `data.permissions.accessibility.state` should be `granted`, and `data.supported_surfaces` should not be empty. Agents load the platform skill before their first action; see [Skills](/desktop/skills).
@@ -22,7 +22,7 @@ agent-desktop skills get platform    # the guide for this OS, in data.content
 A skeleton snapshot reads three levels and marks each cut branch with `children_count`:
 
 ```bash
-agent-desktop snapshot --app gnome-calculator --skeleton -i --compact
+acdesktop snapshot --app gnome-calculator --skeleton -i --compact
 ```
 
 ```json
@@ -52,7 +52,7 @@ The tree is trimmed: wrapper groups and `native_id` fields are removed. `e1` is 
 ## 3. Drill into a region
 
 ```bash
-agent-desktop snapshot --root @s2txcl95uvubmn:e1 -i --compact
+acdesktop snapshot --root @s2txcl95uvubmn:e1 -i --compact
 ```
 
 The drill reads `e1`'s subtree and adds 31 refs (`e3` to `e33`) to the same snapshot. Two of them:
@@ -69,7 +69,7 @@ The drill reads `e1`'s subtree and adds 31 refs (`e3` to `e33`) to the same snap
 ## 4. Act on a ref
 
 ```bash
-agent-desktop click @s2txcl95uvubmn:e11
+acdesktop click @s2txcl95uvubmn:e11
 ```
 
 ```json
@@ -103,7 +103,7 @@ The click went through the accessibility API (`semantic_api`), without moving th
 The app updates its display asynchronously, so wait for the value instead of reading once or sleeping:
 
 ```bash
-agent-desktop wait --element @s2txcl95uvubmn:e6 --predicate value --value 7 --timeout 5000
+acdesktop wait --element @s2txcl95uvubmn:e6 --predicate value --value 7 --timeout 5000
 ```
 
 ```json
@@ -128,7 +128,7 @@ agent-desktop wait --element @s2txcl95uvubmn:e6 --predicate value --value 7 --ti
 Press **C** (`e8` in the same drill) so the app is as you found it:
 
 ```bash
-agent-desktop click @s2txcl95uvubmn:e8
+acdesktop click @s2txcl95uvubmn:e8
 ```
 
 ## Next steps

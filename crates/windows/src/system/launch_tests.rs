@@ -1,7 +1,5 @@
 use super::*;
-use acdesktop_core::{
-    AppError, Deadline, DeliverySemantics, ErrorCode, ErrorPayload, ProcessId,
-};
+use acdesktop_core::{AppError, Deadline, DeliverySemantics, ErrorCode, ErrorPayload, ProcessId};
 
 #[cfg(target_os = "windows")]
 use super::super::launch_path::resolve_executable;
@@ -216,10 +214,7 @@ impl Drop for KillOnDrop {
 
 #[cfg(target_os = "windows")]
 fn scratch_dir(label: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!(
-        "acdesktop-launch-{label}-{}",
-        std::process::id()
-    ));
+    let dir = std::env::temp_dir().join(format!("acdesktop-launch-{label}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).expect("scratch dir");
     dir
@@ -259,10 +254,7 @@ fn fixture_host_args() -> Vec<String> {
 
 #[cfg(target_os = "windows")]
 fn fixture_host_env() -> std::collections::BTreeMap<String, String> {
-    std::collections::BTreeMap::from([(
-        String::from("ACDESKTOP_FIXTURE_HOST"),
-        String::from("1"),
-    )])
+    std::collections::BTreeMap::from([(String::from("ACDESKTOP_FIXTURE_HOST"), String::from("1"))])
 }
 
 /// `LaunchOptions` that start the windowed fixture host, with the launch

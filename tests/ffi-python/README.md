@@ -61,6 +61,6 @@ Legs 1 to 4 cover the surface that needs no permission: the ABI version, struct 
 
 | File | Purpose |
 |------|---------|
-| `linux_helper.py` | The Linux helper leg, and `verify_cli` for the installed CLI (used by `tests/linux-dist/run-npm-install.sh`) |
+| `linux_helper.py` | The Linux helper leg and CLI verification |
 | `test_linux_helper.py` | Unit tests for `linux_helper.py`: `python3 -I -m unittest discover -s tests/ffi-python -p 'test_linux_helper.py'` |
 | `leak_probe.py` | Linux only, not run by CI: `python3 tests/ffi-python/leak_probe.py <library.so> [--calls N]`. It points the library at a silent X11 TCP server and checks that repeated timed-out `ad_list_displays` calls keep the host's thread and descriptor counts flat. |

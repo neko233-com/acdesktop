@@ -18,11 +18,7 @@ macOS, Windows, and Linux. The [platform table in the README](../README.md#platf
 
 ## How do I install acdesktop?
 
-```bash
-npm install -g acdesktop
-```
-
-[Installation](https://agent-browser.dev/desktop/installation) covers the other package managers, release archives, and building from source. [docs/install.md](install.md) has the same details for GitHub readers.
+Download a native archive from [GitHub Releases](https://github.com/neko233-com/acdesktop/releases). [Installation](install.md) covers the platform scripts, archive verification, and source builds.
 
 ## How do I build the C library from source?
 
@@ -54,7 +50,7 @@ Yes. It is licensed under [Apache-2.0](../LICENSE).
 
 Snapshots, window titles, clipboard reads, notifications, screenshots, and command results contain the desktop content you asked to read. `--debug --screenshot PATH.html` writes a local HTML page with a screenshot and the accessibility data. Session traces redact sensitive structured fields, but they can keep evidence artifacts. Keep these files and your agent's transcripts private. Redaction does not make a screenshot safe to publish.
 
-The native CLI does not require a remote model service. The optional [JEV helper](../skills/jev-desktop/SKILL.md) sends your goal and screen descriptions to the model provider you configure. Use it only with data that provider may see.
+The native CLI does not require a remote model service.
 
 Probe captures under `probes/` record technical details such as OS versions and window geometry. Review them before publishing, even after you redact identity fields.
 
@@ -64,4 +60,3 @@ See [SUPPORT.md](../SUPPORT.md) for what to include in a bug report. Report secu
 
 - [Issues](https://github.com/neko233-com/acdesktop/issues)
 - [Releases](https://github.com/neko233-com/acdesktop/releases)
-- [npm package](https://www.npmjs.com/package/acdesktop)

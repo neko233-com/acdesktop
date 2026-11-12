@@ -1,3 +1,4 @@
+pub(crate) mod adapter_factory;
 mod app_window;
 mod clipboard;
 mod cursor_overlay;
@@ -12,6 +13,8 @@ pub(crate) mod sandbox;
 mod session;
 mod system;
 mod trace;
+pub(crate) mod updater;
+pub(crate) mod user_config;
 
 #[cfg(test)]
 mod test_support;
@@ -136,7 +139,6 @@ fn dispatch_command(
         Commands::CursorOverlay(args) => cursor_overlay::dispatch(args, adapter, context),
         Commands::Trace(args) => trace::dispatch(args, context),
         Commands::Sandbox(args) => sandbox::dispatch(args, adapter),
-        // 以下命令已在 main.rs 提前处理，不会走到这里；但 match 必须覆盖所有 variant
         Commands::Update(_) | Commands::Config(_) => unreachable!("已在 main.rs 提前处理"),
     };
     if let Some(session_id) = overlay_session {

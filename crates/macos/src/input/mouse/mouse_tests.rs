@@ -5,10 +5,7 @@ use core_graphics::event::CGEventFlags;
 fn standalone_mouse_state_is_rejected_without_emission() {
     let error = standalone_state_error();
 
-    assert_eq!(
-        error.code,
-        acdesktop_core::ErrorCode::ActionNotSupported
-    );
+    assert_eq!(error.code, acdesktop_core::ErrorCode::ActionNotSupported);
     assert_eq!(error.details.unwrap()["raw_input_emitted"], false);
 }
 

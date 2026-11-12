@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "acdesktop-core",
  "acdesktop-linux",
@@ -32,7 +32,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop-core"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "base64 0.23.1",
  "libc",
@@ -46,7 +46,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop-ffi"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "acdesktop-core",
  "acdesktop-linux",
@@ -62,7 +62,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop-linux"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "acdesktop-core",
  "async-io",
@@ -79,7 +79,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop-macos"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "accessibility-sys",
  "acdesktop-core",
@@ -98,7 +98,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop-windows"
-version = "1.2.0"
+version = "2.0.0"
 dependencies = [
  "acdesktop-core",
  "png 0.18.1",

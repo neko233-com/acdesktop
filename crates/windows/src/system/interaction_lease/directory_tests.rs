@@ -58,7 +58,7 @@ fn read_owner(path: &Path) -> SidBuffer {
 /// the way an elevated Administrator's `SeRestorePrivilege` normally sits -
 /// needed only for the unrelated-SID owner leg, which sets ownership to a
 /// SID outside this process's own token.
-fn enable_privilege(name: windows_sys::core::PCWSTR) {
+fn enable_privilege(name: windows_sys::core::PCWSTR) -> bool {
     use windows_sys::Win32::Security::LookupPrivilegeValueW;
 
     let token = sid::open_process_token_for_adjust().unwrap();
@@ -83,9 +83,11 @@ fn enable_privilege(name: windows_sys::core::PCWSTR) {
         )
     };
     assert_ne!(adjusted, 0, "AdjustTokenPrivileges failed");
+    let enabled = unsafe { windows_sys::Win32::Foundation::GetLastError() } == 0;
     unsafe {
         windows_sys::Win32::Foundation::CloseHandle(token);
     }
+    enabled
 }
 
 /// A directory whose owner is exactly `TokenOwner` (constructed explicitly,
@@ -145,7 +147,11 @@ fn a_directory_owned_by_an_unrelated_sid_is_refused() {
     let root = scratch_root("owner-unrelated");
     let target = root.join("lockdir");
     std::fs::create_dir(&target).unwrap();
-    enable_privilege(SE_RESTORE_NAME);
+    if !enable_privilege(SE_RESTORE_NAME) {
+        eprintln!("skip foreign-owner OS test: the process lacks SeRestorePrivilege");
+        std::fs::remove_dir_all(&root).unwrap();
+        return;
+    }
     let guests = SidBuffer::well_known(WinBuiltinGuestsSid).unwrap();
     set_owner(&target, &guests);
 
@@ -204,8 +210,10 @@ fn a_reparse_leaf_inserted_after_parent_creation_is_refused_before_acl_repair() 
 
 fn author_container_inherit_users_ace(root: &Path) {
     let users = SidBuffer::well_known(WinBuiltinUsersSid).unwrap();
+    let user = sid::process_token_user_sid().unwrap();
     let sid_len = unsafe { windows_sys::Win32::Security::GetLengthSid(users.as_psid()) } as usize;
-    let acl_len = 8 + 8 + sid_len;
+    let user_len = unsafe { windows_sys::Win32::Security::GetLengthSid(user.as_psid()) } as usize;
+    let acl_len = 8 + 8 + sid_len + 8 + user_len;
     let mut storage = vec![0_u64; acl_len.div_ceil(8)];
     let acl_ptr = storage
         .as_mut_ptr()
@@ -227,6 +235,16 @@ fn author_container_inherit_users_ace(root: &Path) {
         )
     };
     assert_ne!(added, 0, "AddAccessAllowedAceEx failed");
+    let user_added = unsafe {
+        AddAccessAllowedAceEx(
+            acl_ptr,
+            windows_sys::Win32::Security::ACL_REVISION,
+            CONTAINER_INHERIT_ACE,
+            windows_sys::Win32::Storage::FileSystem::FILE_ALL_ACCESS,
+            user.as_psid(),
+        )
+    };
+    assert_ne!(user_added, 0, "adding the fixture owner's access failed");
     let handle = open_backup_semantics(root);
     let raw: HANDLE = handle.as_raw_handle();
     let status = unsafe {
@@ -264,4 +282,16 @@ fn a_parent_junction_is_refused() {
     std::fs::remove_dir_all(&real_target).unwrap();
     let _ = std::fs::remove_dir(&junction);
     std::fs::remove_dir_all(&root).unwrap();
+}
+
+#[test]
+fn owner_validation_accepts_process_sids_and_rejects_a_foreign_sid() {
+    let owner = sid::process_token_owner_sid().unwrap();
+    let user = sid::process_token_user_sid().unwrap();
+    let foreign = SidBuffer::well_known(WinBuiltinGuestsSid).unwrap();
+    assert!(directory::validate_owner_sid(owner, owner, user).is_ok());
+    assert!(directory::validate_owner_sid(user, owner, user).is_ok());
+    let error = directory::validate_owner_sid(&foreign, owner, user)
+        .expect_err("foreign owner must be refused");
+    assert_eq!(error.details.unwrap()["kind"], "lease_directory_untrusted");
 }

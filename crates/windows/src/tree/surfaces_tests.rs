@@ -62,7 +62,6 @@ mod shell_surfaces {
 
     use super::super::super::fixture::fixture_modal::ModalFixture;
     use super::super::super::fixture::{HostedFixture, bootstrap};
-    use super::super::super::walk::walker_fake::deadline;
     use crate::adapter::WindowsAdapter;
     use crate::system::fixture::test_support::{
         SHELL_SURFACE_LOCK, or_skip_shell, shell_declined_the_surface, stage_foreground,
@@ -78,6 +77,10 @@ mod shell_surfaces {
     use std::time::Duration;
 
     const STATE_TIMEOUT: Duration = Duration::from_secs(5);
+
+    fn deadline() -> acdesktop_core::Deadline {
+        acdesktop_core::Deadline::after(30_000).expect("surface observation deadline")
+    }
 
     /// Finally-style cleanup: whatever a test raised is dismissed when the
     /// test body exits, on any path, so a failed assertion never leaks a

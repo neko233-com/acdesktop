@@ -1,10 +1,10 @@
 ---
 title: Chromium and Electron apps
 navTitle: Chromium and Electron
-description: Drive the web contents of a Chromium or Electron app with agent-browser over a DevTools port that agent-desktop opens, and keep the native UI on agent-desktop.
+description: Drive the web contents of a Chromium or Electron app with agent-browser over a DevTools port that acdesktop opens, and keep the native UI on acdesktop.
 ---
 
-agent-desktop reads every app through the OS accessibility tree, and that path works for Chromium and Electron apps too. Their web contents can be dense and slow to walk, though. For an app you can launch fresh, `launch --cdp` starts it with a loopback-only Chrome DevTools Protocol (CDP) port, and [agent-browser](https://agent-browser.dev) connects to that port to drive the web contents. agent-desktop never speaks CDP itself; it opens and verifies the port, and keeps the native UI.
+acdesktop reads every app through the OS accessibility tree, and that path works for Chromium and Electron apps too. Their web contents can be dense and slow to walk, though. For an app you can launch fresh, `launch --cdp` starts it with a loopback-only Chrome DevTools Protocol (CDP) port, and [agent-browser](https://agent-browser.dev) connects to that port to drive the web contents. acdesktop never speaks CDP itself; it opens and verifies the port, and keeps the native UI.
 
 <table>
   <thead>
@@ -12,19 +12,19 @@ agent-desktop reads every app through the OS accessibility tree, and that path w
   </thead>
   <tbody>
     <tr><td>Web contents: pages, panels, editors, forms inside the app</td><td>agent-browser, over the CDP port</td></tr>
-    <tr><td>Native menu bar, file dialogs and sheets, window management, notifications, screenshots</td><td>agent-desktop</td></tr>
-    <tr><td>An app that is already running, or one you did not launch</td><td>agent-desktop only. The port exists only on a process launched with it</td></tr>
+    <tr><td>Native menu bar, file dialogs and sheets, window management, notifications, screenshots</td><td>acdesktop</td></tr>
+    <tr><td>An app that is already running, or one you did not launch</td><td>acdesktop only. The port exists only on a process launched with it</td></tr>
   </tbody>
 </table>
 
 ## 1. Launch the app with a DevTools port
 
 ```bash
-agent-desktop launch chrome --cdp --env ACCESSIBILITY_ENABLED=1 \
+acdesktop launch chrome --cdp --env ACCESSIBILITY_ENABLED=1 \
   --arg=--force-renderer-accessibility --arg=--user-data-dir=/tmp/chrome-profile
 ```
 
-`--cdp` adds the remote-debugging switches, waits until the endpoint answers, and returns it in `data.cdp`. Omit the port, as here, to let the OS pick a free one, or pass one (`--cdp 9229`). The `--env` and `--force-renderer-accessibility` arguments are for Linux, where Chromium joins the accessibility bus only when asked, so that agent-desktop can still see the native UI; see [Linux](/desktop/platforms/linux#chromium-qt-and-electron). An Electron app needs no extra arguments.
+`--cdp` adds the remote-debugging switches, waits until the endpoint answers, and returns it in `data.cdp`. Omit the port, as here, to let the OS pick a free one, or pass one (`--cdp 9229`). The `--env` and `--force-renderer-accessibility` arguments are for Linux, where Chromium joins the accessibility bus only when asked, so that acdesktop can still see the native UI; see [Linux](/desktop/platforms/linux#chromium-qt-and-electron). An Electron app needs no extra arguments.
 
 This is Google Chrome on Linux, with the suggestion and the window object trimmed:
 
@@ -50,7 +50,7 @@ This is Google Chrome on Linux, with the suggestion and the window object trimme
 }
 ```
 
-Pass the app name that `list-apps` prints (`chrome`, `Slack`, `Obsidian`). agent-desktop refuses `--cdp` for an app that is already running, because a running process has no port and quitting it would lose the user's state. It finds the running app by that name, so a launcher alias such as `google-chrome` on Linux skips the check and the launch times out instead.
+Pass the app name that `list-apps` prints (`chrome`, `Slack`, `Obsidian`). acdesktop refuses `--cdp` for an app that is already running, because a running process has no port and quitting it would lose the user's state. It finds the running app by that name, so a launcher alias such as `google-chrome` on Linux skips the check and the launch times out instead.
 
 ## 2. Connect agent-browser to the port
 
@@ -66,13 +66,13 @@ agent-browser click @e2
 
 From here the web contents follow agent-browser's own snapshot, ref, and act loop; see [agent-browser](https://agent-browser.dev) and `agent-browser skills get electron`. Playwright, Puppeteer, and other CDP clients can use `data.cdp.websocket_url` instead. Do not write raw CDP or call app-internal APIs.
 
-## 3. Keep the native UI on agent-desktop
+## 3. Keep the native UI on acdesktop
 
-The window chrome, menus, and dialogs are not in the web contents, so they stay on agent-desktop, in the same run:
+The window chrome, menus, and dialogs are not in the web contents, so they stay on acdesktop, in the same run:
 
 ```bash
-agent-desktop find --app chrome --role button --name Reload --first
-agent-desktop find --app chrome --role textfield --first          # the address bar
+acdesktop find --app chrome --role button --name Reload --first
+acdesktop find --app chrome --role textfield --first          # the address bar
 ```
 
 Against the session above, the second `find` returned the address bar, `"name": "Address and search bar"`, with the page agent-browser had opened as its value. Use `snapshot --surface` for a native file dialog or sheet the web contents open; see [Surfaces](/desktop/surfaces).
@@ -80,7 +80,7 @@ Against the session above, the second `find` returned the address bar, `"name": 
 ## 4. Close the app
 
 ```bash
-agent-desktop close-app chrome
+acdesktop close-app chrome
 ```
 
 `close-app` ends the process and with it the port; the run above returned `delivered_verified` with `details.evidence: "process_instance_exited"`, and the endpoint stopped answering. While the port is open, any local process can control the app's web contents, including processes of other accounts on the same machine, because the DevTools port has no authentication. Request `--cdp` only for the steps that need it.

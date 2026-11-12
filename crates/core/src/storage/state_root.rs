@@ -78,19 +78,13 @@ fn validate_env_root(
         Ok(meta) => {
             if meta.file_type().is_symlink() {
                 return Err(AppError::invalid_input_with_suggestion(
-                    format!(
-                        "ACDESKTOP_HOME must not be a symlink: '{}'",
-                        path.display()
-                    ),
+                    format!("ACDESKTOP_HOME must not be a symlink: '{}'", path.display()),
                     "Point ACDESKTOP_HOME at a real directory, not a symlink.",
                 ));
             }
             if !meta.is_dir() {
                 return Err(AppError::invalid_input_with_suggestion(
-                    format!(
-                        "ACDESKTOP_HOME must be a directory: '{}'",
-                        path.display()
-                    ),
+                    format!("ACDESKTOP_HOME must be a directory: '{}'", path.display()),
                     "Remove the file at this path or choose a different ACDESKTOP_HOME.",
                 ));
             }
@@ -107,10 +101,7 @@ fn validate_env_root(
         }
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
         Err(err) => Err(AppError::invalid_input_with_suggestion(
-            format!(
-                "Cannot access ACDESKTOP_HOME '{}': {err}",
-                path.display()
-            ),
+            format!("Cannot access ACDESKTOP_HOME '{}': {err}", path.display()),
             "Check permissions on the parent directory or choose a different path.",
         )),
     }

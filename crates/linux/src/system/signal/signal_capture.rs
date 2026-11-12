@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    AdapterError, Deadline, SignalBaseline, SignalCompleteness, SignalFilter,
-};
+use acdesktop_core::{AdapterError, Deadline, SignalBaseline, SignalCompleteness, SignalFilter};
 use serde_json::json;
 
 use super::signal_boundary::{Scope, narrow};

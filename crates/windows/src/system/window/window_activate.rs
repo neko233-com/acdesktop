@@ -1,8 +1,6 @@
 use std::time::Duration;
 
-use acdesktop_core::{
-    AdapterError, DeliverySemantics, ErrorCode, InteractionLease, WindowInfo,
-};
+use acdesktop_core::{AdapterError, DeliverySemantics, ErrorCode, InteractionLease, WindowInfo};
 
 #[cfg(target_os = "windows")]
 use crate::system::runtime::hresult;

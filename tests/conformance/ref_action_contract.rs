@@ -135,10 +135,7 @@ impl Drop for TestHome {
 }
 
 fn temp_path(label: &str) -> std::path::PathBuf {
-    std::env::temp_dir().join(format!(
-        "acdesktop-conformance-{label}-{}",
-        unique_suffix()
-    ))
+    std::env::temp_dir().join(format!("acdesktop-conformance-{label}-{}", unique_suffix()))
 }
 
 fn unique_suffix() -> u128 {

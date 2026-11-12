@@ -40,6 +40,8 @@ fn args(commands: Value, timeout_ms: u64) -> BatchArgs {
     BatchArgs {
         commands_json: commands.to_string(),
         stop_on_error: false,
+        parallel: false,
+        max_workers: 1,
         timeout_ms,
     }
 }
@@ -179,6 +181,8 @@ fn entry_count_and_output_are_bounded() {
         BatchArgs {
             commands_json: " ".repeat(MAX_BATCH_JSON_BYTES + 1),
             stop_on_error: false,
+            parallel: false,
+            max_workers: 1,
             timeout_ms: 60_000,
         },
         &adapter,

@@ -106,6 +106,8 @@ fn batch_pre_seed_baseline_lets_seen_set_report_a_window_close_not_a_timeout() {
     let args = BatchArgs {
         commands_json: commands.to_string(),
         stop_on_error: true,
+        parallel: false,
+        max_workers: 1,
         timeout_ms: 60_000,
     };
     let adapter = SeenSetBatchAdapter {

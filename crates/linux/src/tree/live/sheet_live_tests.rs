@@ -68,12 +68,9 @@ fn find_sheet(scene: &Scene, window: &str) -> RefEntry {
         },
         timeout_ms: Some(10_000),
     };
-    let found = acdesktop_core::commands::find::execute(
-        args,
-        &scene.adapter,
-        &CommandContext::default(),
-    )
-    .expect("selected sheet match hydrates");
+    let found =
+        acdesktop_core::commands::find::execute(args, &scene.adapter, &CommandContext::default())
+            .expect("selected sheet match hydrates");
     let id = found["match"]["ref_id"].as_str().expect("a saved ref");
     RefStore::new().unwrap().load_ref(id).unwrap()
 }

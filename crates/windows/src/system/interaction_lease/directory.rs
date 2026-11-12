@@ -248,6 +248,14 @@ fn validate_owner(handle: &File) -> Result<(), AdapterError> {
     let owner = read_owner_sid(handle).map_err(io_untrusted)?;
     let token_owner = sid::process_token_owner_sid().map_err(io_untrusted)?;
     let token_user = sid::process_token_user_sid().map_err(io_untrusted)?;
+    validate_owner_sid(&owner, token_owner, token_user)
+}
+
+pub(super) fn validate_owner_sid(
+    owner: &sid::SidBuffer,
+    token_owner: &sid::SidBuffer,
+    token_user: &sid::SidBuffer,
+) -> Result<(), AdapterError> {
     if owner.matches(token_owner) || owner.matches(token_user) {
         return Ok(());
     }

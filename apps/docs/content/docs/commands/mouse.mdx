@@ -22,8 +22,8 @@ Read [Headed mode](/desktop/guides/headed-mode) before you add the flag. Coordin
 Moves the cursor to an element's center or to a point.
 
 ```bash
-agent-desktop --headed hover @s8f3k2p9:e5
-agent-desktop --headed hover --xy 640,400
+acdesktop --headed hover @s8f3k2p9:e5
+acdesktop --headed hover --xy 640,400
 ```
 
 <table>
@@ -62,8 +62,8 @@ For a ref, the cursor goes to the center of the live bounds after visibility, st
 Presses at one point, moves to another, and releases.
 
 ```bash
-agent-desktop --headed drag --from @s8f3k2p9:e1 --to @s8f3k2p9:e5
-agent-desktop --headed drag --from-xy 100,200 --to-xy 400,500 --drop-delay 800
+acdesktop --headed drag --from @s8f3k2p9:e1 --to @s8f3k2p9:e5
+acdesktop --headed drag --from-xy 100,200 --to-xy 400,500 --drop-delay 800
 ```
 
 <table>
@@ -87,7 +87,7 @@ The destination app is never focused first, because raising it could cover the s
 Moves the cursor to absolute coordinates.
 
 ```bash
-agent-desktop --headed mouse-move --xy 700,450
+acdesktop --headed mouse-move --xy 700,450
 ```
 
 The report matches the [`hover`](#hover) example. On macOS the position is read back (`details.verification_scope: "pointer_position"`).
@@ -97,7 +97,7 @@ The report matches the [`hover`](#hover) example. On macOS the position is read 
 Clicks at absolute coordinates.
 
 ```bash
-agent-desktop --headed mouse-click --xy 500,300 [--button left|right|middle] [--count N] [--modifiers NAME]...
+acdesktop --headed mouse-click --xy 500,300 [--button left|right|middle] [--count N] [--modifiers NAME]...
 ```
 
 <table>
@@ -137,7 +137,7 @@ agent-desktop --headed mouse-click --xy 500,300 [--button left|right|middle] [--
 Reserved name for pressing and holding a button. It never sends input.
 
 ```bash
-agent-desktop --headed mouse-down --xy 500,300 [--button NAME] [--modifiers NAME]...
+acdesktop --headed mouse-down --xy 500,300 [--button NAME] [--modifiers NAME]...
 ```
 
 The first failing check decides the error: a bad argument is `INVALID_ARGS`; headless is `POLICY_DENIED` (`not_delivered`); Linux Wayland is `ACTION_NOT_SUPPORTED` with cause `wayland_session`; everywhere else, `--headed` ends in `ACTION_NOT_SUPPORTED`, `mouse-down is unavailable in stateless mode`, with a disposition of `unknown` and no event sent. Use [`mouse-click`](#mouse-click) or [`drag`](#drag).
@@ -147,7 +147,7 @@ The first failing check decides the error: a bad argument is `INVALID_ARGS`; hea
 Reserved name for releasing a held button. It fails closed through the same checks as [`mouse-down`](#mouse-down).
 
 ```bash
-agent-desktop --headed mouse-up --xy 500,300
+acdesktop --headed mouse-up --xy 500,300
 ```
 
 ## mouse-wheel
@@ -155,7 +155,7 @@ agent-desktop --headed mouse-up --xy 500,300
 Scrolls the mouse wheel at absolute coordinates. Use it for canvases and custom surfaces with no accessibility scroll action; for a scroll area with a ref, use [`scroll`](/desktop/commands/scroll#scroll).
 
 ```bash
-agent-desktop --headed mouse-wheel --x 700 --y 400 --dy -2
+acdesktop --headed mouse-wheel --x 700 --y 400 --dy -2
 ```
 
 <table>

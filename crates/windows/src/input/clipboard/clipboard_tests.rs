@@ -69,20 +69,37 @@ impl SavedClipboard {
     }
 }
 
+fn retry_clipboard_contention<T>(
+    mut operation: impl FnMut() -> Result<T, AdapterError>,
+) -> Result<T, AdapterError> {
+    let until = Instant::now() + Duration::from_secs(5);
+    loop {
+        match operation() {
+            Err(error)
+                if error.code == ErrorCode::Timeout
+                    && error.disposition == DeliverySemantics::not_delivered()
+                    && Instant::now() < until =>
+            {
+                std::thread::sleep(Duration::from_millis(25))
+            }
+            result => return result,
+        }
+    }
+}
+
 fn with_restored_clipboard(body: impl FnOnce()) {
     let _lock = clipboard_test_lock();
     bootstrap();
-    let saved = SavedClipboard::capture(deadline(5_000)).expect("capture clipboard for restore");
+    let saved = retry_clipboard_contention(|| SavedClipboard::capture(deadline(5_000)))
+        .expect("capture clipboard for restore");
     let body_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(body));
-    saved
-        .restore(deadline(5_000))
+    retry_clipboard_contention(|| saved.restore(deadline(5_000)))
         .expect("restore every saved clipboard format");
     if let Err(panic) = body_result {
         std::panic::resume_unwind(panic);
     }
     assert!(
-        saved
-            .matches_current(deadline(5_000))
+        retry_clipboard_contention(|| saved.matches_current(deadline(5_000)))
             .expect("re-read clipboard for round-trip check"),
         "every raw clipboard format must round-trip through save/restore"
     );
@@ -229,7 +246,10 @@ fn hung_delay_owner_returns_app_unresponsive() {
 fn sequence_retry_is_observed_when_clipboard_moves_mid_read() {
     with_restored_clipboard(|| {
         reset_sequence_retries_observed();
-        set_content(&ClipboardContent::Text("stable".into()), deadline(5_000)).expect("set");
+        retry_clipboard_contention(|| {
+            set_content(&ClipboardContent::Text("stable".into()), deadline(5_000))
+        })
+        .expect("set");
         super::inject_sequence_mismatch_once();
         let content = get_clipboard_content(ClipboardFormat::Text, deadline(5_000))
             .expect("retry must still return content")
@@ -245,7 +265,10 @@ fn sequence_retry_is_observed_when_clipboard_moves_mid_read() {
 #[test]
 fn oversized_clipboard_payload_is_rejected_before_copy() {
     with_restored_clipboard(|| {
-        set_content(&ClipboardContent::Text("small".into()), deadline(5_000)).expect("set");
+        retry_clipboard_contention(|| {
+            set_content(&ClipboardContent::Text("small".into()), deadline(5_000))
+        })
+        .expect("set");
         with_global_size_override_for_test(MAX_CLIPBOARD_PAYLOAD_BYTES + 1, || {
             let error = get_clipboard_content(ClipboardFormat::Text, deadline(5_000))
                 .expect_err("hostile GlobalSize must fail before allocating the payload");

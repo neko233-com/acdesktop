@@ -11,7 +11,7 @@ applies_when:
   - A nested repr(C) struct is embedded by value inside another (size change propagates silently)
   - Writing or updating the committed C ABI header (include/acdesktop.h)
   - Adding a new FFI integration test in crates/ffi/tests/
-  - A C, Swift, Python, Go, or Node consumer allocates the struct on the stack or in a fixed buffer
+  - A C, Swift, Python, or Go consumer allocates the struct on the stack or in a fixed buffer
 tags:
   - ffi
   - abi

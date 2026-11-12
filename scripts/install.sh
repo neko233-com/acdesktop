@@ -7,7 +7,7 @@
 #   bash scripts/install.sh --install-dir /usr/local/bin
 #
 # 设计原则：
-#   - 零 Node 依赖，直接下载原生二进制
+#   - 直接下载原生二进制
 #   - 单次下载、单次校验、原子替换
 #   - 响应快：用 GitHub Release API 拿版本号，checksum 并行
 
@@ -50,7 +50,7 @@ if [[ -n "$REQUESTED_VERSION" ]]; then
   [[ "$TAG" == v* ]] || TAG="v${TAG}"
 else
   # 直接拿最新 release tag —— 用 curl head 比完整 GET 更快
-  TAG=$(curl -fsSLI -o /dev/null -w '%{redirect_url}' \
+  TAG=$(curl -fsSLI -o /dev/null -w '%{url_effective}' \
     "${GH_RELEASES}/latest" | sed 's|.*/tag/||')
 fi
 VERSION="${TAG#v}"
@@ -61,16 +61,22 @@ TARBALL_URL="${BASE_URL}/${TARBALL}"
 CHECKSUMS_URL="${BASE_URL}/checksums.txt"
 
 # ---------- 下载并校验 ----------
-download_and_verify() {
+download_and_verify() (
   local tmp
   tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
+  trap 'rm -rf "$tmp"' EXIT
 
   echo "→ 下载 ${TARBALL} …"
   # 并行下载 tarball + checksums
-  curl -fsSL --retry 3 --retry-delay 1 -o "${tmp}/${TARBALL}"   "${TARBALL_URL}"   &
+  curl -fsSL --retry 3 --retry-delay 1 -o "${tmp}/${TARBALL}" "${TARBALL_URL}" &
+  local archive_pid=$!
   curl -fsSL --retry 3 --retry-delay 1 -o "${tmp}/checksums.txt" "${CHECKSUMS_URL}" &
-  wait
+  local checksum_pid=$!
+  if ! wait "$archive_pid"; then
+    wait "$checksum_pid" || true
+    return 1
+  fi
+  wait "$checksum_pid"
 
   echo "→ SHA256 校验 …"
   local expected
@@ -105,7 +111,7 @@ download_and_verify() {
   mv -f "${helper_tmp}" "${helper_dest}"
 
   chmod 0755 "${bin_dest}" "${helper_dest}"
-}
+)
 
 install_and_notify() {
   download_and_verify

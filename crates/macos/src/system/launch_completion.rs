@@ -234,8 +234,7 @@ unsafe extern "C" {
         ),
         release: unsafe extern "C" fn(*mut c_void),
     ) -> bool;
-    fn acdesktop_running_application_is_live(application: *mut c_void, expected_pid: i32)
-    -> u8;
+    fn acdesktop_running_application_is_live(application: *mut c_void, expected_pid: i32) -> u8;
 }
 
 #[cfg(test)]

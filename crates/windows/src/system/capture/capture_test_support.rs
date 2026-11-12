@@ -70,6 +70,7 @@ impl HomeIsolation {
                 .unwrap_or(0)
         ));
         std::fs::create_dir_all(&root).expect("isolated home");
+        crate::system::private_file::tests::protect_test_directory(&root);
         let previous_home = std::env::var_os("HOME");
         let previous_profile = std::env::var_os("USERPROFILE");
         unsafe {

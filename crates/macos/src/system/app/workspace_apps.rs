@@ -70,8 +70,7 @@ impl WindowOwnerSnapshot {
     /// Pids of the apps `identifier` names. A bundle ID or executable name counts
     /// only when no app has that display name, so an alias never merges two apps.
     pub(crate) fn matching_pids(&self, identifier: &str) -> rustc_hash::FxHashSet<i32> {
-        let named =
-            |owner: &WindowOwner| acdesktop_core::app_name_matches(&owner.name, identifier);
+        let named = |owner: &WindowOwner| acdesktop_core::app_name_matches(&owner.name, identifier);
         let by_alias = !self.owners.iter().any(named);
         self.owners
             .iter()

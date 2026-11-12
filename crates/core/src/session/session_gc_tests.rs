@@ -60,6 +60,7 @@ fn gc_retains_idle_cross_process_owner_and_reaps_after_crash() {
         .arg("session::gc_tests::subprocess_session_lease_holder")
         .arg("--nocapture")
         .env("HOME", guard.path())
+        .env_remove("ACDESKTOP_HOME")
         .env("ACDESKTOP_SESSION_LEASE_READY", &ready)
         .env("ACDESKTOP_SESSION_LEASE_ID", &manifest.id)
         .spawn()

@@ -19,6 +19,7 @@ use crate::{
 mod bounded_json;
 mod execution;
 mod execution_parallel;
+mod parallel_identity;
 mod preparation;
 mod result_entry;
 
@@ -109,6 +110,10 @@ pub(crate) fn parse_command(item: BatchCommand) -> Result<Commands, AppError> {
         "version" => no_args(command, item.args).map(|()| Commands::Version),
         "skills" => parse_skills(item.args).map(Commands::Skills),
         "session" => parse_session(item.args).map(Commands::Session),
+        "update" | "config" => Err(AppError::invalid_input_with_suggestion(
+            format!("{command} cannot run inside a batch"),
+            "Run this command directly.",
+        )),
         "cursor-overlay" => Err(AppError::invalid_input_with_suggestion(
             "Cursor overlay configuration cannot run inside a batch",
             "Enable or disable it once for the selected session before running the batch.",

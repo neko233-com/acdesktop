@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared independent observations for the packaged C and npm consumers.
+# Shared independent observations for the packaged C consumer.
 
 find_ref() {
   python3 - "$1" "$2" "$3" <<'PY'

@@ -198,8 +198,7 @@ mod tests {
         ));
 
         name.native_title = None;
-        let actions =
-            LocatorField::Known(vec![acdesktop_core::actions::capability::CLICK.into()]);
+        let actions = LocatorField::Known(vec![acdesktop_core::actions::capability::CLICK.into()]);
         assert!(!is_transparent_wrapper(
             Some("AXGenericElement"),
             None,

@@ -67,8 +67,15 @@ fn open_command(kind: SnapshotSurface, context: &CommandContext) -> Option<serde
     let adapter = WindowsAdapter::new();
     or_skip_shell(
         &format!("the command opens the {}", kind.as_str()),
-        open_system_surface::execute(OpenSystemSurfaceArgs { surface: kind }, &adapter, context)
-            .map_err(adapter_error_of),
+        open_system_surface::execute(
+            OpenSystemSurfaceArgs {
+                surface: kind,
+                timeout_ms: Some(15_000),
+            },
+            &adapter,
+            context,
+        )
+        .map_err(adapter_error_of),
         || responded_since(&witness),
     )
 }
@@ -87,7 +94,7 @@ fn snapshot_command(kind: SnapshotSurface) -> serde_json::Value {
             surface: kind,
             skeleton: false,
             root_ref: None,
-            timeout_ms: Some(10_000),
+            timeout_ms: Some(30_000),
             force_electron_a11y: false,
         },
         &adapter,
@@ -221,6 +228,7 @@ fn strict_headless_open_refuses_before_raising() {
         let error = open_system_surface::execute(
             OpenSystemSurfaceArgs {
                 surface: SnapshotSurface::ActionCenter,
+                timeout_ms: None,
             },
             &adapter,
             &CommandContext::default(),

@@ -52,8 +52,8 @@ impl UserConfig {
     /// 加载；文件不存在时返回默认并在 save 时落盘。
     pub(crate) fn load() -> Self {
         let path = config_path();
-        match std::fs::read_to_string(&path) {
-            Ok(text) => serde_json::from_str(&text).unwrap_or_else(|e| {
+        match acdesktop_core::read_private_bounded(&path, 64 * 1024) {
+            Ok(bytes) => serde_json::from_slice(&bytes).unwrap_or_else(|e| {
                 eprintln!("acdesktop: 配置文件解析失败，使用默认值 ({path:?}): {e}");
                 Self::default()
             }),
@@ -63,11 +63,8 @@ impl UserConfig {
 
     pub(crate) fn save(&self) -> std::io::Result<()> {
         let path = config_path();
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
-        let text = serde_json::to_string_pretty(self).unwrap();
-        std::fs::write(&path, text)?;
+        let text = serde_json::to_string_pretty(self).map_err(std::io::Error::other)?;
+        acdesktop_core::write_private_atomic(&path, text.as_bytes())?;
         Ok(())
     }
 
@@ -93,7 +90,6 @@ pub(crate) fn config_path() -> PathBuf {
 }
 
 fn dirs_home() -> PathBuf {
-    // 优先 HOME，回退 USERPROFILE / $HOME / 当前目录
     if let Some(h) = std::env::var_os("HOME") {
         return PathBuf::from(h);
     }

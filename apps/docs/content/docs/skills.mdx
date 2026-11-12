@@ -1,26 +1,26 @@
 ---
 title: Skills
 navTitle: Skills
-description: Load agent-desktop's skills with the skills command. They are compiled into the binary, so they always match the installed version.
+description: Load acdesktop's skills with the skills command. They are compiled into the binary, so they always match the installed version.
 ---
 
-agent-desktop ships guides written for AI agents: the observe, act, and verify loop, the retry rules, and what differs on each OS. They are compiled into the binary, so the instructions an agent reads always match the version it runs. The `skills` command prints them. It needs no permission and no desktop session.
+acdesktop ships guides written for AI agents: the observe, act, and verify loop, the retry rules, and what differs on each OS. They are compiled into the binary, so the instructions an agent reads always match the version it runs. The `skills` command prints them. It needs no permission and no desktop session.
 
 ## Bootstrap an agent
 
 Run these three commands before the first action:
 
 ```bash
-agent-desktop status                  # platform, permissions, supported surfaces
-agent-desktop skills get desktop      # the loop, refs, verification, and retry rules
-agent-desktop skills get platform     # what differs on the OS the binary runs on
+acdesktop status                  # platform, permissions, supported surfaces
+acdesktop skills get desktop      # the loop, refs, verification, and retry rules
+acdesktop skills get platform     # what differs on the OS the binary runs on
 ```
 
 To make this automatic, put the bootstrap in your agent's instructions file (`AGENTS.md` or equivalent):
 
 ```markdown
-Use `agent-desktop` to see and operate desktop apps. Before the first use, run
-`agent-desktop skills get desktop` and `agent-desktop skills get platform`, and follow them.
+Use `acdesktop` to see and operate desktop apps. Before the first use, run
+`acdesktop skills get desktop` and `acdesktop skills get platform`, and follow them.
 ```
 
 ## The skills command
@@ -32,19 +32,19 @@ Every form prints the JSON envelope. A skill's Markdown is in `data.content`.
     <tr><th>Command</th><th>Description</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>agent-desktop skills</code></td><td>List skills, the same as <code>skills list</code></td></tr>
-    <tr><td><code>agent-desktop skills list</code></td><td>List every bundled skill with its aliases and references</td></tr>
-    <tr><td><code>agent-desktop skills get &lt;name&gt;</code></td><td>Print one skill's main guide</td></tr>
-    <tr><td><code>agent-desktop skills get &lt;name&gt; &lt;reference&gt;</code></td><td>Print one reference file of that skill</td></tr>
-    <tr><td><code>agent-desktop skills get &lt;name&gt; --full</code></td><td>Print the main guide followed by every reference, each introduced by a <code>--- references/&lt;file&gt;.md ---</code> line</td></tr>
-    <tr><td><code>agent-desktop skills path</code></td><td>Report that skills are embedded, and list the available names</td></tr>
+    <tr><td><code>acdesktop skills</code></td><td>List skills, the same as <code>skills list</code></td></tr>
+    <tr><td><code>acdesktop skills list</code></td><td>List every bundled skill with its aliases and references</td></tr>
+    <tr><td><code>acdesktop skills get &lt;name&gt;</code></td><td>Print one skill's main guide</td></tr>
+    <tr><td><code>acdesktop skills get &lt;name&gt; &lt;reference&gt;</code></td><td>Print one reference file of that skill</td></tr>
+    <tr><td><code>acdesktop skills get &lt;name&gt; --full</code></td><td>Print the main guide followed by every reference, each introduced by a <code>--- references/&lt;file&gt;.md ---</code> line</td></tr>
+    <tr><td><code>acdesktop skills path</code></td><td>Report that skills are embedded, and list the available names</td></tr>
   </tbody>
 </table>
 
 `--full` is the only flag the command adds, and it has no effect when you pass a reference. To read a skill as plain Markdown, extract `data.content`:
 
 ```bash
-agent-desktop skills get desktop | jq -r '.data.content'
+acdesktop skills get desktop | jq -r '.data.content'
 ```
 
 `skills path` confirms there is no skills directory on disk:
@@ -55,9 +55,9 @@ agent-desktop skills get desktop | jq -r '.data.content'
   "ok": true,
   "command": "skills",
   "data": {
-    "available": ["agent-desktop", "agent-desktop-macos", "agent-desktop-windows", "agent-desktop-linux", "agent-desktop-ffi", "jev-desktop"],
+    "available": ["acdesktop", "acdesktop-macos", "acdesktop-windows", "acdesktop-linux", "acdesktop-ffi"],
     "location": "embedded",
-    "note": "Skills are compiled into this binary and are always version-matched. Run `agent-desktop skills get <name>` to print a skill, or redirect into a file to extract a copy."
+    "note": "Skills are compiled into this binary and are always version-matched. Run `acdesktop skills get <name>` to print a skill, or redirect into a file to extract a copy."
   }
 }
 ```
@@ -71,12 +71,11 @@ agent-desktop skills get desktop | jq -r '.data.content'
     <tr><th>Name</th><th>Alias</th><th>Covers</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>agent-desktop</code></td><td><code>desktop</code></td><td>The core guide for every OS: the snapshot and ref loop, verification and retry rules, and when to open each reference. Load it first.</td></tr>
-    <tr><td><code>agent-desktop-macos</code></td><td><code>macos</code></td><td>What differs on macOS: permissions, Notification Center, troubleshooting.</td></tr>
-    <tr><td><code>agent-desktop-windows</code></td><td><code>windows</code></td><td>What differs on Windows: PowerShell quoting, elevation, shell surfaces, Chromium and Electron, troubleshooting.</td></tr>
-    <tr><td><code>agent-desktop-linux</code></td><td><code>linux</code></td><td>What differs on Linux: the AT-SPI bus, X11 and Wayland, window lifecycle, capture and clipboard, shell and notifications, troubleshooting.</td></tr>
-    <tr><td><code>agent-desktop-ffi</code></td><td><code>ffi</code></td><td>Embedding agent-desktop through the <a href="/desktop/ffi">C library</a>: build and link, errors, ownership, threading.</td></tr>
-    <tr><td><code>jev-desktop</code></td><td><code>jev</code></td><td>An optional helper that drives an app from a plain-language goal. It needs a clone of the repository and an API key, and it is not part of the native CLI.</td></tr>
+    <tr><td><code>acdesktop</code></td><td><code>desktop</code></td><td>The core guide for every OS: the snapshot and ref loop, verification and retry rules, and when to open each reference. Load it first.</td></tr>
+    <tr><td><code>acdesktop-macos</code></td><td><code>macos</code></td><td>What differs on macOS: permissions, Notification Center, troubleshooting.</td></tr>
+    <tr><td><code>acdesktop-windows</code></td><td><code>windows</code></td><td>What differs on Windows: PowerShell quoting, elevation, shell surfaces, Chromium and Electron, troubleshooting.</td></tr>
+    <tr><td><code>acdesktop-linux</code></td><td><code>linux</code></td><td>What differs on Linux: the AT-SPI bus, X11 and Wayland, window lifecycle, capture and clipboard, shell and notifications, troubleshooting.</td></tr>
+    <tr><td><code>acdesktop-ffi</code></td><td><code>ffi</code></td><td>Embedding acdesktop through the <a href="/desktop/ffi">C library</a>: build and link, errors, ownership, threading.</td></tr>
   </tbody>
 </table>
 
@@ -84,9 +83,9 @@ agent-desktop skills get desktop | jq -r '.data.content'
 
 ```json
 {
-  "aliases": ["linux", "agent-desktop-linux"],
+  "aliases": ["linux", "acdesktop-linux"],
   "current": true,
-  "name": "agent-desktop-linux",
+  "name": "acdesktop-linux",
   "platform": "linux",
   "references": [
     "references/bus-and-permissions.md",
@@ -104,7 +103,7 @@ An unknown name returns `INVALID_ARGS` and lists every alias:
 ```json
 {
   "code": "INVALID_ARGS",
-  "message": "Unknown skill 'nope'. Known: desktop, agent-desktop, macos, agent-desktop-macos, windows, agent-desktop-windows, linux, agent-desktop-linux, ffi, agent-desktop-ffi, jev, jev-desktop"
+  "message": "Unknown skill 'nope'. Known: desktop, acdesktop, macos, acdesktop-macos, windows, acdesktop-windows, linux, acdesktop-linux, ffi, acdesktop-ffi"
 }
 ```
 
@@ -113,8 +112,8 @@ An unknown name returns `INVALID_ARGS` and lists every alias:
 Load a reference only when you need it. Name it by path (`references/workflows.md`), file name (`workflows.md`), or stem (`workflows`):
 
 ```bash
-agent-desktop skills get desktop workflows
-agent-desktop skills get linux troubleshooting
+acdesktop skills get desktop workflows
+acdesktop skills get linux troubleshooting
 ```
 
 <table>
@@ -132,12 +131,6 @@ agent-desktop skills get linux troubleshooting
 
 An unknown reference returns `INVALID_ARGS` and lists the available ones.
 
-## Install a skill in an agent harness
+## Use skills in an agent harness
 
-A harness that supports skills can also install a static copy with `npx skills add`:
-
-```bash
-npx skills add https://github.com/<owner>/agent-desktop --skill agent-desktop
-```
-
-You can also add `--skill agent-desktop-ffi` or the platform skill for your OS (`agent-desktop-macos`, `agent-desktop-windows`, or `agent-desktop-linux`). An installed copy can go stale when you upgrade the CLI, so prefer `agent-desktop skills get`, which always matches the binary you run.
+Use `acdesktop skills get desktop` and `acdesktop skills get platform` to load the guides that match the binary you run. Your agent can choose how to use those guides.

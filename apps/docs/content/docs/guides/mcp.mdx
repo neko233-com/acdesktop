@@ -1,10 +1,10 @@
 ---
-title: Using agent-desktop over MCP
+title: Using acdesktop over MCP
 navTitle: MCP
-description: Serve every agent-desktop command as an MCP tool over stdio. How tools map to commands, how global flags apply, and what a tool returns.
+description: Serve every acdesktop command as an MCP tool over stdio. How tools map to commands, how global flags apply, and what a tool returns.
 ---
 
-`agent-desktop mcp` runs a Model Context Protocol server over stdio. Every command is a tool, so an MCP client gets the same surface as the CLI with no separate setup.
+`acdesktop mcp` runs a Model Context Protocol server over stdio. Every command is a tool, so an MCP client gets the same surface as the CLI with no separate setup.
 
 ## Connect a client
 
@@ -13,7 +13,7 @@ Add the server to your client's MCP configuration:
 ```json
 {
   "mcpServers": {
-    "agent-desktop": { "command": "agent-desktop", "args": ["mcp"] }
+    "acdesktop": { "command": "acdesktop", "args": ["mcp"] }
   }
 }
 ```
@@ -40,10 +40,10 @@ The tool list is read from the CLI's own command definitions, so it always match
 Global flags given to `mcp` apply to every call:
 
 ```bash
-agent-desktop mcp --session s1 --headed
+acdesktop mcp --session s1 --headed
 ```
 
-`AGENT_DESKTOP_SESSION`, `AGENT_DESKTOP_AGENT_ID` and `AGENT_DESKTOP_HOME` in the server's environment apply the same way.
+`ACDESKTOP_SESSION`, `ACDESKTOP_AGENT_ID` and `ACDESKTOP_HOME` in the server's environment apply the same way.
 
 A tool cannot pass a global flag. Commands that need a session, such as `trace` and `cursor-overlay`, work only when the server has one, headed-only commands need `mcp --headed`, and `--wait-for` is not available per call.
 

@@ -259,10 +259,8 @@ mod tests {
 
     #[test]
     fn private_directory_is_owner_matched_and_mode_restricted() {
-        let directory = std::env::temp_dir().join(format!(
-            "acdesktop-endpoint-test-{}",
-            std::process::id()
-        ));
+        let directory =
+            std::env::temp_dir().join(format!("acdesktop-endpoint-test-{}", std::process::id()));
         let _ = std::fs::remove_dir(&directory);
         std::fs::create_dir(&directory).expect("create test directory");
         std::fs::set_permissions(&directory, std::fs::Permissions::from_mode(0o755))

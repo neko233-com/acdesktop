@@ -64,8 +64,7 @@ differently:
 
 - **SmartScreen:** a browser download carries Mark-of-the-Web, so
   double-clicking it can show "Windows protected your PC". Choose More info,
-  then Run anyway. The npm package bundles the binary and downloads nothing,
-  so npm installation attaches no mark and fires no mark-gated prompt.
+  then Run anyway after verifying the release checksum.
 - **Antivirus quarantine:** Defender or another scanner may quarantine a new
   unsigned executable however it was obtained. Restore or allow-list it after
   you verify the published SHA-256 checksum.

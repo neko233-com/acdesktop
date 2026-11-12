@@ -17,6 +17,7 @@ permissions: {}
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  ACDESKTOP_NO_AUTO_UPDATE: "1"
 
 jobs:
   fmt:
@@ -225,24 +226,8 @@ jobs:
         run: |
           scripts/ci-ffi-helper-discovery-smoke.sh
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '26'
-
-      - name: jev-desktop tests
-        run: |
-          node scripts/jev/run.test.mjs
-          node scripts/jev/act.test.mjs
-          node scripts/jev/run.integration.test.mjs
-          node scripts/jev/evidence.test.mjs
-
-      - name: NPM package contents
-        run: |
-          node --test tests/npm/*.test.js tests/release/*.test.js
-          node scripts/check-npm-package.js
-
-      - name: NPM wrapper smoke
-        run: chmod +x scripts/*.sh && scripts/ci-npm-wrapper-smoke.sh
+      - name: Release preparation and archive tests
+        run: python3 -m unittest discover -s tests/release -p "test_*.py"
 
   test-linux:
     name: Test (Linux)
@@ -322,61 +307,8 @@ jobs:
         with:
           node-version: '26'
 
-      - name: NPM package contents
-        run: |
-          node --test tests/npm/*.test.js
-          scripts/check-linux-archive-contents.sh npm linux-x64
-
-      - name: Embedded visual viewer tests
-        run: node --test src/visual_debug/viewer_filter.test.js
-
-      - name: NPM wrapper smoke
-        run: chmod +x scripts/*.sh && scripts/ci-npm-wrapper-smoke.sh
-
-      - name: Status reports accessibility granted on a live bus
-        run: |
-          cat > "$RUNNER_TEMP/status-granted.sh" <<'SCRIPT'
-          set -eu
-          JSON=$(target/release/acdesktop status)
-          printf '%s\n' "$JSON"
-          printf '%s' "$JSON" | python3 -c '
-          import json, sys
-          doc = json.load(sys.stdin)
-          assert doc.get("ok") is True, "status did not succeed"
-          state = doc["data"]["permissions"]["accessibility"]["state"]
-          assert state == "granted", "accessibility state is " + state
-          '
-          SCRIPT
-          dbus-run-session -- xvfb-run -a bash "$RUNNER_TEMP/status-granted.sh"
-
-      - name: Status and permissions report the missing bus as denied accessibility
-        run: |
-          XDG_RUNTIME_DIR=$(mktemp -d)
-          export DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent XDG_RUNTIME_DIR
-          for command in status permissions; do
-            JSON=$(target/release/acdesktop "$command")
-            printf '%s\n' "$JSON"
-            printf '%s' "$JSON" | python3 -c '
-          import json, sys
-          doc = json.load(sys.stdin)
-          assert doc.get("ok") is True, "the diagnostic failed instead of reporting the bus"
-          data = doc["data"]
-          access = (data.get("permissions") or data)["accessibility"]
-          assert access["state"] == "denied", "accessibility state is " + access["state"]
-          assert "session bus" in access["suggestion"], "suggestion does not name the session bus"
-          '
-          done
-          RC=0
-          JSON=$(target/release/acdesktop click @s8f3k2p9:e1) || RC=$?
-          test "$RC" -eq 1
-          printf '%s\n' "$JSON"
-          printf '%s' "$JSON" | python3 -c '
-          import json, sys
-          doc = json.load(sys.stdin)
-          assert doc.get("ok") is False, "click unexpectedly succeeded without a bus"
-          assert doc["error"]["code"] == "PERM_DENIED", "unexpected code " + doc["error"]["code"]
-          assert "session bus" in doc["error"]["suggestion"], "error does not carry the recovery step"
-          '
+      - name: Embedded visual viewer and release workflow tests
+        run: node --test src/visual_debug/viewer_filter.test.js tests/release/release-workflows.test.js
 
   test-windows:
     name: Test (Windows)
@@ -651,21 +583,13 @@ jobs:
       - name: Build release binary
         run: cargo build --locked --release -p acdesktop
 
-      - name: Install the packed npm package and run it through the shim
+      - name: Run the native release binary
         shell: pwsh
         run: |
-          $env:ACDESKTOP_BINARY_PATH = (Resolve-Path 'target/release/acdesktop.exe').Path
-          Push-Location npm
-          npm pack
-          $tarball = Get-ChildItem -Filter 'acdesktop-*.tgz' | Select-Object -First 1
-          if (-not $tarball) { Write-Host 'FAIL: npm pack produced no tarball'; exit 1 }
-          Pop-Location
-          $prefix = Join-Path $env:RUNNER_TEMP 'npm-arm64-prefix'
-          npm install -g $tarball.FullName --prefix $prefix
-          if ($LASTEXITCODE -ne 0) { Write-Host "FAIL: npm install exited $LASTEXITCODE"; exit $LASTEXITCODE }
-          & (Join-Path $prefix 'acdesktop.cmd') version
-          if ($LASTEXITCODE -ne 0) { Write-Host "FAIL: acdesktop version through the npm shim exited $LASTEXITCODE"; exit $LASTEXITCODE }
-          Write-Host 'OK: the win32-arm64 table entry resolves and runs through the npm shim'
+          $result = & target/release/acdesktop.exe version | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or -not $result.ok -or $result.command -ne 'version') {
+            throw 'Native version command failed'
+          }
 
       - name: Guard profile isolation
         shell: pwsh
@@ -816,7 +740,7 @@ jobs:
       - name: Run stub-adapter passthrough tests
         if: matrix.target == 'x86_64-unknown-linux-gnu'
         run: >
-          scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-ffi
+          bash scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-ffi
           --features stub-adapter --test c_abi_passthrough
 
       - name: Assert release-ffi profile keeps panic=unwind

@@ -4,9 +4,7 @@ use crate::tree::element::UIAElement;
 use crate::tree::fixture::fixture_window;
 use crate::tree::fixture::{LocalFixture, ensure_test_apartment};
 use crate::tree::walk::walker_fake::deadline;
-use acdesktop_core::{
-    AdapterError, NativeHandle, ObservationOps, tree::state::VisibilityEvidence,
-};
+use acdesktop_core::{AdapterError, NativeHandle, ObservationOps, tree::state::VisibilityEvidence};
 use std::time::{Duration, Instant};
 use uiautomation::types::Handle;
 use uiautomation::{UIElement, UITreeWalker};

@@ -211,7 +211,7 @@ fn baseline_error(
     source.into()
 }
 
-fn session_ended_for(command: &PreparedCommand) -> Option<String> {
+pub(super) fn session_ended_for(command: &PreparedCommand) -> Option<String> {
     let session_id = command.context.session_id()?;
     match acdesktop_core::session::read_manifest(session_id) {
         Ok(Some(manifest)) if manifest.ended_at.is_some() => Some(session_id.to_owned()),
@@ -219,7 +219,7 @@ fn session_ended_for(command: &PreparedCommand) -> Option<String> {
     }
 }
 
-fn batch_session_ended(index: usize, command: &str, session_id: &str) -> AppError {
+pub(super) fn batch_session_ended(index: usize, command: &str, session_id: &str) -> AppError {
     AdapterError::new(
         ErrorCode::InvalidArgs,
         format!(

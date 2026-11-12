@@ -261,10 +261,7 @@ mod tests {
     /// regression actually breaks.
     #[test]
     fn child_environment_block_is_none_when_nothing_needs_changing() {
-        let key = format!(
-            "ACDESKTOP_LAUNCH_PATH_TEST_ABSENT_{}",
-            std::process::id()
-        );
+        let key = format!("ACDESKTOP_LAUNCH_PATH_TEST_ABSENT_{}", std::process::id());
         unsafe { std::env::remove_var(&key) };
         let overrides = BTreeMap::new();
         let block = child_environment_block(&overrides, &key).expect("decision");
@@ -281,10 +278,7 @@ mod tests {
     /// null environment pointer.
     #[test]
     fn child_environment_block_strips_an_inherited_strip_key_even_with_empty_overrides() {
-        let key = format!(
-            "ACDESKTOP_LAUNCH_PATH_TEST_STRIP_{}",
-            std::process::id()
-        );
+        let key = format!("ACDESKTOP_LAUNCH_PATH_TEST_STRIP_{}", std::process::id());
         unsafe { std::env::set_var(&key, "stale-handle-value") };
         let overrides = BTreeMap::new();
         let block = child_environment_block(&overrides, &key)

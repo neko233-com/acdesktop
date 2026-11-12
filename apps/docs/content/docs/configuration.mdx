@@ -1,14 +1,14 @@
 ---
 title: Configuration
 navTitle: Configuration
-description: Global flags, post-action wait flags, environment variables, and the state root where agent-desktop stores snapshots, sessions, and traces.
+description: Global flags, post-action wait flags, environment variables, and the state root where acdesktop stores snapshots, sessions, and traces.
 ---
 
-agent-desktop has no configuration file. Behavior comes from global flags on each command, a few environment variables, and the state root directory where snapshots, sessions, and traces live.
+The user configuration lives at `~/.acdesktop/config.json` by default; `ACDESKTOP_CONFIG_DIR` changes its directory. Use `acdesktop config show`, `acdesktop config path`, or `acdesktop config set KEY VALUE` to inspect or change it. Command flags and environment variables also control each invocation; snapshots, sessions, and traces live under the state root.
 
 ## Global flags
 
-Global flags work before or after the command name, so `agent-desktop --headed click REF` and `agent-desktop click REF --headed` are the same. `agent-desktop --help` lists them.
+Global flags work before or after the command name, so `acdesktop --headed click REF` and `acdesktop click REF --headed` are the same. `acdesktop --help` lists them.
 
 <table>
   <thead>
@@ -16,8 +16,8 @@ Global flags work before or after the command name, so `agent-desktop --headed c
   </thead>
   <tbody>
     <tr><td><code>--headed</code></td><td>off</td><td>Prefer physical delivery for natural input commands and allow focus and cursor side effects. The default is strict headless semantic delivery. See <a href="/desktop/guides/headed-mode">Headed mode</a>.</td></tr>
-    <tr><td><code>--session ID</code></td><td>none</td><td>Select the snapshot namespace and trace. Overrides <code>AGENT_DESKTOP_SESSION</code>. See <a href="/desktop/sessions">Sessions</a>.</td></tr>
-    <tr><td><code>--agent-id ID</code></td><td>none</td><td>Subagent id within the session. Overrides <code>AGENT_DESKTOP_AGENT_ID</code>. Required for desktop actions in a multi-agent session.</td></tr>
+    <tr><td><code>--session ID</code></td><td>none</td><td>Select the snapshot namespace and trace. Overrides <code>ACDESKTOP_SESSION</code>. See <a href="/desktop/sessions">Sessions</a>.</td></tr>
+    <tr><td><code>--agent-id ID</code></td><td>none</td><td>Subagent id within the session. Overrides <code>ACDESKTOP_AGENT_ID</code>. Required for desktop actions in a multi-agent session.</td></tr>
     <tr><td><code>--trace PATH</code></td><td>off</td><td>Append trace events as JSONL to this file instead of the session's trace. See <a href="/desktop/guides/traces">Traces</a>.</td></tr>
     <tr><td><code>--trace-strict</code></td><td>off</td><td>Fail when trace setup or a pre-action write fails. Requires <code>--trace</code> or a tracing session.</td></tr>
     <tr><td><code>--wait-for SELECTOR</code>, <code>-w</code></td><td>none</td><td>After the command, poll until an element matches. See <a href="#post-action-wait-flags">Post-action wait flags</a>.</td></tr>
@@ -48,9 +48,9 @@ Global flags work before or after the command name, so `agent-desktop --headed c
 - A temporary `ACTION_NOT_SUPPORTED` error with `details.kind: "window_without_accessibility_element"` is retried during wait polling. For `--wait-for-gone`, that error does not count as absence; the wait succeeds only after a complete selector read finds no match or the app/window lookup confirms the target is gone.
 
 ```bash
-agent-desktop click @s8f3k2p9:e5 --wait-for ":Saved" --wait-timeout 5000
-agent-desktop click @s8f3k2p9:e5 --wait-for-gone "progressindicator"
-agent-desktop snapshot --app gnome-calculator -w "button:7"
+acdesktop click @s8f3k2p9:e5 --wait-for ":Saved" --wait-timeout 5000
+acdesktop click @s8f3k2p9:e5 --wait-for-gone "progressindicator"
+acdesktop snapshot --app gnome-calculator -w "button:7"
 ```
 
 ## Environment variables
@@ -60,34 +60,34 @@ agent-desktop snapshot --app gnome-calculator -w "button:7"
     <tr><th>Variable</th><th>Meaning</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>AGENT_DESKTOP_HOME</code></td><td>Relocates the <a href="#state-root">state root</a>. Must be an absolute path.</td></tr>
-    <tr><td><code>AGENT_DESKTOP_SESSION</code></td><td>Session id used when <code>--session</code> is not passed. <code>session start</code> prints the line that sets it. An empty value is <code>INVALID_ARGS</code>.</td></tr>
-    <tr><td><code>AGENT_DESKTOP_AGENT_ID</code></td><td>Subagent id used when <code>--agent-id</code> is not passed.</td></tr>
-    <tr><td><code>AGENT_DESKTOP_MACOS_HELPER_PATH</code></td><td>macOS only. Absolute path to the packaged <code>agent-desktop-macos-helper</code>. The npm launcher sets it.</td></tr>
+    <tr><td><code>ACDESKTOP_HOME</code></td><td>Relocates the <a href="#state-root">state root</a>. Must be an absolute path.</td></tr>
+    <tr><td><code>ACDESKTOP_SESSION</code></td><td>Session id used when <code>--session</code> is not passed. <code>session start</code> prints the line that sets it. An empty value is <code>INVALID_ARGS</code>.</td></tr>
+    <tr><td><code>ACDESKTOP_AGENT_ID</code></td><td>Subagent id used when <code>--agent-id</code> is not passed.</td></tr>
+    <tr><td><code>ACDESKTOP_MACOS_HELPER_PATH</code></td><td>macOS only. Absolute path to the packaged <code>acdesktop-macos-helper</code>.</td></tr>
     <tr><td><code>RUST_LOG</code></td><td>Log filter for stderr logs. A valid value replaces the default level.</td></tr>
   </tbody>
 </table>
 
-An invalid value returns `INVALID_ARGS` with `not_delivered`, and nothing runs. In PowerShell, set a variable with `$env:AGENT_DESKTOP_HOME = "$env:TEMP\ad-scratch"`. On Linux the adapter also reads the desktop session's `DISPLAY`, `WAYLAND_DISPLAY`, `XDG_RUNTIME_DIR`, and `DBUS_SESSION_BUS_ADDRESS`; see [Linux](/desktop/platforms/linux).
+An invalid value returns `INVALID_ARGS` with `not_delivered`, and nothing runs. In PowerShell, set a variable with `$env:ACDESKTOP_HOME = "$env:TEMP\ad-scratch"`. On Linux the adapter also reads the desktop session's `DISPLAY`, `WAYLAND_DISPLAY`, `XDG_RUNTIME_DIR`, and `DBUS_SESSION_BUS_ADDRESS`; see [Linux](/desktop/platforms/linux).
 
 ## State root
 
-agent-desktop keeps its state under one directory: `.agent-desktop` in your home directory by default. `agent-desktop status` reports the resolved path as `state_root`. `AGENT_DESKTOP_HOME` replaces the default:
+acdesktop keeps its state under one directory: `.acdesktop` in your home directory by default. `acdesktop status` reports the resolved path as `state_root`. `ACDESKTOP_HOME` replaces the default:
 
 - It must be an absolute path. If it exists, it must be a directory you own and not a symlink.
 - It does not need to exist yet; it is created on first use with mode `0700` on macOS and Linux.
 
-On macOS and Linux the state root must stay private. A root that is group-writable or readable by other users makes commands that write there fail with `INTERNAL`, "private file parent is accessible by group or other users". Run `chmod 700` on it, or let agent-desktop create it. A fresh root per run isolates refs:
+On macOS and Linux the state root must stay private. A root that is group-writable or readable by other users makes commands that write there fail with `INTERNAL`, "private file parent is accessible by group or other users". Run `chmod 700` on it, or let acdesktop create it. A fresh root per run isolates refs:
 
 ```bash
-export AGENT_DESKTOP_HOME="$(mktemp -d)"   # absolute and private
-agent-desktop status                       # data.state_root shows this path
+export ACDESKTOP_HOME="$(mktemp -d)"   # absolute and private
+acdesktop status                       # data.state_root shows this path
 ```
 
 ### Layout
 
 ```text
-~/.agent-desktop/                     state root
+~/.acdesktop/                     state root
   latest_snapshot_id                  newest snapshot in the global namespace
   snapshots/
     s8f3k2p9/refmap.json              one refmap per snapshot
@@ -105,4 +105,4 @@ agent-desktop status                       # data.state_root shows this path
 - **Sessions.** `session start` creates `sessions/<id>/` with its own `snapshots/`, so one session's refs are invisible to another. `session gc` deletes ended sessions with their traces. See [Sessions](/desktop/sessions).
 - **Traces.** A tracing session writes one JSONL segment per process under `trace/`, plus `screens/` and `refmaps/` with `--screenshots`. See [Traces](/desktop/guides/traces).
 
-The cross-process interaction lock lives outside the state root (under `/tmp` on macOS and Linux), so every agent of one user shares it whatever their `AGENT_DESKTOP_HOME`. Files you name yourself, such as a `--trace` path or a screenshot path, are also outside it.
+The cross-process interaction lock lives outside the state root (under `/tmp` on macOS and Linux), so every agent of one user shares it whatever their `ACDESKTOP_HOME`. Files you name yourself, such as a `--trace` path or a screenshot path, are also outside it.

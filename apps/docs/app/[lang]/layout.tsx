@@ -17,7 +17,7 @@ export const generateStaticParams = () =>
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
-  title: { default: "agent-desktop | Desktop Automation for AI", template: "%s | agent-desktop" },
+  title: { default: "acdesktop | Desktop Automation for AI", template: "%s | acdesktop" },
   description: "Desktop automation CLI for AI agents",
   icons: { icon: "/desktop/favicon.ico" },
 };

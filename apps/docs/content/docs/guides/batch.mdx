@@ -1,7 +1,7 @@
 ---
 title: Batching commands
 navTitle: Batch
-description: Run several agent-desktop commands in one process with batch. When to batch, the non-atomic semantics, validation before the first entry, and how to read the result.
+description: Run several acdesktop commands in one process with batch. When to batch, the non-atomic semantics, validation before the first entry, and how to read the result.
 ---
 
 `batch` runs a JSON array of commands in order, in one process. It is not a transaction. Use it to save process starts on a known sequence, and to pair an action with `wait --event` so the wait's baseline is read before the action runs. The input format, limits, and output fields are in the [`batch` reference](/desktop/commands/batch).
@@ -20,7 +20,7 @@ Do not batch these:
 
 ## Know what runs first
 
-Before any entry runs, agent-desktop checks every entry: the JSON, the command names, the arguments, ref syntax, and the permissions each command needs. One failure rejects the whole batch and nothing runs:
+Before any entry runs, acdesktop checks every entry: the JSON, the command names, the arguments, ref syntax, and the permissions each command needs. One failure rejects the whole batch and nothing runs:
 
 ```json
 {

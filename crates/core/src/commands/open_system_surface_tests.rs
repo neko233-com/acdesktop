@@ -6,6 +6,7 @@ use std::sync::Mutex;
 struct SurfaceAdapter {
     opens: Mutex<Vec<(SnapshotSurface, InteractionPolicy)>>,
     leases: Mutex<u32>,
+    budgets: Mutex<Vec<u64>>,
 }
 
 impl ObservationOps for SurfaceAdapter {}
@@ -18,6 +19,7 @@ impl SystemOps for SurfaceAdapter {
         deadline: crate::Deadline,
     ) -> Result<InteractionLease, AdapterError> {
         *self.leases.lock().unwrap() += 1;
+        self.budgets.lock().unwrap().push(deadline.timeout_ms());
         InteractionLease::guarded(deadline, ())
     }
 
@@ -93,6 +95,7 @@ fn adapter() -> SurfaceAdapter {
     SurfaceAdapter {
         opens: Mutex::new(Vec::new()),
         leases: Mutex::new(0),
+        budgets: Mutex::new(Vec::new()),
     }
 }
 
@@ -103,6 +106,7 @@ fn data_carries_the_snake_case_kind_and_the_full_window_identity() {
     let value = execute(
         OpenSystemSurfaceArgs {
             surface: SnapshotSurface::ActionCenter,
+            timeout_ms: None,
         },
         &adapter,
         &headed(),
@@ -127,6 +131,7 @@ fn the_callers_policy_travels_to_the_adapter_so_the_floor_can_fire() {
     execute(
         OpenSystemSurfaceArgs {
             surface: SnapshotSurface::StartMenu,
+            timeout_ms: None,
         },
         &adapter,
         &crate::context::CommandContext::default(),
@@ -149,6 +154,7 @@ fn a_headed_policy_is_passed_through_unchanged() {
     execute(
         OpenSystemSurfaceArgs {
             surface: SnapshotSurface::SystemTray,
+            timeout_ms: None,
         },
         &adapter,
         &headed(),
@@ -168,6 +174,7 @@ fn the_command_takes_the_interaction_lease_like_every_desktop_mover() {
     execute(
         OpenSystemSurfaceArgs {
             surface: SnapshotSurface::Taskbar,
+            timeout_ms: None,
         },
         &adapter,
         &headed(),
@@ -187,6 +194,7 @@ fn the_trait_default_answers_not_supported_for_adapters_without_the_surface() {
     let error = execute(
         OpenSystemSurfaceArgs {
             surface: SnapshotSurface::Dock,
+            timeout_ms: None,
         },
         &adapter,
         &headed(),
@@ -210,6 +218,7 @@ fn a_surface_no_window_presents_leaves_the_window_out() {
     let value = execute(
         OpenSystemSurfaceArgs {
             surface: SnapshotSurface::Dock,
+            timeout_ms: None,
         },
         &adapter(),
         &headed(),
@@ -217,4 +226,35 @@ fn a_surface_no_window_presents_leaves_the_window_out() {
     .unwrap();
 
     assert_eq!(value, serde_json::json!({ "surface": "dock" }));
+}
+
+#[test]
+fn explicit_timeout_covers_the_lease_and_the_surface_open() {
+    let adapter = adapter();
+    execute(
+        OpenSystemSurfaceArgs {
+            surface: SnapshotSurface::ActionCenter,
+            timeout_ms: Some(15_000),
+        },
+        &adapter,
+        &headed(),
+    )
+    .unwrap();
+    assert_eq!(*adapter.budgets.lock().unwrap(), vec![15_000]);
+}
+
+#[test]
+fn excessive_timeout_is_rejected_before_the_lease() {
+    let adapter = adapter();
+    let error = execute(
+        OpenSystemSurfaceArgs {
+            surface: SnapshotSurface::ActionCenter,
+            timeout_ms: Some(u64::MAX),
+        },
+        &adapter,
+        &headed(),
+    )
+    .unwrap_err();
+    assert_eq!(error.code(), "INVALID_ARGS");
+    assert_eq!(*adapter.leases.lock().unwrap(), 0);
 }

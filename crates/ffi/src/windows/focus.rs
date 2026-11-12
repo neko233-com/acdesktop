@@ -28,10 +28,7 @@ pub unsafe extern "C" fn ad_focus_window_exact(
     })
 }
 
-fn focus_core_window(
-    adapter: *const AdAdapter,
-    window: &acdesktop_core::WindowInfo,
-) -> AdResult {
+fn focus_core_window(adapter: *const AdAdapter, window: &acdesktop_core::WindowInfo) -> AdResult {
     let adapter = match crate::adapter::lookup_adapter(adapter) {
         Ok(adapter) => adapter,
         Err(error) => {

@@ -121,10 +121,7 @@ fn a_files_tree_row_expands_and_collapses_in_both_directions() {
     let leaf = find(&session, |view| view.name() == Some("leaf.txt")).expect("expanded leaf");
     let refused = act(&session, &leaf, |target| set_expanded(target, true))
         .expect_err("a file cannot expand");
-    assert_eq!(
-        refused.code,
-        acdesktop_core::ErrorCode::ActionNotSupported
-    );
+    assert_eq!(refused.code, acdesktop_core::ErrorCode::ActionNotSupported);
     oracle((true, true));
     let closed = act(&session, &row, |target| set_expanded(target, false)).expect("collapses");
     assert_eq!(closed.steps[0].verified(), Some(true));

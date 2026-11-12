@@ -6,9 +6,7 @@ use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
 
-use acdesktop_core::{
-    AppError, Deadline, PlatformAdapter, WindowInfo, context::CommandContext,
-};
+use acdesktop_core::{AppError, Deadline, PlatformAdapter, WindowInfo, context::CommandContext};
 use serde_json::{Value, json};
 
 use crate::cli::Commands;

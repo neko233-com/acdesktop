@@ -72,9 +72,7 @@ fn session_start_reports_the_adapter_overlay_result() {
             rendered
         );
         let id = value["session_id"].as_str().unwrap();
-        let manifest = acdesktop_core::session::read_manifest(id)
-            .unwrap()
-            .unwrap();
+        let manifest = acdesktop_core::session::read_manifest(id).unwrap().unwrap();
         assert_eq!(
             serde_json::to_value(manifest.cursor_overlay).unwrap()["enabled"],
             cursor
@@ -118,8 +116,7 @@ fn session_end_without_any_scope_is_invalid() {
 #[test]
 fn scoped_session_end_is_idempotent_without_reopening_commands() {
     let _home = HomeGuard::new();
-    let manifest =
-        acdesktop_core::session::start_session(StartSessionOptions::default()).unwrap();
+    let manifest = acdesktop_core::session::start_session(StartSessionOptions::default()).unwrap();
     let context = CommandContext::new(Some(manifest.id.clone()), None, false).unwrap();
     let end = |context: &CommandContext, id| {
         crate::dispatch::dispatch(
@@ -214,8 +211,7 @@ fn session_end_reports_uncertain_when_overlay_teardown_fails_after_persisting() 
 #[test]
 fn session_gc_ended_reclaims_an_ended_session_that_recorded_trace_events() {
     let home = HomeGuard::new();
-    let manifest =
-        acdesktop_core::session::start_session(StartSessionOptions::default()).unwrap();
+    let manifest = acdesktop_core::session::start_session(StartSessionOptions::default()).unwrap();
     let segment = acdesktop_core::session::trace_dir(&manifest.id)
         .unwrap()
         .join("1-1.jsonl");

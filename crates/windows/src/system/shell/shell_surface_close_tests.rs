@@ -123,3 +123,19 @@ fn an_overflow_the_shell_raised_closes_and_leaves_no_foreground_behind() {
         "a dismissed surface does not keep the desktop's foreground"
     );
 }
+
+#[test]
+fn a_failed_post_delivery_read_does_not_advise_a_safe_retry() {
+    let error = acdesktop_core::AdapterError::timeout("observation timed out")
+        .with_details(serde_json::json!({"kind": "deadline", "retryable": true}));
+    let error = super::after_delivery(error);
+    assert_eq!(
+        error.disposition,
+        acdesktop_core::DeliverySemantics::delivered_unverified()
+    );
+    assert!(!error.is_explicitly_retryable());
+    assert_eq!(
+        error.details.as_ref().and_then(|v| v.get("retryable")),
+        Some(&serde_json::json!(false))
+    );
+}

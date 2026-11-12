@@ -25,7 +25,7 @@ To block until a new notification arrives, use [`wait --notification`](/desktop/
 Lists the notifications on the OS surface.
 
 ```bash
-agent-desktop list-notifications [--app NAME] [--text TEXT] [--limit N]
+acdesktop list-notifications [--app NAME] [--text TEXT] [--limit N]
 ```
 
 <table>
@@ -60,8 +60,8 @@ agent-desktop list-notifications [--app NAME] [--text TEXT] [--limit N]
 Dismisses one notification by index.
 
 ```bash
-agent-desktop --headed dismiss-notification INDEX --expected-app NAME
-agent-desktop --headed dismiss-notification 2 --expected-title "Standup in 10 minutes"
+acdesktop --headed dismiss-notification INDEX --expected-app NAME
+acdesktop --headed dismiss-notification 2 --expected-title "Standup in 10 minutes"
 ```
 
 <table>
@@ -82,7 +82,7 @@ agent-desktop --headed dismiss-notification 2 --expected-title "Standup in 10 mi
 Dismisses every notification, or every one from one app.
 
 ```bash
-agent-desktop --headed dismiss-all-notifications [--app NAME]
+acdesktop --headed dismiss-all-notifications [--app NAME]
 ```
 
 `data.dismissed_count` counts the removed notifications. When some could not be closed, `data.failures` and `data.failed_count` are added.
@@ -92,7 +92,7 @@ agent-desktop --headed dismiss-all-notifications [--app NAME]
 Presses a named action button on a notification.
 
 ```bash
-agent-desktop --headed notification-action INDEX ACTION --expected-app NAME
+acdesktop --headed notification-action INDEX ACTION --expected-app NAME
 ```
 
 `ACTION` is a name from the notification's `actions`. The result is an action report, usually `delivered_unverified`: check the effect in the app. Errors: as for `dismiss-notification`, plus `ACTION_NOT_SUPPORTED` when the notification has no button with that name.

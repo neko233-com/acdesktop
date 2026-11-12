@@ -134,3 +134,14 @@ fn a_shell_host_image_matches_by_stem_and_an_application_does_not() {
     assert!(!is_host_image("notepad.exe", START_HOSTS));
     assert!(!is_host_image("searchhostx.exe", START_HOSTS));
 }
+
+#[test]
+fn action_center_uses_the_matching_shell_accelerator() {
+    for (build, expected) in [(19045, VK_A), (22000, VK_N), (26300, VK_N)] {
+        let row = row_for_build(SnapshotSurface::ActionCenter, build).expect("known kind");
+        assert!(
+            matches!(row.raise, SurfaceRaise::Accelerator { modifiers, key } if modifiers == [VK_LWIN] && key == expected)
+        );
+        assert_eq!(row.dismiss, SurfaceDismiss::Toggle);
+    }
+}

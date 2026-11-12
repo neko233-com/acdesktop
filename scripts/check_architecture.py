@@ -1,4 +1,4 @@
-"""Architecture boundaries for the agent-desktop workspace.
+"""Architecture boundaries for the acdesktop workspace.
 
 Fails when platform code leaks into core, when one platform crate reaches
 another, when a crate's top-level layout drifts, or when a file sits in the
@@ -20,10 +20,10 @@ import sys
 import tempfile
 
 PLATFORMS = ("macos", "windows", "linux")
-PLATFORM_PACKAGES = {f"agent-desktop-{p}" for p in PLATFORMS}
-WIRING_PACKAGES = {"agent-desktop", "agent-desktop-ffi"}
-TOP_PACKAGES = {"agent-desktop", "agent-desktop-ffi"}
-CORE_PACKAGE = "agent-desktop-core"
+PLATFORM_PACKAGES = {f"acdesktop-{p}" for p in PLATFORMS}
+WIRING_PACKAGES = {"acdesktop", "acdesktop-ffi"}
+TOP_PACKAGES = {"acdesktop", "acdesktop-ffi"}
+CORE_PACKAGE = "acdesktop-core"
 CORE_DEPENDENCIES = {"serde", "serde_json", "thiserror", "tracing", "rustc-hash", "base64", "libc", "smallvec"}
 PLATFORM_LAYERS = {"tree", "actions", "input", "system", "notifications"}
 PLATFORM_FILES = {"lib.rs", "adapter.rs"}
@@ -527,8 +527,8 @@ def check(repo):
 CLEAN = {
     "Cargo.toml": '[workspace]\nmembers = ["crates/core", "crates/macos", "crates/windows", "crates/linux", "crates/ffi", "src"]\n'
                   'resolver = "2"\n[workspace.dependencies]\nserde = "1"\nsmallvec = "1"\n'
-                  'agent-desktop-core = { path = "crates/core" }\n',
-    "crates/core/Cargo.toml": '[package]\nname = "agent-desktop-core"\nversion = "0.0.0"\nedition = "2021"\n'
+                  'acdesktop-core = { path = "crates/core" }\n',
+    "crates/core/Cargo.toml": '[package]\nname = "acdesktop-core"\nversion = "0.0.0"\nedition = "2021"\n'
                               '[dependencies]\nserde.workspace = true\nsmallvec.workspace = true\nlibc = "0.2"\n',
     "crates/core/src/lib.rs": "pub mod commands;\npub mod tree;\n",
     "crates/core/src/tree/mod.rs": "pub mod node;\n",
@@ -540,11 +540,11 @@ CLEAN = {
     "crates/core/src/tree/node_tests.rs": "#[test]\nfn t() {}\n",
     "crates/core/src/commands/mod.rs": "pub mod version;\n",
     "crates/core/src/commands/version.rs": "pub fn execute() {}\n",
-    "crates/ffi/Cargo.toml": '[package]\nname = "agent-desktop-ffi"\nversion = "0.0.0"\nedition = "2021"\n'
-                             '[target.\'cfg(target_os = "macos")\'.dependencies]\nagent-desktop-macos = { path = "../macos" }\n',
+    "crates/ffi/Cargo.toml": '[package]\nname = "acdesktop-ffi"\nversion = "0.0.0"\nedition = "2021"\n'
+                             '[target.\'cfg(target_os = "macos")\'.dependencies]\nacdesktop-macos = { path = "../macos" }\n',
     "crates/ffi/src/lib.rs": "\n",
-    "src/Cargo.toml": '[package]\nname = "agent-desktop"\nversion = "0.0.0"\nedition = "2021"\n[[bin]]\nname = "agent-desktop"\npath = "main.rs"\n'
-                      '[target.\'cfg(target_os = "linux")\'.dependencies]\nagent-desktop-linux = { path = "../crates/linux" }\n',
+    "src/Cargo.toml": '[package]\nname = "acdesktop"\nversion = "0.0.0"\nedition = "2021"\n[[bin]]\nname = "acdesktop"\npath = "main.rs"\n'
+                      '[target.\'cfg(target_os = "linux")\'.dependencies]\nacdesktop-linux = { path = "../crates/linux" }\n',
     "src/main.rs": "mod batch;\nmod cli;\nmod cli_args;\nmod command_policy;\nmod diagnostic;\nmod dispatch;\n"
                    "mod visual_debug;\n#[cfg(test)]\n#[path = \"tests/main_tests.rs\"]\nmod main_tests;\nfn main() {}\n",
     "src/tests/main_tests.rs": "\n",
@@ -555,8 +555,8 @@ for _d in sorted(CORE_DOMAINS - {"tree", "commands"}):
     CLEAN["crates/core/src/lib.rs"] += f"mod {_d};\n"
     CLEAN[f"crates/core/src/{_d}/mod.rs"] = "\n"
 for _p in PLATFORMS:
-    CLEAN[f"crates/{_p}/Cargo.toml"] = (f'[package]\nname = "agent-desktop-{_p}"\nversion = "0.0.0"\nedition = "2021"\n'
-                                        "[dependencies]\nagent-desktop-core.workspace = true\n")
+    CLEAN[f"crates/{_p}/Cargo.toml"] = (f'[package]\nname = "acdesktop-{_p}"\nversion = "0.0.0"\nedition = "2021"\n'
+                                        "[dependencies]\nacdesktop-core.workspace = true\n")
     CLEAN[f"crates/{_p}/src/lib.rs"] = "mod actions;\nmod adapter;\nmod input;\nmod notifications;\nmod system;\nmod tree;\n"
     CLEAN[f"crates/{_p}/src/adapter.rs"] = "pub struct A;\nimpl PlatformAdapter for A {}\n"
     for _layer, _trait in (("tree", "ObservationOps"), ("actions", "ActionOps"), ("input", "InputOps"), ("system", "SystemOps")):
@@ -566,9 +566,9 @@ for _p in PLATFORMS:
     CLEAN[f"crates/{_p}/src/notifications/double_tests.rs"] = "struct D;\nimpl SystemOps for D {}\n"
 
 PLANTS = {
-    "G1": [("crates/linux/Cargo.toml", CLEAN["crates/linux/Cargo.toml"] + 'agent-desktop-windows = { path = "../windows" }\n'),
-           ("crates/linux/Cargo.toml", CLEAN["crates/linux/Cargo.toml"] + 'other = { package = "agent-desktop-macos", path = "../macos" }\n'),
-           ("crates/core/Cargo.toml", CLEAN["crates/core/Cargo.toml"] + '[dev-dependencies]\nagent-desktop-macos = { path = "../macos" }\n')],
+    "G1": [("crates/linux/Cargo.toml", CLEAN["crates/linux/Cargo.toml"] + 'acdesktop-windows = { path = "../windows" }\n'),
+           ("crates/linux/Cargo.toml", CLEAN["crates/linux/Cargo.toml"] + 'other = { package = "acdesktop-macos", path = "../macos" }\n'),
+           ("crates/core/Cargo.toml", CLEAN["crates/core/Cargo.toml"] + '[dev-dependencies]\nacdesktop-macos = { path = "../macos" }\n')],
     "G2": [("crates/core/Cargo.toml", CLEAN["crates/core/Cargo.toml"] + '[target.x86_64-unknown-linux-gnu.dependencies]\nserde_json = "1"\n'),
            ("crates/core/Cargo.toml", CLEAN["crates/core/Cargo.toml"] + 'zbus = "5"\n'),
            ("crates/core/Cargo.toml", CLEAN["crates/core/Cargo.toml"] + '"windows-sys" = "0.61"\n'),
@@ -645,7 +645,7 @@ def self_test():
                 full = os.path.join(tmp, path)
                 os.makedirs(os.path.dirname(full), exist_ok=True)
                 with open(full, "w", encoding="utf-8") as fh:
-                    fh.write(text.replace("@ABS@", tmp))
+                    fh.write(text.replace("@ABS@", tmp.replace(os.sep, "/")))
 
         CORE_OS_ALLOWLIST = set()
         LISTENER_ALLOWLIST = set()

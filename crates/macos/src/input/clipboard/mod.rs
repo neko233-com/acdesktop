@@ -51,9 +51,7 @@ mod imp {
         AutoreleasePool, Pasteboard as Id, change_count, ensure_read_access, pasteboard,
     };
     use super::*;
-    use acdesktop_core::{
-        ClipboardContent, ClipboardFormat, Deadline, ImageBuffer, ImageFormat,
-    };
+    use acdesktop_core::{ClipboardContent, ClipboardFormat, Deadline, ImageBuffer, ImageFormat};
     use core_foundation::base::TCFType;
     use std::ffi::c_void;
 

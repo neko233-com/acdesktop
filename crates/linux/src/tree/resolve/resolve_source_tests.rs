@@ -11,10 +11,7 @@ fn a_permanent_display_cause_precedes_bus_resolution() {
             Ok(_) => panic!("no display must refuse resolution"),
             Err(error) => error,
         };
-        assert_eq!(
-            error.code,
-            acdesktop_core::ErrorCode::PlatformNotSupported
-        );
+        assert_eq!(error.code, acdesktop_core::ErrorCode::PlatformNotSupported);
         assert_eq!(
             error.details.expect("cause")["display_unavailable"],
             "not_configured"

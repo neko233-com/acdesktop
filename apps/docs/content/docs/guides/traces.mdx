@@ -1,19 +1,19 @@
 ---
 title: Traces
 navTitle: Traces
-description: Record what agent-desktop did with session traces or --trace, read the timeline with trace show and trace export, and capture visual debug files without leaking private data.
+description: Record what acdesktop did with session traces or --trace, read the timeline with trace show and trace export, and capture visual debug files without leaking private data.
 ---
 
-A trace is an append-only JSONL record of what agent-desktop did: each command, its outcome and duration, and each snapshot it saved. Use one to debug a run or to audit what an agent did. There are two ways to record: a [session](/desktop/sessions), which also lets you read the trace back, and `--trace PATH`, which writes one file.
+A trace is an append-only JSONL record of what acdesktop did: each command, its outcome and duration, and each snapshot it saved. Use one to debug a run or to audit what an agent did. There are two ways to record: a [session](/desktop/sessions), which also lets you read the trace back, and `--trace PATH`, which writes one file.
 
 ## Record a run in a session
 
 A session records a trace by default. `session start` does not activate the session for later commands, so export its id:
 
 ```bash
-export AGENT_DESKTOP_SESSION="$(agent-desktop session start --name trace-demo | jq -er '.data.session_id')"
-agent-desktop snapshot --app gnome-calculator -i --compact
-agent-desktop status                                  # session_id is set and tracing is true
+export ACDESKTOP_SESSION="$(acdesktop session start --name trace-demo | jq -er '.data.session_id')"
+acdesktop snapshot --app gnome-calculator -i --compact
+acdesktop status                                  # session_id is set and tracing is true
 ```
 
 Each process that runs a command writes its own segment under `<state root>/sessions/<id>/trace/`, named `<pid>-<process start>.jsonl`, starting with a `trace.meta` line. `session start --no-trace` creates a session without one. On PowerShell, see [Windows](/desktop/platforms/windows#use-powershell) for the equivalent of `export`.
@@ -23,9 +23,9 @@ Each process that runs a command writes its own segment under `<state root>/sess
 `trace show` merges every segment into one ordered timeline and needs no OS permission:
 
 ```bash
-agent-desktop trace show --limit 20                   # the last 20 events
-agent-desktop trace show --event command.             # only command.start and command.end
-agent-desktop trace show --limit 0 | jq -r '.data.events[] | select(.event == "command.end") | [.command, .ok, .duration_ms] | @tsv'
+acdesktop trace show --limit 20                   # the last 20 events
+acdesktop trace show --event command.             # only command.start and command.end
+acdesktop trace show --limit 0 | jq -r '.data.events[] | select(.event == "command.end") | [.command, .ok, .duration_ms] | @tsv'
 ```
 
 These are three real events from the session above:
@@ -41,7 +41,7 @@ These are three real events from the session above:
 `trace export` writes a self-contained HTML viewer, by default `trace-<session>.html` in the session directory:
 
 ```bash
-agent-desktop trace export --out /tmp/run.html
+acdesktop trace export --out /tmp/run.html
 ```
 
 Both need an active session and read session segments only, not a `--trace PATH` file. Flags and result fields are in the [`trace` reference](/desktop/commands/system#trace).
@@ -70,7 +70,7 @@ Other events and fields can appear; ignore the ones you do not know.
 `--trace PATH` appends events to one file and needs no session:
 
 ```bash
-agent-desktop --trace /tmp/run.jsonl find --app gnome-calculator --role button --name 7 --exact --count
+acdesktop --trace /tmp/run.jsonl find --app gnome-calculator --role button --name 7 --exact --count
 jq -c 'select(.event == "command.end")' /tmp/run.jsonl
 ```
 
@@ -87,8 +87,8 @@ A session's recording budget is 32 MiB, 100,000 events, and 4,096 directory entr
 Visual debug writes one HTML file that pairs a window screenshot with labeled element bounds:
 
 ```bash
-agent-desktop --debug --screenshot /tmp/calc-debug.html snapshot --app gnome-calculator -i
-agent-desktop --debug --screenshot /tmp/click-debug.html click @s8f3k2p9:e12
+acdesktop --debug --screenshot /tmp/calc-debug.html snapshot --app gnome-calculator -i
+acdesktop --debug --screenshot /tmp/click-debug.html click @s8f3k2p9:e12
 ```
 
 - `--debug` requires `--screenshot PATH.html`, a new file ending in `.html`. It is created with owner-only permissions.
@@ -99,7 +99,7 @@ agent-desktop --debug --screenshot /tmp/click-debug.html click @s8f3k2p9:e12
 ## Keep private data private
 
 <Callout title="Traces and debug files contain desktop content">
-  Snapshot trees, window titles, clipboard reads, notifications, screenshots, and command results contain what you asked agent-desktop to inspect. Treat these files as private.
+  Snapshot trees, window titles, clipboard reads, notifications, screenshots, and command results contain what you asked acdesktop to inspect. Treat these files as private.
 </Callout>
 
 - Trace lines replace sensitive fields, such as `text`, `value`, `name`, `title`, `url`, `label`, `description`, and `password`, with `{ "redacted": true }`. Command names, app names, ref and snapshot ids, error codes, and durations stay readable.

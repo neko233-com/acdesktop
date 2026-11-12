@@ -15,9 +15,7 @@ pub(crate) fn window_readback(op: &WindowOp) -> Option<WindowReadback> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use acdesktop_core::{
-        DeliverySemantics, OperationReport, OperationTarget, ProcessIdentity,
-    };
+    use acdesktop_core::{DeliverySemantics, OperationReport, OperationTarget, ProcessIdentity};
 
     fn report(op: &WindowOp) -> OperationReport {
         OperationReport::window_operation(

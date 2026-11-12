@@ -52,7 +52,9 @@ pub(crate) struct Cli {
 impl Cli {
     /// 合并命令行 `--fast` 与配置文件 `fast_mode`
     pub(crate) fn fast_mode(&self) -> bool {
-        if self.fast { return true; }
-        crate::config::UserConfig::load().fast_mode
+        if self.fast {
+            return true;
+        }
+        crate::cli::config::UserConfig::load().fast_mode
     }
 }

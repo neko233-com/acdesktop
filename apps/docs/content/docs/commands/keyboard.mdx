@@ -11,9 +11,9 @@ description: Reference for press, key-down, and key-up. press sends key combos; 
 Sends a key combo to the focused window, or to one app.
 
 ```bash
-agent-desktop press COMBO [--app NAME] [--window-id ID] [--force]
-agent-desktop press ctrl+shift+z
-agent-desktop press return --app gnome-calculator
+acdesktop press COMBO [--app NAME] [--window-id ID] [--force]
+acdesktop press ctrl+shift+z
+acdesktop press return --app gnome-calculator
 ```
 
 <table>
@@ -61,10 +61,10 @@ Platform limits: each platform has its own key names, blocked combos, and scoped
 Reserved name for holding a key down. It never sends input.
 
 ```bash
-agent-desktop key-down COMBO [--force]
+acdesktop key-down COMBO [--force]
 ```
 
-A held key needs a process that can guarantee its release, and every agent-desktop command is a short-lived process. So on every platform, headless or headed, the command parses the combo (`INVALID_ARGS` if bad), applies the blocked-combo check (`POLICY_DENIED` unless `--force`), and then refuses:
+A held key needs a process that can guarantee its release, and every acdesktop command is a short-lived process. So on every platform, headless or headed, the command parses the combo (`INVALID_ARGS` if bad), applies the blocked-combo check (`POLICY_DENIED` unless `--force`), and then refuses:
 
 ```json
 {
@@ -87,5 +87,5 @@ Nothing was sent, and the command fails the same way every time. Send the whole 
 Reserved name for releasing a held key. It follows the same steps as [`key-down`](#key-down) and ends with `ACTION_NOT_SUPPORTED` (`key-up is unavailable in stateless mode`).
 
 ```bash
-agent-desktop key-up COMBO [--force]
+acdesktop key-up COMBO [--force]
 ```

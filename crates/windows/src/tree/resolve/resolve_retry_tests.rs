@@ -78,10 +78,7 @@ fn an_unstamped_unresponsive_error_is_not_retried() {
             "raw",
         ))
     });
-    assert_eq!(
-        err_code(result),
-        acdesktop_core::ErrorCode::AppUnresponsive
-    );
+    assert_eq!(err_code(result), acdesktop_core::ErrorCode::AppUnresponsive);
     assert_eq!(attempts, 1);
 }
 

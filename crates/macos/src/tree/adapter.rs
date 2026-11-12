@@ -9,8 +9,7 @@ impl ObservationOps for MacOSAdapter {
     fn is_application_surface(&self, surface: acdesktop_core::SnapshotSurface) -> bool {
         matches!(
             surface,
-            acdesktop_core::SnapshotSurface::Menu
-                | acdesktop_core::SnapshotSurface::Menubar
+            acdesktop_core::SnapshotSurface::Menu | acdesktop_core::SnapshotSurface::Menubar
         )
     }
 

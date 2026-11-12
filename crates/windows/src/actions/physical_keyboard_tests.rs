@@ -3,9 +3,7 @@ use super::{
 };
 use crate::input::keyboard_send_fake_sink as key_sink;
 use crate::system::fixture::test_time::deadline;
-use acdesktop_core::{
-    ActionStepOutcome, DeliveryDisposition, ErrorCode, KeyCombo, StepMechanism,
-};
+use acdesktop_core::{ActionStepOutcome, DeliveryDisposition, ErrorCode, KeyCombo, StepMechanism};
 
 fn combo() -> KeyCombo {
     KeyCombo {

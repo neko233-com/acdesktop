@@ -258,11 +258,7 @@ fn legacy_pointer_symlink_does_not_activate_a_session() {
     let target = acdesktop_dir().unwrap().join("pointer-target");
     fs::create_dir_all(target.parent().unwrap()).unwrap();
     fs::write(&target, b"whatever").unwrap();
-    std::os::unix::fs::symlink(
-        &target,
-        acdesktop_dir().unwrap().join("current_session"),
-    )
-    .unwrap();
+    std::os::unix::fs::symlink(&target, acdesktop_dir().unwrap().join("current_session")).unwrap();
 
     assert!(resolve_active_session(None, None).unwrap().is_none());
 }

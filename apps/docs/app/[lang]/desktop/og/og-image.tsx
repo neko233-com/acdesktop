@@ -40,7 +40,7 @@ export function renderOgImage(title: string) {
             color: "white",
           }}
         >
-          agent-desktop
+          acdesktop
         </span>
       </div>
       <div

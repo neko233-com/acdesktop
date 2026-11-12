@@ -16,9 +16,8 @@ const SKILL_MACOS_REF_TROUBLESHOOTING: &str =
     include_str!("../../../../skills/acdesktop-macos/references/troubleshooting.md");
 
 const SKILL_WINDOWS_MAIN: &str = include_str!("../../../../skills/acdesktop-windows/SKILL.md");
-const SKILL_WINDOWS_REF_PERMISSIONS: &str = include_str!(
-    "../../../../skills/acdesktop-windows/references/permissions-and-elevation.md"
-);
+const SKILL_WINDOWS_REF_PERMISSIONS: &str =
+    include_str!("../../../../skills/acdesktop-windows/references/permissions-and-elevation.md");
 const SKILL_WINDOWS_REF_CHROMIUM: &str =
     include_str!("../../../../skills/acdesktop-windows/references/chromium-and-electron.md");
 const SKILL_WINDOWS_REF_TROUBLESHOOTING: &str =
@@ -35,13 +34,10 @@ const SKILL_LINUX_REF_WINDOWS: &str =
     include_str!("../../../../skills/acdesktop-linux/references/windows-and-lifecycle.md");
 const SKILL_LINUX_REF_CAPTURE: &str =
     include_str!("../../../../skills/acdesktop-linux/references/capture-and-clipboard.md");
-const SKILL_LINUX_REF_SHELL: &str = include_str!(
-    "../../../../skills/acdesktop-linux/references/shell-tray-and-notifications.md"
-);
+const SKILL_LINUX_REF_SHELL: &str =
+    include_str!("../../../../skills/acdesktop-linux/references/shell-tray-and-notifications.md");
 const SKILL_LINUX_REF_TROUBLESHOOTING: &str =
     include_str!("../../../../skills/acdesktop-linux/references/troubleshooting.md");
-
-const SKILL_JEV_MAIN: &str = include_str!("../../../../skills/jev-desktop/SKILL.md");
 
 const SKILL_FFI_MAIN: &str = include_str!("../../../../skills/acdesktop-ffi/SKILL.md");
 const SKILL_FFI_REF_BUILD: &str =
@@ -208,14 +204,6 @@ const SKILLS: &[Skill] = &[
         platform: None,
         main: SKILL_FFI_MAIN,
         refs: SKILL_FFI_REFS,
-    },
-    Skill {
-        canonical: "jev-desktop",
-        aliases: &["jev", "jev-desktop"],
-        summary: "Driving a desktop app from a plain-language goal without reading the accessibility tree. run.mjs takes a whole goal, act.mjs takes one step.",
-        platform: None,
-        main: SKILL_JEV_MAIN,
-        refs: &[],
     },
 ];
 

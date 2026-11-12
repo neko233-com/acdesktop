@@ -16,9 +16,7 @@ fn under_build_tree(file: &str) -> PathBuf {
 
 #[test]
 fn the_installed_binary_is_recognised_with_and_without_its_extension() {
-    assert!(is_acdesktop_image(&under_build_tree(
-        "acdesktop.exe"
-    )));
+    assert!(is_acdesktop_image(&under_build_tree("acdesktop.exe")));
     assert!(is_acdesktop_image(&under_build_tree("acdesktop")));
     assert!(is_acdesktop_image(Path::new("acdesktop.exe")));
 }
@@ -28,20 +26,14 @@ fn the_installed_binary_is_recognised_with_and_without_its_extension() {
 /// produced.
 #[test]
 fn the_comparison_ignores_case_in_the_stem_and_the_extension() {
-    assert!(is_acdesktop_image(&under_build_tree(
-        "AGENT-DESKTOP.EXE"
-    )));
-    assert!(is_acdesktop_image(&under_build_tree(
-        "Agent-Desktop.Exe"
-    )));
+    assert!(is_acdesktop_image(&under_build_tree("ACDESKTOP.EXE")));
+    assert!(is_acdesktop_image(&under_build_tree("AcDesktop.Exe")));
 }
 
 #[test]
 fn another_binary_is_rejected_even_from_our_own_build_tree() {
     assert!(!is_acdesktop_image(&under_build_tree("notepad.exe")));
-    assert!(!is_acdesktop_image(&under_build_tree(
-        "acdesktop-ffi.exe"
-    )));
+    assert!(!is_acdesktop_image(&under_build_tree("acdesktop-ffi.exe")));
     assert!(!is_acdesktop_image(&under_build_tree("agent.exe")));
 }
 

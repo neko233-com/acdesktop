@@ -25,11 +25,10 @@ fn an_unconfirmed_write_expires_without_becoming_safe_to_retry() {
 #[test]
 fn a_read_failure_is_preserved() {
     let error = wait_for_placement(Deadline::after(1_000).unwrap(), || {
-        Err(AdapterError::new(
-            acdesktop_core::ErrorCode::WindowNotFound,
-            "owner changed",
+        Err(
+            AdapterError::new(acdesktop_core::ErrorCode::WindowNotFound, "owner changed")
+                .with_disposition(DeliverySemantics::delivered_unverified()),
         )
-        .with_disposition(DeliverySemantics::delivered_unverified()))
     })
     .unwrap_err();
     assert_eq!(error.code, acdesktop_core::ErrorCode::WindowNotFound);

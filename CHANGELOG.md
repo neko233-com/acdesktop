@@ -2,13 +2,22 @@
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-12
+
+### Changes
+
+- 通过原生归档分发 CLI 和 C 库，外部 agent 自行选择调用方式。
+- 并行 batch 根据已验证的进程身份安排语义操作，全局输入按原顺序执行。
+- 修复版本检查、安装失败处理及私有状态目录相关测试。
+- 配置和更新缓存复用私有文件保护，拒绝通过链接重定向写入。
+- `open-system-surface` 支持自定义操作期限，并适配 Windows 11 通知中心快捷键。
+
 ### CI
 
 - 全面修复 CI：macOS linker 符号命名对齐（Objective-C bridge 与 Rust extern "C" 声明统一 `acdesktop_` 前缀）
 - Linux 容器 job 统一执行脚本的 execute 权限修复（git clone 不保留 +x 位）
 - FFI header 提交文件名对齐（`agent_desktop.h` → `acdesktop.h`），本地 `cbindgen --verify` 通过
-- 所有 workflow `setup-node` 升级到 Node 26 LTS
-- publish-github job 只依赖 check-release，build/FFI 失败不再阻塞 GitHub Release 产出
+- GitHub Release 等待所有构建和 FFI 校验通过，并核对完整资产及校验和
 
 ## [1.2.0] - 2026-11-05
 

@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    AdapterError, Deadline, SignalBaseline, SignalCompleteness, SignalFilter,
-};
+use acdesktop_core::{AdapterError, Deadline, SignalBaseline, SignalCompleteness, SignalFilter};
 
 use super::signal_filter_apply::apply_signal_filter;
 use super::signal_inventory::{SignalWindowInventory, capture_windows_and_apps};

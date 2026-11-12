@@ -104,10 +104,7 @@ fn menu_ref(context: &MenuContext) -> acdesktop_core::RefEntry {
     entry
 }
 
-fn verdict(
-    entry: &acdesktop_core::RefEntry,
-    live: &acdesktop_core::LiveElement,
-) -> IdentityMatch {
+fn verdict(entry: &acdesktop_core::RefEntry, live: &acdesktop_core::LiveElement) -> IdentityMatch {
     assert_eq!(entry.identity.role, live.state.role);
     let value = live
         .state

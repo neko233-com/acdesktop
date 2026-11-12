@@ -14,15 +14,13 @@ pub(crate) struct BatchArgs {
     pub timeout_ms: u64,
     #[arg(
         long,
-        help = "跨 app 并行执行：observation 命令（snapshot/find/list-*）天然无副作用，\
-                action 命令（click/type/drag）仍按 app 分组串行以保证安全。\
-                可配合 --max-workers 控制并发数。"
+        help = "Run observations concurrently. Semantic ref actions can run across verified process identities; global and headed operations run in order."
     )]
     pub parallel: bool,
     #[arg(
         long,
         default_value_t = default_max_workers(),
-        help = "--parallel 时最多同时跑的 app 分组数。默认 = CPU 核心数，上限 8。"
+        help = "Maximum concurrent groups with --parallel (default: CPU count, capped at 8)"
     )]
     pub max_workers: usize,
 }

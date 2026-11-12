@@ -10,7 +10,7 @@ use gpui::{
     IntoElement, SharedString, Window, WindowBounds, WindowOptions,
 };
 
-use crate::data::{NavItem, Project, sample_projects};
+use crate::data::{sample_projects, NavItem, Project};
 use crate::sidebar::Sidebar;
 use crate::theme::{
     BRAND, BTN_SECONDARY, CONTENT_BG, TEXT_MUTED, TEXT_PRIMARY, TEXT_SECONDARY, WINDOW_BG,
@@ -149,13 +149,11 @@ impl MyGoApp {
     }
 
     fn render_project_list(&self, projects: Vec<&Project>) -> impl IntoElement {
-        div()
-            .flex()
-            .flex_col()
-            .flex_1()
-            .px_8()
-            .pb_8()
-            .children(projects.into_iter().map(|p| self.render_project_card(p.clone())))
+        div().flex().flex_col().flex_1().px_8().pb_8().children(
+            projects
+                .into_iter()
+                .map(|p| self.render_project_card(p.clone())),
+        )
     }
 
     fn render_project_card(&self, p: Project) -> impl IntoElement {
@@ -213,12 +211,7 @@ impl MyGoApp {
                                     .child(p.template.clone()),
                             ),
                     )
-                    .child(
-                        div()
-                            .text_sm()
-                            .text_color(TEXT_MUTED)
-                            .child(p.path.clone()),
-                    ),
+                    .child(div().text_sm().text_color(TEXT_MUTED).child(p.path.clone())),
             )
             .child(
                 div()

@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    AdapterError, DeliverySemantics, ErrorCode, InteractionLease, NativeHandle,
-};
+use acdesktop_core::{AdapterError, DeliverySemantics, ErrorCode, InteractionLease, NativeHandle};
 use serde_json::json;
 
 use super::scroll_bus::BusPort;

@@ -5,9 +5,7 @@ pub(crate) struct ChainContext<'a> {
 }
 
 impl ChainContext<'_> {
-    pub(crate) fn remaining(
-        &self,
-    ) -> Result<std::time::Duration, acdesktop_core::AdapterError> {
+    pub(crate) fn remaining(&self) -> Result<std::time::Duration, acdesktop_core::AdapterError> {
         let remaining = self.deadline.remaining();
         if remaining.is_zero() {
             Err(self.deadline.timeout_error())

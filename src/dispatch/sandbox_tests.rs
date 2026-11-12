@@ -40,8 +40,8 @@ impl acdesktop_core::SystemOps for IdleAdapter {}
 
 #[test]
 fn a_sandbox_exec_refusal_reports_that_nothing_was_delivered() {
-    let cli = crate::Cli::try_parse_from(["acdesktop", "sandbox", "exec", "BAD", "--", "ls"])
-        .unwrap();
+    let cli =
+        crate::Cli::try_parse_from(["acdesktop", "sandbox", "exec", "BAD", "--", "ls"]).unwrap();
     let Some(crate::cli::Commands::Sandbox(args)) = &cli.command else {
         panic!("sandbox command");
     };

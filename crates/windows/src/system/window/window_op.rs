@@ -1,8 +1,6 @@
 #[cfg(target_os = "windows")]
 use crate::system::runtime::hresult::win32_last_error;
-use acdesktop_core::{
-    AdapterError, Deadline, DeliverySemantics, ErrorCode, WindowInfo, WindowOp,
-};
+use acdesktop_core::{AdapterError, Deadline, DeliverySemantics, ErrorCode, WindowInfo, WindowOp};
 
 use super::window_identity::WindowIdentityEvidence;
 use super::window_op_verb::{ShowVerb, verb_is_satisfied};

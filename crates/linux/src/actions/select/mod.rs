@@ -1,8 +1,6 @@
 use std::time::Duration;
 
-use acdesktop_core::{
-    Action, ActionResult, AdapterError, Deadline, DeliverySemantics, ErrorCode,
-};
+use acdesktop_core::{Action, ActionResult, AdapterError, Deadline, DeliverySemantics, ErrorCode};
 use serde_json::json;
 use zbus::zvariant::{OwnedValue, Structure, Value};
 

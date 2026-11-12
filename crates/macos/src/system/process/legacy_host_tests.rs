@@ -29,10 +29,7 @@ fn the_marker_counts_only_as_an_exact_environment_entry() {
         "ACDESKTOP_INTERNAL_COMMAND_HOST=1suffix",
         "OTHER=ACDESKTOP_INTERNAL_COMMAND_HOST=1",
     ] {
-        assert!(!environment_has_marker(&procargs(
-            &["acdesktop"],
-            &[entry]
-        )));
+        assert!(!environment_has_marker(&procargs(&["acdesktop"], &[entry])));
     }
 }
 

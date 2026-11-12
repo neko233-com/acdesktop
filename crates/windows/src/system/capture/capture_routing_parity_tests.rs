@@ -98,13 +98,32 @@ fn screenshot_user_path_bypasses_private_policy_that_refuses_reparse() {
     bootstrap();
     install_windows_private_file();
     let adapter = WindowsAdapter::new();
-    let root =
-        std::env::temp_dir().join(format!("acdesktop-user-bypass-{}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("acdesktop-user-bypass-{}", std::process::id()));
     let elsewhere = root.join("elsewhere");
     let junction = root.join("redirect");
     std::fs::create_dir_all(&elsewhere).expect("elsewhere");
     std::fs::create_dir_all(&root).expect("root");
     create_junction(&junction, &elsewhere);
+    let control = junction.join("junction-create-control.tmp");
+    match std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&control)
+    {
+        Ok(file) => {
+            drop(file);
+            std::fs::remove_file(&control).expect("remove junction control file");
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+            eprintln!(
+                "skip user-path junction test: native create_new is unavailable through this junction: {error}"
+            );
+            std::fs::remove_dir(&junction).expect("remove junction");
+            std::fs::remove_dir_all(&root).expect("remove scratch root");
+            return;
+        }
+        Err(error) => panic!("junction control creation failed: {error}"),
+    }
     let user_path = junction.join("shot.png");
 
     let refused = WindowsPrivateFile::new().write_atomic(&user_path, b"private");

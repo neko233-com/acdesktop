@@ -60,9 +60,7 @@ fn exec_passthrough(
     adapter: &dyn PlatformAdapter,
 ) -> Result<ExecPassthrough, AppError> {
     reject_outer_options(cli)
-        .and_then(|()| {
-            acdesktop_core::validate_state_root_env().map_err(crate::pre_dispatch_error)
-        })
+        .and_then(|()| acdesktop_core::validate_state_root_env().map_err(crate::pre_dispatch_error))
         .and_then(|()| sandbox::execute_exec(args.name.clone(), args.args.clone(), adapter))
         .map_err(|error| {
             let before_the_provider_ran = !matches!(error, AppError::Adapter(_));

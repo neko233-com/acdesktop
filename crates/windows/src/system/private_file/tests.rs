@@ -30,6 +30,7 @@ impl Scratch {
 
     pub(super) fn adopt(root: PathBuf) -> Self {
         std::fs::create_dir_all(&root).expect("scratch root must be creatable");
+        protect_test_directory(&root);
         Self { root }
     }
 
@@ -69,4 +70,18 @@ pub(crate) fn create_junction(link: &Path, target: &Path) {
         created.file_type().is_symlink(),
         "the planted link must surface as a reparse point"
     );
+}
+
+pub(crate) fn protect_test_directory(path: &Path) {
+    use std::os::windows::fs::OpenOptionsExt;
+    use windows_sys::Win32::Storage::FileSystem::{
+        FILE_FLAG_BACKUP_SEMANTICS, READ_CONTROL, WRITE_DAC,
+    };
+
+    let directory = std::fs::OpenOptions::new()
+        .access_mode(READ_CONTROL | WRITE_DAC)
+        .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
+        .open(path)
+        .expect("open test directory for ACL setup");
+    super::dacl::protect_directory(&directory).expect("protect test directory");
 }

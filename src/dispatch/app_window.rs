@@ -87,6 +87,7 @@ pub(super) fn open_system_surface(
     open_system_surface_command::execute(
         open_system_surface_command::OpenSystemSurfaceArgs {
             surface: args.surface.to_core(),
+            timeout_ms: args.timeout_ms,
         },
         adapter,
         context,

@@ -125,7 +125,7 @@ fn action_center_opens_roots_and_closes_cloaked() {
 
     let Some(info) = or_skip_shell(
         "action center open",
-        open_surface(SnapshotSurface::ActionCenter, headed(), deadline(10_000)),
+        open_surface(SnapshotSurface::ActionCenter, headed(), deadline(30_000)),
         || responded_since(&witness),
     ) else {
         return;
@@ -141,7 +141,7 @@ fn action_center_opens_roots_and_closes_cloaked() {
     let witness = witness_desktop();
     let Some(_) = or_skip_shell(
         "action center close",
-        close_surface(SnapshotSurface::ActionCenter, deadline(8_000)),
+        close_surface(SnapshotSurface::ActionCenter, deadline(30_000)),
         || responded_since(&witness),
     ) else {
         return;

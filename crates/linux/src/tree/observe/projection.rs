@@ -31,9 +31,7 @@ fn bounds_of(extents: &Field<Extents>) -> LocatorField<Rect> {
 
 fn window_bounds(read: &ObservedRead) -> LocatorField<Rect> {
     match read.evidence_bounds {
-        Some((extents, acdesktop_core::BoundsSpace::Window)) => {
-            bounds_of(&Field::Present(extents))
-        }
+        Some((extents, acdesktop_core::BoundsSpace::Window)) => bounds_of(&Field::Present(extents)),
         _ if read.node.extents.is_failed() => LocatorField::Unknown,
         _ => LocatorField::Absent,
     }

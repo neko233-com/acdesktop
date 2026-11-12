@@ -112,11 +112,8 @@ pub unsafe extern "C" fn ad_snapshot(
 
         let scope = crate::commands::command_scope!(context, "snapshot");
 
-        let result = acdesktop_core::commands::snapshot::execute(
-            args,
-            adapter_ref.inner.as_ref(),
-            &context,
-        );
+        let result =
+            acdesktop_core::commands::snapshot::execute(args, adapter_ref.inner.as_ref(), &context);
         crate::commands::complete_scope!(scope, &result);
 
         unsafe { write_command_envelope("snapshot", result, out) }

@@ -29,6 +29,7 @@ const SYS_PAGER_CLASS: &str = "SysPager";
 const OVERFLOW_WINDOW_CLASS: &str = "NotifyIconOverflowWindow";
 
 pub(crate) const VK_A: u16 = 0x41;
+pub(crate) const VK_N: u16 = 0x4E;
 pub(crate) const VK_LWIN: u16 = 0x5B;
 pub(crate) const VK_ESCAPE: u16 = 0x1B;
 
@@ -227,7 +228,30 @@ const KINDS: &[SurfaceKindRow] = &[
     },
 ];
 
+const WINDOWS_11_ACTION_CENTER: SurfaceKindRow = SurfaceKindRow {
+    kind: SnapshotSurface::ActionCenter,
+    family: SurfaceFamily::Immersive {
+        expected_class: CORE_WINDOW_CLASS,
+        host_images: ACTION_CENTER_HOSTS,
+        landmarks: ACTION_CENTER_LANDMARKS,
+    },
+    raise: SurfaceRaise::Accelerator {
+        modifiers: &[VK_LWIN],
+        key: VK_N,
+    },
+    dismiss: SurfaceDismiss::Toggle,
+    exists_on_build: true,
+    capability_holder: None,
+};
+
 pub(crate) fn row_for(kind: SnapshotSurface) -> Option<&'static SurfaceKindRow> {
+    row_for_build(kind, super::shell_surface::build_number())
+}
+
+fn row_for_build(kind: SnapshotSurface, build: u32) -> Option<&'static SurfaceKindRow> {
+    if kind == SnapshotSurface::ActionCenter && build >= 22000 {
+        return Some(&WINDOWS_11_ACTION_CENTER);
+    }
     KINDS.iter().find(|row| row.kind == kind)
 }
 

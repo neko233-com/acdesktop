@@ -18,7 +18,6 @@ on:
     paths:
       - '.github/workflows/release.yml'
       - '.github/workflows/release-dry-run.yml'
-      - 'npm/**'
       - 'crates/ffi/Cargo.toml'
       - 'crates/ffi/src/**'
       - 'crates/ffi/include/**'
@@ -351,9 +350,7 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            npm_key: linux-x64
           - target: aarch64-unknown-linux-gnu
-            npm_key: linux-arm64
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -366,12 +363,11 @@ jobs:
           merge-multiple: true
           path: archives
 
-      - name: Check the helper is in all three channels
+      - name: Check the helper is in both archives
         run: |
           scripts/check-linux-archive-contents.sh all \
             archives/acdesktop-v*-${{ matrix.target }}.tar.gz \
-            archives/acdesktop-ffi-v*-${{ matrix.target }}.tar.gz \
-            ${{ matrix.npm_key }}
+            archives/acdesktop-ffi-v*-${{ matrix.target }}.tar.gz
 
   linux-consumer:
     defaults:
@@ -396,10 +392,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '26'
 
       - name: Download this architecture's CLI and FFI archives
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -448,7 +440,7 @@ jobs:
           ACDESKTOP_WM_ROOT=/ scripts/private-session.sh --wm -- \
             tests/linux-dist/run-consumer.sh "$(ls -d extracted/acdesktop-ffi-v/acdesktop-ffi-v*)"
 
-      - name: Packed npm install from the extracted CLI archive
+      - name: Run the extracted CLI
         run: |
-          ACDESKTOP_WM_ROOT=/ scripts/private-session.sh --wm -- \
-            tests/linux-dist/run-npm-install.sh "archives"
+          extracted/acdesktop-v/acdesktop version > "$RUNNER_TEMP/version.json"
+          python3 -c 'import json,sys; value=json.load(open(sys.argv[1])); assert value["ok"] and value["command"] == "version"' "$RUNNER_TEMP/version.json"

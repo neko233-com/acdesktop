@@ -124,9 +124,7 @@ fn button_role_with_toggle_state_but_no_pressed_bit_emits_no_pressed() {
 /// `is_toggleable_role` confirms it is gated in before the assertion runs.
 #[test]
 fn toggle_state_on_a_switch_role_emits_checked_and_indeterminate() {
-    assert!(acdesktop_core::tree::roles::is_toggleable_role(
-        "switch"
-    ));
+    assert!(acdesktop_core::tree::roles::is_toggleable_role("switch"));
 
     let checked = resolved(
         vec![

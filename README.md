@@ -4,13 +4,13 @@
 
 Agent Control Desktop (acdesktop) lets an AI agent see and operate desktop apps on macOS and Windows — without screenshots, pixel matching, or coordinate guessing. It reads the native accessibility tree, returns it as JSON with a stable ref for every actionable element, and lets the agent act on refs to click, type, drag, scroll, or read values. The observation–action loop lives in your agent; acdesktop ships no model.
 
-It compiles to a single static CLI and a C shared library. Zero runtime dependencies, zero network calls at runtime.
+It ships as a native CLI and a C shared library. The optional update check contacts GitHub; disable it with `ACDESKTOP_NO_AUTO_UPDATE=1`.
 
 ---
 
 ## Install （macOS arm64 / Windows arm64）
 
-**一键脚本 —— 最快、最轻量，零 Node 依赖：**
+**一键脚本 —— 最快、最轻量，原生安装：**
 
 ```bash
 # macOS arm64
@@ -26,7 +26,7 @@ irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install
 1. 从 GitHub Release 下载对应平台的原生二进制
 2. 用 `checksums.txt` 校验 SHA256
 3. 原子替换到 `~/.local/bin`（macOS）或 `$HOME\.local\bin`（Windows）
-4. 自动写入用户 PATH，刷新当前会话
+4. Windows 自动更新用户 PATH；macOS 提示如何加入 PATH
 
 其他方式：
 
@@ -71,6 +71,8 @@ acdesktop snapshot --app Finder -i
 
 ---
 
+The CLI exposes 63 command names, 59 operational commands on macOS. The C ABI major is 7.
+
 ## 命令总览
 
 ### 观察 (observation)
@@ -111,30 +113,9 @@ acdesktop snapshot --app Finder -i
 
 ## 同时操作多个
 
-用 `batch --parallel` 跨 app 并行执行 —— 相当于同时操控多个。
+用 `batch --parallel` 并行读取多个应用。带有可验证进程身份的无头语义 ref 操作可跨进程并行，同一进程的操作保持顺序。无法确定身份、全局输入和 headed 操作按原顺序作为屏障执行。读取和写入之间也会等待前一组完成。
 
-```bash
-# 并行抓取多个 app 的 UI 树（全 observation，天然零副作用）
-acdesktop batch --parallel '[
-  {"command":"snapshot","args":{"app":"Finder","compact":true}},
-  {"command":"snapshot","args":{"app":"Chrome","compact":true}},
-  {"command":"snapshot","args":{"app":"微信","compact":true}},
-  {"command":"list-windows","args":{"app":"Finder"}}
-]'
-# 3 个 snapshot + list-windows 并行完成，耗时 ≈ 单次 snapshot
-```
-
-**安全分桶策略 —— 不牺牲正确性：**
-
-| 命令类 | 跨 app | 同 app | 原因 |
-|---|---|---|---|
-| Observation（snapshot / find / list-*） | ✅ 并行 | ✅ 并行 | 纯读，零副作用 |
-| Action（click / type / drag / launch） | ✅ 并行 | ❌ 严格串行 | 跨进程 UI 树互不干扰，但同 app 内焦点/状态/文本输入会竞态 |
-| Global（press / key-down / mouse-* / clipboard-*） | ❌ 等所有桶跑完才执行 | ❌ 串行 | 只有一个键盘、一个鼠标、一个剪贴板 |
-
-**不能在 `--parallel` 里用的命令**（直接 INVALID_ARGS）：`wait` / `cursor-overlay` / `sandbox` / `batch`（嵌套）/ `session gc/end` / `trace` —— 它们依赖之前 action 的结果或涉及全局状态。
-
-并发数由 `--max-workers` 控制（默认 = CPU 核心数，上限 8）。没有引入任何新依赖，全用 `std::thread::scope`。
+`--max-workers` 限制并发分组数；默认取 CPU 核心数，最多 8。`--stop-on-error` 使用顺序执行，以确保失败后不启动后续操作。
 
 ---
 
@@ -219,7 +200,7 @@ ACDESKTOP_NO_AUTO_UPDATE=1 acdesktop status
 
 | 指标 | macOS arm64 | Windows arm64 |
 |---|---|---|
-| 冷启动（原生二进制，无 Node） | ~12 ms | ~15 ms |
+| 冷启动（原生二进制） | ~12 ms | ~15 ms |
 | `snapshot --app Finder -i` | ~40 ms | ~55 ms |
 | `click` 单次行动 | ~8 ms | ~12 ms |
 | 二进制体积 | < 12 MB | < 11 MB |

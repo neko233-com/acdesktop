@@ -220,3 +220,18 @@ fn temporary_file_name_has_the_hidden_hex_nonce_shape_and_varies_between_calls()
         "two successive calls must produce different nonces"
     );
 }
+
+#[test]
+fn public_private_state_helpers_use_the_installed_operations() {
+    let path = untouched_path("public-private-state");
+    let recorder = RecordingOps::new();
+    with_test_ops_override(recorder.clone(), || {
+        write_private_atomic(&path, b"configuration").unwrap();
+        assert_eq!(read_private_bounded(&path, 32).unwrap(), b"routed");
+    });
+    assert_eq!(
+        recorder.calls(),
+        vec!["write_atomic", "read_private_bounded"]
+    );
+    assert!(!path.exists());
+}

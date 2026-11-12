@@ -1,11 +1,11 @@
 ---
 name: acdesktop-ffi
-tags: ffi, c-bindings, cdylib, python, swift, node, go, rust-ffi
+tags: ffi, c-bindings, cdylib, python, swift, go, rust-ffi
 requirements:
   - acdesktop-ffi
 description: >
   C-ABI bindings over acdesktop's PlatformAdapter. Consumers
-  (Python ctypes, Swift, Node ffi-napi, Go cgo, C++, Ruby fiddle)
+  (Python ctypes, Swift, Go cgo, C++, Ruby fiddle)
   link libacdesktop_ffi.{dylib,so,dll} and call `ad_*` functions
   directly instead of spawning the CLI binary per call. The canonical
   observe-act workflow is: ad_init → ad_adapter_create[_with_session]

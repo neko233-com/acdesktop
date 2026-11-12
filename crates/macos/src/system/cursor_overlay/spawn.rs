@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    AdapterError, CURSOR_ARRIVAL_TIMEOUT_MS, CursorOverlayControl, ErrorCode,
-};
+use acdesktop_core::{AdapterError, CURSOR_ARRIVAL_TIMEOUT_MS, CursorOverlayControl, ErrorCode};
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
 use std::os::unix::process::CommandExt;
@@ -68,10 +66,7 @@ fn broadcast(control: &CursorOverlayControl) -> Result<(), AdapterError> {
     first_error.map_or(Ok(()), Err)
 }
 
-fn startup_lock(
-    path: &Path,
-    deadline: Instant,
-) -> Result<acdesktop_core::FileLock, AdapterError> {
+fn startup_lock(path: &Path, deadline: Instant) -> Result<acdesktop_core::FileLock, AdapterError> {
     acdesktop_core::FileLock::acquire(
         path,
         acdesktop_core::Deadline::detached_after(

@@ -13,10 +13,10 @@ A session is a directory under the state root that owns a set of snapshot refmap
 ## Start, list, end, and clean up
 
 ```bash
-agent-desktop session start --name docs-example   # create the session and print its id
-agent-desktop session list                        # manifests, oldest first
-agent-desktop session end <session-id>            # seal the manifest
-agent-desktop session gc --ended                  # delete ended sessions nothing is using
+acdesktop session start --name docs-example   # create the session and print its id
+acdesktop session list                        # manifests, oldest first
+acdesktop session end <session-id>            # seal the manifest
+acdesktop session gc --ended                  # delete ended sessions nothing is using
 ```
 
 `session start` returns the id and the line that activates it:
@@ -28,13 +28,13 @@ agent-desktop session gc --ended                  # delete ended sessions nothin
   "command": "session",
   "data": {
     "activation": {
-      "environment": "AGENT_DESKTOP_SESSION",
+      "environment": "ACDESKTOP_SESSION",
       "value": "run-1793352720537-17009-0"
     },
     "artifacts": "events",
     "created_at": 1793352720537,
     "name": "docs-example",
-    "next": "export AGENT_DESKTOP_SESSION=run-1793352720537-17009-0",
+    "next": "export ACDESKTOP_SESSION=run-1793352720537-17009-0",
     "session_id": "run-1793352720537-17009-0",
     "trace": "on"
   }
@@ -53,7 +53,7 @@ Ending a session seals the manifest and stops its trace. After that, every other
   "error": {
     "code": "INVALID_ARGS",
     "message": "Session 'run-1793352720537-17009-0' has ended",
-    "suggestion": "Unset AGENT_DESKTOP_SESSION and omit --session, then run the command or start a new session",
+    "suggestion": "Unset ACDESKTOP_SESSION and omit --session, then run the command or start a new session",
     "details": { "kind": "session_ended", "session_id": "run-1793352720537-17009-0" },
     "disposition": { "delivery": "not_delivered", "retry": "safe" }
   }
@@ -72,7 +72,7 @@ A command picks its session in this order:
   </thead>
   <tbody>
     <tr><td>1</td><td><code>--session &lt;id&gt;</code></td><td>Wins over the environment variable.</td></tr>
-    <tr><td>2</td><td><code>AGENT_DESKTOP_SESSION</code></td><td>An empty value is <code>INVALID_ARGS</code>.</td></tr>
+    <tr><td>2</td><td><code>ACDESKTOP_SESSION</code></td><td>An empty value is <code>INVALID_ARGS</code>.</td></tr>
     <tr><td>3</td><td>none</td><td>The global namespace, stored directly in the state root.</td></tr>
   </tbody>
 </table>
@@ -82,12 +82,12 @@ An id that is not 1 to 64 letters, digits, `-` or `_` fails with `INVALID_ARGS`.
 `session start` does not activate the session for later commands. Each command is its own process, so pass the id to every one, or export it once in your shell:
 
 ```bash
-export AGENT_DESKTOP_SESSION=$(agent-desktop session start --name docs-example | jq -r '.data.session_id')
-agent-desktop snapshot --app gnome-calculator -i   # runs inside the session
-agent-desktop session end "$AGENT_DESKTOP_SESSION"
+export ACDESKTOP_SESSION=$(acdesktop session start --name docs-example | jq -r '.data.session_id')
+acdesktop snapshot --app gnome-calculator -i   # runs inside the session
+acdesktop session end "$ACDESKTOP_SESSION"
 ```
 
-`session end` with no id ends the session selected by `--session` or `AGENT_DESKTOP_SESSION`. On Windows, `data.next` prints the PowerShell form (`$env:AGENT_DESKTOP_SESSION = '...'`); see [Windows](/desktop/platforms/windows) for quoting rules.
+`session end` with no id ends the session selected by `--session` or `ACDESKTOP_SESSION`. On Windows, `data.next` prints the PowerShell form (`$env:ACDESKTOP_SESSION = '...'`); see [Windows](/desktop/platforms/windows) for quoting rules.
 
 ## Snapshot namespaces
 
@@ -97,7 +97,7 @@ Several agents may share one session id. Each should act on refs from its own sn
 
 ## Agent identity
 
-`--agent-id <id>` (or `AGENT_DESKTOP_AGENT_ID`) names the harness subagent that is running a command. The flag wins over the variable. An id is 1 to 64 letters, digits, `-` or `_`, and an invalid id fails with `INVALID_ARGS`. It is scoped by session.
+`--agent-id <id>` (or `ACDESKTOP_AGENT_ID`) names the harness subagent that is running a command. The flag wins over the variable. An id is 1 to 64 letters, digits, `-` or `_`, and an invalid id fails with `INVALID_ARGS`. It is scoped by session.
 
 The identity matters in one mode: a session started with `session start --cursor --multi-agent`. There, desktop actions such as `click` and `type` require an agent id and fail with `INVALID_ARGS` without one. Observation, clipboard and session commands do not. Each distinct id gets its own cursor, and a reused id reuses its cursor. A headless action moves its cursor before it takes the interaction lease, so several agents' cursors travel at the same time while their actions take turns. Commands that draw the same cursor take turns from its travel to its click effect, so a shared cursor never clicks while showing another command's target. Snapshots stay shared by session.
 

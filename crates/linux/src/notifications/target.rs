@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    AdapterError, Deadline, DeliverySemantics, ErrorCode, NotificationIdentity,
-};
+use acdesktop_core::{AdapterError, Deadline, DeliverySemantics, ErrorCode, NotificationIdentity};
 
 use super::extract::Entry;
 use super::list::{matches_app, read_listing};
