@@ -97,7 +97,7 @@ static BOOL isStringDictionary(id value) {
     return YES;
 }
 
-bool agent_desktop_open_application(
+bool acdesktop_open_application(
     const uint8_t *requestBytes,
     size_t requestLength,
     void *context,
@@ -204,7 +204,7 @@ bool agent_desktop_open_application(
     return true;
 }
 
-uint8_t agent_desktop_running_application_is_live(void *application, int32_t expectedPID) {
+uint8_t acdesktop_running_application_is_live(void *application, int32_t expectedPID) {
     @try {
         NSRunningApplication *app = (__bridge NSRunningApplication *)application;
         return app != nil && !app.isTerminated && app.processIdentifier == expectedPID;

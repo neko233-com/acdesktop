@@ -7,7 +7,7 @@ typedef struct {
     double height;
 } AgentDesktopScreenRect;
 
-bool agent_desktop_visible_frame(uint32_t displayID, AgentDesktopScreenRect *output) {
+bool acdesktop_visible_frame(uint32_t displayID, AgentDesktopScreenRect *output) {
     if (output == NULL) {
         return false;
     }

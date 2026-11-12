@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version: '26'
       - name: Install docs dependencies
         working-directory: apps/docs
         run: npx --yes pnpm@11.1.3 install --frozen-lockfile
@@ -91,7 +91,7 @@ jobs:
           rustup component add clippy
 
       - name: Verify macOS Bash 3.2 compatibility
-        run: /bin/bash scripts/check-bash3-compat.sh
+        run: chmod +x scripts/*.sh && /bin/bash scripts/check-bash3-compat.sh
 
       - name: Cache cargo registry
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -122,22 +122,22 @@ jobs:
           echo "OK: core crate has no platform dependencies"
 
       - name: Enforce Rust source rules
-        run: scripts/check-rust-file-size.sh
+        run: chmod +x scripts/*.sh && scripts/check-rust-file-size.sh
 
       - name: Enforce architecture boundaries
-        run: scripts/check-architecture.sh
+        run: chmod +x scripts/*.sh && scripts/check-architecture.sh
 
       - name: Enforce no delivery-plan references in source
-        run: scripts/check-no-phase-references.sh
+        run: chmod +x scripts/*.sh && scripts/check-no-phase-references.sh
 
       - name: Enforce the stale_ref constructors take only ref ids
-        run: scripts/check-stale-ref-constructor-misuse.sh
+        run: chmod +x scripts/*.sh && scripts/check-stale-ref-constructor-misuse.sh
 
       - name: Clippy
         run: cargo clippy --locked -p acdesktop-core -p acdesktop-macos -p acdesktop -p acdesktop-ffi --all-targets -- -D warnings
 
       - name: Core and macOS unit tests
-        run: scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-core -p acdesktop-macos --lib
+        run: chmod +x scripts/*.sh && scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-core -p acdesktop-macos --lib
 
       - name: Native cursor trail lifecycle
         run: |
@@ -174,20 +174,20 @@ jobs:
           PY
 
       - name: Locator benchmark adapter contract
-        run: scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-core --example locator_benchmark
+        run: chmod +x scripts/*.sh && scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-core --example locator_benchmark
 
       - name: Deterministic permission acceptance contract
         run: bash tests/e2e/permission-contract.sh
 
       - name: Binary command tests
-        run: scripts/cargo-test-isolated-home.sh test --locked -p acdesktop
+        run: chmod +x scripts/*.sh && scripts/cargo-test-isolated-home.sh test --locked -p acdesktop
 
       # The FFI crate ships integration harnesses under crates/ffi/tests/ that
       # exercise the C-ABI from outside the crate (raw extern "C" decls, enum
       # fuzzing, out-param zeroing, last-error lifetimes). The workspace --lib
       # run skips them, so wire them in explicitly so regressions fail PR CI.
       - name: FFI integration tests
-        run: scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-ffi --tests
+        run: chmod +x scripts/*.sh && scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-ffi --tests
 
       - name: Build stripped release binary
         run: |
@@ -227,7 +227,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version: '26'
 
       - name: jev-desktop tests
         run: |
@@ -242,7 +242,7 @@ jobs:
           node scripts/check-npm-package.js
 
       - name: NPM wrapper smoke
-        run: scripts/ci-npm-wrapper-smoke.sh
+        run: chmod +x scripts/*.sh && scripts/ci-npm-wrapper-smoke.sh
 
   test-linux:
     name: Test (Linux)
@@ -316,11 +316,11 @@ jobs:
         run: cargo build --locked --release -p acdesktop-linux --bins
 
       - name: glibc floor gate self-test
-        run: scripts/check-elf-glibc-floor-selftest.sh
+        run: chmod +x scripts/*.sh && scripts/check-elf-glibc-floor-selftest.sh
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '24'
+          node-version: '26'
 
       - name: NPM package contents
         run: |
@@ -331,7 +331,7 @@ jobs:
         run: node --test src/visual_debug/viewer_filter.test.js
 
       - name: NPM wrapper smoke
-        run: scripts/ci-npm-wrapper-smoke.sh
+        run: chmod +x scripts/*.sh && scripts/ci-npm-wrapper-smoke.sh
 
       - name: Status reports accessibility granted on a live bus
         run: |
@@ -831,4 +831,4 @@ jobs:
 
       - name: Prove the shipped cdylib catches an exported-boundary panic
         shell: bash
-        run: bash crates/ffi/tests/run_cdylib_panic_probe.sh ${{ matrix.target }}
+        run: chmod +x scripts/*.sh crates/ffi/tests/*.sh && bash crates/ffi/tests/run_cdylib_panic_probe.sh ${{ matrix.target }}

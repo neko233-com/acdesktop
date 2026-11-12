@@ -31,7 +31,6 @@ irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install
 其他方式：
 
 ```bash
-npm install -g acdesktop          # Node 包装器每次调用多 ~125 ms
 brew install acdesktop            # macOS / Linux
 # 或手动下载 release archive: https://github.com/neko233-com/acdesktop/releases
 ```

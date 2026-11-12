@@ -673,7 +673,7 @@ static NSColor *ADGuideGray(CGFloat white) {
 }
 @end
 
-int agent_desktop_permission_guide_run(uint8_t steps, const char *host_path, ADGuideGranted granted) {
+int acdesktop_permission_guide_run(uint8_t steps, const char *host_path, ADGuideGranted granted) {
     @autoreleasepool {
         NSString *host = host_path == NULL ? nil : [NSString stringWithUTF8String:host_path];
         if (steps == 0 || host.length == 0 || granted == NULL) {

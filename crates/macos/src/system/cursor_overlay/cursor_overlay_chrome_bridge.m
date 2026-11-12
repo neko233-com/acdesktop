@@ -64,7 +64,7 @@ const AgentDesktopCursorStyle *ADStyle(void) {
     return &ADCurrentStyle;
 }
 
-void agent_desktop_cursor_overlay_style(const AgentDesktopCursorStyle *style) {
+void acdesktop_cursor_overlay_style(const AgentDesktopCursorStyle *style) {
     if (style != NULL) {
         ADCurrentStyle = *style;
     }

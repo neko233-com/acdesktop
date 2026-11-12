@@ -23,4 +23,4 @@ jobs:
       - name: Install pinned Rust toolchain
         run: rustup show
       - name: Build and run the exclusive native suite
-        run: scripts/run-native-e2e-ci.sh
+        run: chmod +x scripts/*.sh && scripts/run-native-e2e-ci.sh

@@ -215,7 +215,7 @@ static void ADLayoutBubble(NSSize pill) {
                                     line);
 }
 
-double agent_desktop_cursor_overlay_label_width(const char *label) {
+double acdesktop_cursor_overlay_label_width(const char *label) {
     if (label == NULL) {
         return 0.0;
     }
@@ -228,14 +228,14 @@ double agent_desktop_cursor_overlay_label_width(const char *label) {
     }
 }
 
-void agent_desktop_cursor_overlay_idle(void) {
+void acdesktop_cursor_overlay_idle(void) {
     @autoreleasepool {
         ADDragPoll();
         ADPump(NSApplication.sharedApplication);
     }
 }
 
-void agent_desktop_cursor_overlay_stop(void) {
+void acdesktop_cursor_overlay_stop(void) {
     ADDragCancel();
     [ADCursorWindow orderOut:nil];
     [ADBubbleWindow orderOut:nil];
@@ -251,7 +251,7 @@ void agent_desktop_cursor_overlay_stop(void) {
     ADBubblePill = nil;
 }
 
-void agent_desktop_cursor_overlay_caret(double x, double y, double width, double height) {
+void acdesktop_cursor_overlay_caret(double x, double y, double width, double height) {
     if (ADCursorWindow == nil) {
         return;
     }
@@ -262,17 +262,17 @@ void agent_desktop_cursor_overlay_caret(double x, double y, double width, double
     }
 }
 
-void agent_desktop_cursor_overlay_caret_clear(void) {
+void acdesktop_cursor_overlay_caret_clear(void) {
     ADCaretStop();
 }
 
-void agent_desktop_cursor_overlay_caret_follow(bool present, double x, double y, double width,
+void acdesktop_cursor_overlay_caret_follow(bool present, double x, double y, double width,
                                                double height) {
     if (!ADCaretShowing()) {
         return;
     }
     if (present) {
-        agent_desktop_cursor_overlay_caret(x, y, width, height);
+        acdesktop_cursor_overlay_caret(x, y, width, height);
         return;
     }
     @autoreleasepool {
@@ -281,7 +281,7 @@ void agent_desktop_cursor_overlay_caret_follow(bool present, double x, double y,
     }
 }
 
-void agent_desktop_cursor_overlay_rest(void) {
+void acdesktop_cursor_overlay_rest(void) {
     @autoreleasepool {
         NSApplication *app = NSApplication.sharedApplication;
         for (double step = 1.0; step > 0.0; step -= 0.08) {
@@ -299,7 +299,7 @@ void agent_desktop_cursor_overlay_rest(void) {
     }
 }
 
-void agent_desktop_cursor_overlay_hide(void) {
+void acdesktop_cursor_overlay_hide(void) {
     ADDragCancel();
     ADCaretStop();
     [ADCursorWindow orderOut:nil];
@@ -309,7 +309,7 @@ void agent_desktop_cursor_overlay_hide(void) {
     ADTrailStop();
 }
 
-void agent_desktop_cursor_overlay_drag_begin(double fromX, double fromY, bool trail) {
+void acdesktop_cursor_overlay_drag_begin(double fromX, double fromY, bool trail) {
     @try {
         @autoreleasepool {
             (void)fromX;
@@ -327,7 +327,7 @@ void agent_desktop_cursor_overlay_drag_begin(double fromX, double fromY, bool tr
     }
 }
 
-void agent_desktop_cursor_overlay_drag_end(double toX, double toY, bool completed) {
+void acdesktop_cursor_overlay_drag_end(double toX, double toY, bool completed) {
     @try {
         @autoreleasepool {
             if (!ADDragArmed) {
@@ -355,11 +355,11 @@ void agent_desktop_cursor_overlay_drag_end(double toX, double toY, bool complete
     }
 }
 
-bool agent_desktop_cursor_overlay_drag_active(void) {
+bool acdesktop_cursor_overlay_drag_active(void) {
     return ADDragArmed;
 }
 
-void agent_desktop_cursor_overlay_show(void) {
+void acdesktop_cursor_overlay_show(void) {
     [ADCursorWindow orderFrontRegardless];
     if (ADBubbleText.stringValue.length > 0) {
         [ADBubbleWindow orderFrontRegardless];
@@ -375,7 +375,7 @@ static void ADHighlightTarget(const AgentDesktopCursorRenderConfig *config, doub
                     config->highlightSeconds);
 }
 
-bool agent_desktop_cursor_overlay_run(const AgentDesktopCursorFrame *frames,
+bool acdesktop_cursor_overlay_run(const AgentDesktopCursorFrame *frames,
                                       size_t frameCount,
                                       const AgentDesktopCursorRenderConfig *config) {
     if (frames == NULL || frameCount == 0 || config == NULL || config->frameSeconds <= 0.0) {

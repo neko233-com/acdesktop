@@ -28,7 +28,7 @@ typedef struct {
 
 // Reports whether a running application has finished starting up.
 // -1 no such process, 0 still starting, 1 finished.
-int32_t agent_desktop_app_finished_launching(int32_t pid) {
+int32_t acdesktop_app_finished_launching(int32_t pid) {
     @try {
         @autoreleasepool {
             NSRunningApplication *app =
@@ -44,7 +44,7 @@ int32_t agent_desktop_app_finished_launching(int32_t pid) {
     }
 }
 
-AgentDesktopTerminateResult agent_desktop_terminate_application(
+AgentDesktopTerminateResult acdesktop_terminate_application(
     int32_t pid,
     double expectedLaunchTime,
     uint8_t force,
@@ -80,7 +80,7 @@ AgentDesktopTerminateResult agent_desktop_terminate_application(
     }
 }
 
-uint8_t agent_desktop_ensure_cocoa_multithreaded(void) {
+uint8_t acdesktop_ensure_cocoa_multithreaded(void) {
     @try {
         @autoreleasepool {
             if ([NSThread isMultiThreaded]) {
@@ -107,23 +107,23 @@ uint8_t agent_desktop_ensure_cocoa_multithreaded(void) {
     }
 }
 
-static NSString *agent_desktop_non_blank(NSString *value) {
+static NSString *acdesktop_non_blank(NSString *value) {
     NSString *trimmed = [value stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     return trimmed.length == 0 ? nil : value;
 }
 
-static NSString *agent_desktop_application_name(NSRunningApplication *app) {
-    NSString *name = agent_desktop_non_blank(app.localizedName);
+static NSString *acdesktop_application_name(NSRunningApplication *app) {
+    NSString *name = acdesktop_non_blank(app.localizedName);
     if (name == nil) {
-        name = agent_desktop_non_blank(app.executableURL.lastPathComponent);
+        name = acdesktop_non_blank(app.executableURL.lastPathComponent);
     }
     if (name == nil) {
-        name = agent_desktop_non_blank(app.bundleIdentifier);
+        name = acdesktop_non_blank(app.bundleIdentifier);
     }
     return name;
 }
 
-AgentDesktopBytesResult agent_desktop_copy_workspace_snapshot_json(uint8_t frontmostOnly) {
+AgentDesktopBytesResult acdesktop_copy_workspace_snapshot_json(uint8_t frontmostOnly) {
     AgentDesktopBytesResult result = {
         .status = 5, .failureField = NULL, .failureIndex = -1,
         .failurePID = 0, .bytes = NULL, .length = 0
@@ -199,7 +199,7 @@ AgentDesktopBytesResult agent_desktop_copy_workspace_snapshot_json(uint8_t front
                 if (policyName == nil) {
                     continue;
                 }
-                NSString *name = agent_desktop_application_name(app);
+                NSString *name = acdesktop_application_name(app);
                 if (name == nil || name.length == 0 ||
                     [name lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > 16384) {
                     [skipped addObject:@{@"pid": @(pid), @"field": @"application_name", @"index": @(index)}];
@@ -230,7 +230,7 @@ AgentDesktopBytesResult agent_desktop_copy_workspace_snapshot_json(uint8_t front
                     }
                     record[@"bundle_id"] = bundle;
                 }
-                NSString *executable = agent_desktop_non_blank(app.executableURL.lastPathComponent);
+                NSString *executable = acdesktop_non_blank(app.executableURL.lastPathComponent);
                 if (executable != nil && [executable lengthOfBytesUsingEncoding:NSUTF8StringEncoding] <= 16384) {
                     record[@"executable"] = executable;
                 }
@@ -274,11 +274,11 @@ AgentDesktopBytesResult agent_desktop_copy_workspace_snapshot_json(uint8_t front
     }
 }
 
-void agent_desktop_free_bridge_bytes(uint8_t *bytes) {
+void acdesktop_free_bridge_bytes(uint8_t *bytes) {
     free(bytes);
 }
 
-AgentDesktopTerminateResult agent_desktop_activate_application(
+AgentDesktopTerminateResult acdesktop_activate_application(
     int32_t pid,
     bool (*verifyIdentity)(void *),
     void *context

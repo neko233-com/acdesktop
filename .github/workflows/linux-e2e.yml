@@ -21,4 +21,4 @@ jobs:
       - name: Live harness (the gate exits 2 without a session)
         run: bash tests/e2e-linux/run.sh
       - name: Private session checks
-        run: bash scripts/test-private-session.sh
+        run: chmod +x scripts/*.sh && bash scripts/test-private-session.sh

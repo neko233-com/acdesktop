@@ -1,5 +1,5 @@
-#ifndef AGENT_DESKTOP_H
-#define AGENT_DESKTOP_H
+#ifndef ACDESKTOP_H
+#define ACDESKTOP_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -19,7 +19,7 @@
  *     accessibility tree with snapshot-qualified ref IDs (for example,
  *     "@s8f3k2p9:e5") that address
  *     individual interactive elements.  A refmap is written under the state
- *     root (default ~/.agent-desktop, or AGENT_DESKTOP_HOME) and is keyed to
+ *     root (default ~/.acdesktop, or ACDESKTOP_HOME) and is keyed to
  *     the snapshot ID.  The envelope carries
  *     data.snapshot_id. Qualified refs already pin the exact snapshot.
  *
@@ -41,7 +41,7 @@
 
 
 /**
- * The major ABI version of this build of `libagent_desktop_ffi`.
+ * The major ABI version of this build of `libacdesktop_ffi`.
  *
  * Version-bump rule: increment this constant (and update the header via
  * `scripts/update-ffi-header.sh`) whenever a breaking change is made to the
@@ -1301,7 +1301,7 @@ void ad_app_list_free(struct AdAppList *list);
  * Policy: semantic actions, including `TypeText`, default to strict
  * `headless`. Explicit `PressKey` defaults to `focus_fallback`. A policy
  * discriminant may elevate to focus fallback or headed. Base and elevation
- * are computed by `agent_desktop_core::commands::execute_by_ref::execute_with_timeout` via
+ * are computed by `acdesktop_core::commands::execute_by_ref::execute_with_timeout` via
  * `Action::base_interaction_policy` + `InteractionPolicy::join`, so CLI and
  * FFI share a single source of policy truth.
  *
@@ -1373,7 +1373,7 @@ AdResult ad_execute_by_ref_timeout(const struct AdAdapter *adapter,
  * allocates snapshot-qualified refs (`@<snapshot_id>:eN`) for all
  * interactive elements, persists the refmap to disk, and writes the JSON envelope into `*out`.
  *
- * The JSON shape matches `agent-desktop snapshot`:
+ * The JSON shape matches `acdesktop snapshot`:
  * `{"version":"2.6","ok":true,"command":"snapshot","data":{"app":"...","window":{...},"ref_count":N,"snapshot_id":"...","complete":true,"tree":{...}}}`.
  * On macOS, `window` is omitted for application-owned menu and menubar surfaces
  * and when a background app with no window is read through its process.
@@ -1432,7 +1432,7 @@ AdResult ad_snapshot(const struct AdAdapter *adapter,
 
 /**
  * Returns the adapter's current health and permission state as a JSON
- * envelope matching the `agent-desktop status` CLI output.
+ * envelope matching the `acdesktop status` CLI output.
  *
  * `ad_status` does not query the accessibility tree; it reads the
  * permission report and ref-store metadata only. Like other adapter
@@ -1456,7 +1456,7 @@ AdResult ad_status(const struct AdAdapter *adapter, char **out);
 
 /**
  * Exports the merged trace timeline for the adapter's active session as a
- * single self-contained HTML file matching `agent-desktop trace export`.
+ * single self-contained HTML file matching `acdesktop trace export`.
  *
  * `limit` controls tail semantics: `0` embeds all events; the default `5000`
  * matches the CLI. Pass `-1` to use the CLI default explicitly.
@@ -1482,7 +1482,7 @@ AdResult ad_trace_export(const struct AdAdapter *adapter,
 
 /**
  * Returns the merged trace timeline for the adapter's active session as a
- * JSON envelope matching `agent-desktop trace show`.
+ * JSON envelope matching `acdesktop trace show`.
  *
  * `limit` controls tail semantics: `0` embeds all events; the default `500`
  * matches the CLI. Pass `-1` to use the CLI default explicitly.
@@ -1507,10 +1507,10 @@ AdResult ad_trace_show(const struct AdAdapter *adapter,
                        char **out);
 
 /**
- * Returns the `agent-desktop` version envelope as an owned JSON C string.
+ * Returns the `acdesktop` version envelope as an owned JSON C string.
  *
  * The returned string has the same `{version, ok, command, data}` shape
- * as `agent-desktop version` on the CLI. Free it with `ad_free_string`.
+ * as `acdesktop version` on the CLI. Free it with `ad_free_string`.
  *
  * On success `*out` points to the envelope JSON.
  * On error `*out` is null and the last-error slot is populated.
@@ -1923,7 +1923,7 @@ AdResult ad_is_exact(const struct AdAdapter *adapter,
                      const char *property,
                      bool *out);
 
-#if defined(AGENT_DESKTOP_TEST_PANIC_INJECTION)
+#if defined(ACDESKTOP_TEST_PANIC_INJECTION)
 AdResult ad_test_panic_boundary(void);
 #endif
 
@@ -2165,15 +2165,15 @@ AdResult ad_window_op_exact(const struct AdAdapter *adapter,
 }  // extern "C"
 #endif  // __cplusplus
 
-#endif  /* AGENT_DESKTOP_H */
+#endif  /* ACDESKTOP_H */
 
 /* C11 ABI layout guards — auto-generated; do not hand-edit.
  * Each sizeof check references the AD_*_SIZE macro defined above so the
  * size literal lives in exactly one place (the Rust source). Alignment
  * and offset values are structurally fixed on all 64-bit targets.
  * The one-shot guard makes double-include safe regardless of C standard. */
-#ifndef AGENT_DESKTOP_ABI_ASSERTS
-#define AGENT_DESKTOP_ABI_ASSERTS
+#ifndef ACDESKTOP_ABI_ASSERTS
+#define ACDESKTOP_ABI_ASSERTS
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 _Static_assert(sizeof(AdDragParams) == AD_DRAG_PARAMS_SIZE, "AdDragParams ABI size changed");
 _Static_assert(_Alignof(AdDragParams) == 8, "AdDragParams ABI alignment changed");
@@ -2280,4 +2280,4 @@ _Static_assert(sizeof(AdFindStateSlice) == AD_FIND_STATE_SLICE_SIZE, "AdFindStat
 _Static_assert(sizeof(AdFindFilter) == AD_FIND_FILTER_SIZE, "AdFindFilter ABI size changed");
 _Static_assert(offsetof(AdFindFilter, exact) == 80, "AdFindFilter.exact offset changed");
 #endif /* __STDC_VERSION__ >= 201112L */
-#endif /* AGENT_DESKTOP_ABI_ASSERTS */
+#endif /* ACDESKTOP_ABI_ASSERTS */

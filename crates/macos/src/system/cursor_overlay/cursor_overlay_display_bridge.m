@@ -20,7 +20,7 @@ static NSScreen *ADScreenAt(double x, double y) {
     return nil;
 }
 
-bool agent_desktop_cursor_overlay_initial_point(double *output) {
+bool acdesktop_cursor_overlay_initial_point(double *output) {
     if (output == NULL) {
         return false;
     }
@@ -36,7 +36,7 @@ bool agent_desktop_cursor_overlay_initial_point(double *output) {
     }
 }
 
-bool agent_desktop_cursor_overlay_screen(double x,
+bool acdesktop_cursor_overlay_screen(double x,
                                          double y,
                                          double *output) {
     if (output == NULL) {

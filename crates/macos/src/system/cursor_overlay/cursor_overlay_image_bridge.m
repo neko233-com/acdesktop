@@ -43,7 +43,7 @@ static ADCursorImageSlot *ADImageSlot(uint8_t slot) {
     return slot < ADImageSlots ? ADImageSlotList[slot] : nil;
 }
 
-bool agent_desktop_cursor_overlay_image(uint8_t slot,
+bool acdesktop_cursor_overlay_image(uint8_t slot,
                                         const char *path,
                                         double hotspotX,
                                         double hotspotY) {
