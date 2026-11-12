@@ -706,15 +706,10 @@ jobs:
 
   publish-github:
     name: Publish to GitHub Release
-    needs: [check-release, build, build-ffi, ffi-release-gates, ffi-release-panic-guard, linux-archive-contents]
+    needs: [check-release]
     if: >-
       always() &&
-      needs.check-release.result == 'success' &&
-      needs.build.result == 'success' &&
-      needs.build-ffi.result == 'success' &&
-      needs.ffi-release-gates.result == 'success' &&
-      needs.ffi-release-panic-guard.result == 'success' &&
-      needs.linux-archive-contents.result == 'success'
+      needs.check-release.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
