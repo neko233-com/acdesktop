@@ -221,6 +221,7 @@ function Get-JsonPropertyValuesByName {
         }
         return $hits.ToArray()
     }
+    if ($Node -isnot [System.Management.Automation.PSCustomObject]) { return $hits.ToArray() }
     $props = $Node.PSObject.Properties
     if ($null -eq $props) { return $hits.ToArray() }
     foreach ($p in $props) {
@@ -468,6 +469,14 @@ function Invoke-LedgerContentSelfTest {
     $capDir = Join-Path $tempRoot '16-observation\captures'
     New-Item -ItemType Directory -Path $capDir -Force | Out-Null
     try {
+        $scalarFixture = [pscustomobject]@{
+            timestamp = [datetime]'2026-11-12T00:00:00Z'
+            nested = [pscustomobject]@{ target = 42 }
+        }
+        if (@(Get-JsonPropertyValuesByName -Node $scalarFixture -Name 'Date').Count -ne 0 -or
+            @(Get-JsonPropertyValuesByName -Node $scalarFixture -Name 'target')[0] -ne 42) {
+            $failures.Add('scalar values must not be traversed as JSON objects') | Out-Null
+        }
         $census = [ordered]@{
             window_census = [ordered]@{
                 total_enumerated = 147

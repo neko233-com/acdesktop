@@ -626,6 +626,19 @@ jobs:
           Add-Content -Path $env:GITHUB_OUTPUT -Value "lib_tests=$passed"
           Add-Content -Path $env:GITHUB_OUTPUT -Value "lib_suites=$suites"
 
+      - name: Diagnose ARM64 shell tests after failure
+        if: failure() && steps.unit_tests.outcome == 'failure'
+        shell: pwsh
+        env:
+          ACDESKTOP_LIVE_WPF: "1"
+        run: |
+          cargo test --locked -p acdesktop-windows --lib opening_the_start_menu_round_trips_into_the_snapshot -- --nocapture
+          $startResult = $LASTEXITCODE
+          cargo test --locked -p acdesktop-windows --lib an_open_shell_surface_resolves_through_the_adapter_seam_and_roots_a_tree -- --nocapture
+          $centerResult = $LASTEXITCODE
+          Write-Host "Isolated shell diagnostics: start=$startResult action-center=$centerResult"
+          if ($startResult -ne 0 -or $centerResult -ne 0) { exit 1 }
+
       - name: Build release binary
         run: cargo build --locked --release -p acdesktop
 
