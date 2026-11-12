@@ -411,7 +411,7 @@ if (pkg.bin?.['acdesktop'] !== 'bin/acdesktop') {
   throw new Error('npm bin path must be bin/acdesktop');
 }
 
-if (pkg.repository?.url !== 'git+https://github.com/<owner>/acdesktop.git') {
+if (pkg.repository?.url !== 'git+https://github.com/neko233-com/acdesktop.git') {
   throw new Error('npm repository URL must be normalized for npm publish');
 }
 

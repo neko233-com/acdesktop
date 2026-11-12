@@ -32,7 +32,7 @@ const binDir = join(projectRoot, 'bin');
 const packageJson = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf8'));
 const version = packageJson.version;
 
-const GITHUB_REPO = '<owner>/acdesktop';
+const GITHUB_REPO = 'neko233-com/acdesktop';
 const MACOS_HELPER_PATH_ENV = 'ACDESKTOP_MACOS_HELPER_PATH';
 
 function log(msg) {
@@ -246,7 +246,7 @@ function promptSkillInstall() {
   log('  acdesktop skills get platform');
   log('Or install a skill with:');
   for (const skill of skills) {
-    log(`  npx skills add https://github.com/<owner>/acdesktop --skill ${skill}`);
+    log(`  npx skills add https://github.com/neko233-com/acdesktop --skill ${skill}`);
   }
   log('');
 }
