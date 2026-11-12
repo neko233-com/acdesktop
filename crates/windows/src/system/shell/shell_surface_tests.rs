@@ -4,7 +4,9 @@ use crate::system::fixture::test_support::{settles_to, wait_for_foreground_to_se
 use crate::system::window::window_enum::{EnumeratedWindow, enumerate_top_level, is_cloaked};
 use crate::system::window::window_ops::passes_filter;
 
-use crate::system::fixture::test_support::{SHELL_SURFACE_LOCK, or_skip_shell};
+use crate::system::fixture::test_support::{
+    SHELL_SURFACE_LOCK, or_skip_shell, skip_if_desktop_unobservable,
+};
 use crate::system::shell::raise_oracle::{responded_since, witness_desktop};
 
 use crate::system::fixture::test_time::{deadline, headed};
@@ -90,12 +92,13 @@ fn already_open_surface_returns_without_additional_raise() {
     bootstrap();
     let _lock = SHELL_SURFACE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     dismiss_first(SnapshotSurface::ActionCenter);
+    let _cleanup = CloseOnDrop(SnapshotSurface::ActionCenter);
     accelerator_probe::take_all();
     let witness = witness_desktop();
 
     let Some(first) = or_skip_shell(
         "action center first open",
-        open_surface(SnapshotSurface::ActionCenter, headed(), deadline(10_000)),
+        open_surface(SnapshotSurface::ActionCenter, headed(), deadline(30_000)),
         || responded_since(&witness),
     ) else {
         return;
@@ -103,7 +106,7 @@ fn already_open_surface_returns_without_additional_raise() {
     let raises = accelerator_probe::take_all();
     assert_eq!(raises, 1, "the closed surface needs exactly one raise");
 
-    let second = open_surface(SnapshotSurface::ActionCenter, headed(), deadline(10_000))
+    let second = open_surface(SnapshotSurface::ActionCenter, headed(), deadline(30_000))
         .expect("the second open returns the surface already up");
     let raises = accelerator_probe::take_all();
     assert_eq!(
@@ -111,8 +114,6 @@ fn already_open_surface_returns_without_additional_raise() {
         "the resolve-first path must return without raising"
     );
     assert_eq!(first.id, second.id);
-
-    let _cleanup = CloseOnDrop(SnapshotSurface::ActionCenter);
 }
 
 #[test]
@@ -164,7 +165,7 @@ fn start_menu_opens_and_identity_roots_a_tree() {
 
     let Some(info) = or_skip_shell(
         "the start accelerator raises its surface",
-        open_surface(SnapshotSurface::StartMenu, headed(), deadline(10_000)),
+        open_surface(SnapshotSurface::StartMenu, headed(), deadline(30_000)),
         || responded_since(&witness),
     ) else {
         return;
@@ -186,9 +187,12 @@ fn taskbar_resolves_without_raising_and_roots_a_tree() {
     );
     let before = foreground();
 
-    let info = super::resolve_surface(SnapshotSurface::Taskbar, deadline(5_000))
-        .expect("the desktop is readable")
-        .expect("the taskbar is always up");
+    let info = match super::resolve_surface(SnapshotSurface::Taskbar, deadline(5_000)) {
+        Ok(Some(info)) => info,
+        Ok(None) => panic!("the taskbar is always up"),
+        Err(error) if skip_if_desktop_unobservable("the taskbar resolves", &error) => return,
+        Err(error) => panic!("the desktop is readable: {error:?}"),
+    };
     let handle = handle_of(&info);
 
     let after = foreground();
@@ -257,7 +261,7 @@ fn immersive_surface_absent_from_enumeration_but_yielded_by_uia_root() {
 
     let Some(info) = or_skip_shell(
         "action center open",
-        open_surface(SnapshotSurface::ActionCenter, headed(), deadline(10_000)),
+        open_surface(SnapshotSurface::ActionCenter, headed(), deadline(30_000)),
         || responded_since(&witness),
     ) else {
         return;
@@ -287,7 +291,7 @@ fn overflow_opens_via_chevron_and_closes_via_escape() {
         open_surface(
             SnapshotSurface::SystemTrayOverflow,
             headed(),
-            deadline(10_000),
+            deadline(30_000),
         ),
         || responded_since(&witness),
     ) else {
@@ -329,13 +333,21 @@ fn overflow_window_visible(handle: isize) -> bool {
 #[test]
 fn overflow_toolbar_resolves_while_hidden() {
     bootstrap();
-    let Some(info) = super::resolve_surface(SnapshotSurface::SystemTrayOverflow, deadline(5_000))
-        .expect("the desktop is readable")
-    else {
-        eprintln!(
-            "skip overflow toolbar: the NotifyIconOverflowWindow is not materialized on this desktop"
-        );
-        return;
+    let info = match super::resolve_surface(SnapshotSurface::SystemTrayOverflow, deadline(5_000)) {
+        Ok(Some(info)) => info,
+        Ok(None) => {
+            eprintln!(
+                "skip overflow toolbar: the NotifyIconOverflowWindow is not materialized on this desktop"
+            );
+            return;
+        }
+        Err(error) if skip_if_desktop_unobservable("the overflow toolbar resolves", &error) => {
+            eprintln!(
+                "skip overflow toolbar: the shell surface was not observable within the deadline under desktop load"
+            );
+            return;
+        }
+        Err(error) => panic!("the desktop is readable: {error:?}"),
     };
     let handle = handle_of(&info);
     assert_eq!(

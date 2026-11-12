@@ -16,7 +16,7 @@ A container gives acdesktop its own Linux desktop, so your commands act on apps 
 Run these commands in the directory that becomes the build context. The archive must match the architecture of the Docker daemon: `uname -m` gives the host's, and `docker info --format '{{.Architecture}}'` confirms what the daemon runs. Docker Desktop on Apple Silicon reports `aarch64`.
 
 ```bash
-VERSION=2.0.0                                              # the acdesktop release to run
+VERSION=1.3.0                                              # the acdesktop release to run
 case $(uname -m) in                                        # arm64 on macOS, aarch64 on Linux
   arm64 | aarch64) ARCH=aarch64 ;;
   *) ARCH=x86_64 ;;
@@ -33,7 +33,7 @@ tar -xzf "$TARBALL"
 The checksum line confirms the download, and the archive adds `acdesktop` and `acdesktop-linux-clipboard-owner` to the directory. The binary looks for the clipboard helper beside itself.
 
 ```text
-acdesktop-v2.0.0-aarch64-unknown-linux-gnu.tar.gz: OK
+acdesktop-v1.3.0-aarch64-unknown-linux-gnu.tar.gz: OK
 ```
 
 ## 2. Write the wrapper and the Dockerfile
@@ -138,8 +138,8 @@ The image installs Xvfb, openbox, D-Bus, `x11-utils` for `xdpyinfo`, and `at-spi
 ## 3. Build and start the container
 
 ```bash
-docker build -t acdesktop-container:2.0.0 .
-docker run -d --name acdesktop-container acdesktop-container:2.0.0
+docker build -t acdesktop-container:1.3.0 .
+docker run -d --name acdesktop-container acdesktop-container:1.3.0
 ```
 
 ## 4. Run acdesktop inside the container
@@ -181,7 +181,7 @@ The tree and the window are trimmed here. `ref_count` counts every element that 
 
 ```bash
 docker rm -f acdesktop-container
-docker image rm acdesktop-container:2.0.0
+docker image rm acdesktop-container:1.3.0
 ```
 
 ## Limits

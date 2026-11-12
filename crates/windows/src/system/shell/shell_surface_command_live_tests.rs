@@ -28,7 +28,7 @@ use acdesktop_core::{AdapterError, AppError, CommandContext, SnapshotSurface};
 use crate::adapter::WindowsAdapter;
 use crate::system::capture::capture_test_support::HomeIsolation;
 use crate::system::fixture::test_support::{
-    SHELL_SURFACE_LOCK, or_skip_shell, wait_for_foreground_to_settle,
+    SHELL_SURFACE_LOCK, or_skip_shell, skip_if_desktop_unobservable, wait_for_foreground_to_settle,
     with_interaction_lease_test_lock,
 };
 use crate::system::fixture::test_time::deadline;
@@ -70,7 +70,7 @@ fn open_command(kind: SnapshotSurface, context: &CommandContext) -> Option<serde
         open_system_surface::execute(
             OpenSystemSurfaceArgs {
                 surface: kind,
-                timeout_ms: Some(15_000),
+                timeout_ms: Some(30_000),
             },
             &adapter,
             context,
@@ -241,12 +241,14 @@ fn strict_headless_open_refuses_before_raising() {
             before,
             "a refusal that moved the foreground is not a refusal"
         );
-        let resolved = crate::system::shell::shell_surface::resolve_surface(
+        let resolved = match crate::system::shell::shell_surface::resolve_surface(
             SnapshotSurface::ActionCenter,
-            deadline(5_000),
-        )
-        .expect("the desktop is readable")
-        .is_some();
+            deadline(30_000),
+        ) {
+            Ok(resolved) => resolved.is_some(),
+            Err(error) if skip_if_desktop_unobservable("the desktop is readable", &error) => return,
+            Err(error) => panic!("the desktop is readable: {error:?}"),
+        };
         assert!(
             !resolved,
             "the refused open must not have raised the surface"

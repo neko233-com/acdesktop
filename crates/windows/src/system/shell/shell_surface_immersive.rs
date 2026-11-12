@@ -68,7 +68,11 @@ fn resolve_immersive_inner(
 ) -> Result<(Option<WindowInfo>, bool), AdapterError> {
     let narrow = crate::system::window::listing_retry::narrow_to_permitted_codes;
     let client = crate::tree::automation::automation_client().map_err(narrow)?;
-    let children = desktop_root_children(&client)?;
+    let children = crate::system::window::listing_retry::retry_transient_window_race(
+        deadline,
+        AdapterError::is_transient_incomplete_read,
+        || desktop_root_children(&client),
+    )?;
     for child in &children {
         deadline.ensure_remaining()?;
         if let Some(info) =
@@ -230,7 +234,11 @@ pub(in crate::system) fn resolve_with_witness(
     super::bounded_read::read(deadline, move || {
         let narrow = crate::system::window::listing_retry::narrow_to_permitted_codes;
         let client = crate::tree::automation::automation_client().map_err(narrow)?;
-        let children = desktop_root_children(&client)?;
+        let children = crate::system::window::listing_retry::retry_transient_window_race(
+            deadline,
+            AdapterError::is_transient_incomplete_read,
+            || desktop_root_children(&client),
+        )?;
         let mut handles = Vec::new();
         let mut observed = None;
         for child in children {

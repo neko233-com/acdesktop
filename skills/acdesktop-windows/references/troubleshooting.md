@@ -173,7 +173,8 @@ The script runs as written against an open Notepad. Each ref comes from the JSON
 of the step before it, so the sequence stays correct when the tree shifts.
 
 ```powershell
-$out = "$env:TEMP\notepad-save-demo.txt"
+$name = "notepad-save-demo.txt"
+$out = Join-Path $env:USERPROFILE "Documents\$name"
 
 acdesktop restore --app notepad.exe                 # only if minimized; behind is fine
 $doc = (acdesktop find --app notepad.exe --role textfield | ConvertFrom-Json).data.matches[0]
@@ -188,9 +189,9 @@ acdesktop click ($menu.children | Where-Object name -eq 'Save As...').ref_id
 acdesktop wait --window "Save As" --app notepad.exe # the dialog is a new window
 $dialog = (acdesktop list-windows --app notepad.exe | ConvertFrom-Json).data |
     Where-Object title -eq 'Save As'
-$name = (acdesktop find --name "File name" --window-id $dialog.id | ConvertFrom-Json).data.matches |
+$nameField = (acdesktop find --name "File name" --window-id $dialog.id | ConvertFrom-Json).data.matches |
     Where-Object role -eq 'textfield'
-acdesktop set-value $name.ref_id $out               # full path goes in the name field
+acdesktop set-value $nameField.ref_id $name         # a bare filename, not a path
 
 $save = (acdesktop find --role button --name "Save" --window-id $dialog.id | ConvertFrom-Json).data.matches[0]
 acdesktop click $save.ref_id
@@ -203,7 +204,9 @@ Three things that surprise a first-time caller:
 - **`find --name "File name"` returns three matches:** a `statictext` label, a
   `combobox`, and the `textfield` inside the combobox. Only the textfield
   accepts `set-value`, so match on `role` as well as name.
-- **The full path in the name field selects the directory.** There is no
+- **The name field takes a bare filename, not a path.** Notepad (the Store/MSIX
+  build) rejects a full path in that field with "filename invalid"; put the
+  directory in the save location first and write only the filename. There is no
   separate folder step, and navigating the file list by ref is far more fragile.
 - **The file does not exist when the Save click returns.** The shell took
   10.9 s between the click's envelope and the file on disk. Wait for the title

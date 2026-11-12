@@ -108,14 +108,18 @@ fn with_restored_clipboard(body: impl FnOnce()) {
 #[test]
 fn text_image_and_files_round_trip_under_save_restore_lock() {
     with_restored_clipboard(|| {
-        set_content(
-            &ClipboardContent::Text("acdesktop-u8".into()),
-            deadline(5_000),
-        )
+        retry_clipboard_contention(|| {
+            set_content(
+                &ClipboardContent::Text("acdesktop-u8".into()),
+                deadline(5_000),
+            )
+        })
         .expect("set text");
-        match get_clipboard_content(ClipboardFormat::Text, deadline(5_000))
-            .expect("get text")
-            .expect("text present")
+        match retry_clipboard_contention(|| {
+            get_clipboard_content(ClipboardFormat::Text, deadline(5_000))
+        })
+        .expect("get text")
+        .expect("text present")
         {
             ClipboardContent::Text(value) => assert_eq!(value, "acdesktop-u8"),
             other => panic!("expected text, got {other:?}"),
@@ -123,20 +127,19 @@ fn text_image_and_files_round_trip_under_save_restore_lock() {
 
         let png = sample_png();
         let (width, height) = parse_png_dimensions(&png).expect("dims");
-        set_content(
-            &ClipboardContent::Image(ImageBuffer {
-                data: png,
-                format: ImageFormat::Png,
-                width,
-                height,
-                scale_factor: 1.0,
-            }),
-            deadline(5_000),
-        )
-        .expect("set image");
-        match get_clipboard_content(ClipboardFormat::Image, deadline(5_000))
-            .expect("get image")
-            .expect("image present")
+        let image = ClipboardContent::Image(ImageBuffer {
+            data: png,
+            format: ImageFormat::Png,
+            width,
+            height,
+            scale_factor: 1.0,
+        });
+        retry_clipboard_contention(|| set_content(&image, deadline(5_000))).expect("set image");
+        match retry_clipboard_contention(|| {
+            get_clipboard_content(ClipboardFormat::Image, deadline(5_000))
+        })
+        .expect("get image")
+        .expect("image present")
         {
             ClipboardContent::Image(buffer) => {
                 assert_eq!((buffer.width, buffer.height), (width, height));
@@ -150,14 +153,13 @@ fn text_image_and_files_round_trip_under_save_restore_lock() {
             .join("acdesktop-clipboard-u8.txt")
             .to_string_lossy()
             .into_owned();
-        set_content(
-            &ClipboardContent::FileUrls(vec![path.clone()]),
-            deadline(5_000),
-        )
-        .expect("set files");
-        match get_clipboard_content(ClipboardFormat::FileUrls, deadline(5_000))
-            .expect("get files")
-            .expect("files present")
+        let files = ClipboardContent::FileUrls(vec![path.clone()]);
+        retry_clipboard_contention(|| set_content(&files, deadline(5_000))).expect("set files");
+        match retry_clipboard_contention(|| {
+            get_clipboard_content(ClipboardFormat::FileUrls, deadline(5_000))
+        })
+        .expect("get files")
+        .expect("files present")
         {
             ClipboardContent::FileUrls(paths) => assert_eq!(paths, vec![path]),
             other => panic!("expected files, got {other:?}"),
@@ -196,31 +198,33 @@ fn auto_prefers_files_then_image_then_text() {
     with_restored_clipboard(|| {
         let png = sample_png();
         let (width, height) = parse_png_dimensions(&png).expect("dims");
-        set_content(
-            &ClipboardContent::Image(ImageBuffer {
-                data: png,
-                format: ImageFormat::Png,
-                width,
-                height,
-                scale_factor: 1.0,
-            }),
-            deadline(5_000),
-        )
-        .expect("image");
-        add_text_without_clearing().expect("add text");
-        let auto = get_clipboard_content(ClipboardFormat::Auto, deadline(5_000))
-            .expect("auto")
-            .expect("content");
+        let image = ClipboardContent::Image(ImageBuffer {
+            data: png,
+            format: ImageFormat::Png,
+            width,
+            height,
+            scale_factor: 1.0,
+        });
+        retry_clipboard_contention(|| set_content(&image, deadline(5_000))).expect("image");
+        retry_clipboard_contention(add_text_without_clearing).expect("add text");
+        let auto = retry_clipboard_contention(|| {
+            get_clipboard_content(ClipboardFormat::Auto, deadline(5_000))
+        })
+        .expect("auto")
+        .expect("content");
         assert!(matches!(auto, ClipboardContent::Image(_)));
 
         let path = std::env::temp_dir()
             .join("acdesktop-clipboard-auto.txt")
             .to_string_lossy()
             .into_owned();
-        set_content(&ClipboardContent::FileUrls(vec![path]), deadline(5_000)).expect("files");
-        let auto = get_clipboard_content(ClipboardFormat::Auto, deadline(5_000))
-            .expect("auto files")
-            .expect("content");
+        let files = ClipboardContent::FileUrls(vec![path]);
+        retry_clipboard_contention(|| set_content(&files, deadline(5_000))).expect("files");
+        let auto = retry_clipboard_contention(|| {
+            get_clipboard_content(ClipboardFormat::Auto, deadline(5_000))
+        })
+        .expect("auto files")
+        .expect("content");
         assert!(matches!(auto, ClipboardContent::FileUrls(_)));
     });
 }
@@ -251,9 +255,11 @@ fn sequence_retry_is_observed_when_clipboard_moves_mid_read() {
         })
         .expect("set");
         super::inject_sequence_mismatch_once();
-        let content = get_clipboard_content(ClipboardFormat::Text, deadline(5_000))
-            .expect("retry must still return content")
-            .expect("text present");
+        let content = retry_clipboard_contention(|| {
+            get_clipboard_content(ClipboardFormat::Text, deadline(5_000))
+        })
+        .expect("retry must still return content")
+        .expect("text present");
         assert!(matches!(content, ClipboardContent::Text(_)));
         assert!(
             sequence_retries_observed() > 0,

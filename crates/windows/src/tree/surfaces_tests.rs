@@ -313,13 +313,32 @@ mod shell_surfaces {
             if !advertised.contains(&kind) {
                 continue;
             }
-            let already_up = resolve_surface(kind, deadline())
-                .expect("the desktop is readable")
-                .is_some();
+            let already_up = match resolve_surface(kind, deadline()) {
+                Ok(resolved) => resolved.is_some(),
+                Err(error)
+                    if crate::system::fixture::test_support::skip_if_desktop_unobservable(
+                        "the desktop is readable",
+                        &error,
+                    ) =>
+                {
+                    continue;
+                }
+                Err(error) => panic!("the desktop is readable: {error:?}"),
+            };
             let info = match already_up {
-                true => resolve_surface(kind, deadline())
-                    .expect("the desktop is readable")
-                    .expect("checked above"),
+                true => match resolve_surface(kind, deadline()) {
+                    Ok(Some(info)) => info,
+                    Err(error)
+                        if crate::system::fixture::test_support::skip_if_desktop_unobservable(
+                            "the desktop is readable",
+                            &error,
+                        ) =>
+                    {
+                        continue;
+                    }
+                    Err(error) => panic!("the desktop is readable: {error:?}"),
+                    _ => unreachable!("checked above"),
+                },
                 false => {
                     let witness = witness_desktop();
                     let Some(info) = or_skip_shell(

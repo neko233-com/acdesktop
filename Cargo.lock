@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop"
-version = "2.0.0"
+version = "1.3.0"
 dependencies = [
  "acdesktop-core",
  "acdesktop-linux",
@@ -32,7 +32,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop-core"
-version = "2.0.0"
+version = "1.3.0"
 dependencies = [
  "base64",
  "libc",
@@ -46,7 +46,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop-ffi"
-version = "2.0.0"
+version = "1.3.0"
 dependencies = [
  "acdesktop-core",
  "acdesktop-linux",
@@ -62,7 +62,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop-linux"
-version = "2.0.0"
+version = "1.3.0"
 dependencies = [
  "acdesktop-core",
  "async-io",
@@ -79,7 +79,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop-macos"
-version = "2.0.0"
+version = "1.3.0"
 dependencies = [
  "accessibility-sys",
  "acdesktop-core",
@@ -98,7 +98,7 @@ dependencies = [
 
 [[package]]
 name = "acdesktop-windows"
-version = "2.0.0"
+version = "1.3.0"
 dependencies = [
  "acdesktop-core",
  "png",
@@ -980,9 +980,9 @@ checksum = "6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d"
 
 [[package]]
 name = "rustix"
-version = "1.1.5"
+version = "1.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "891efababe418670775f199f0d233d84843c227a0949a883ce15b37c78d6629d"
+checksum = "e5e76742e5294153d4dde1207dbec5bdd81eef6fabdc0d2118babadabfd858aa"
 dependencies = [
  "bitflags",
  "errno",

@@ -1,29 +1,12 @@
 //! Shared `#[cfg(test)]` thread-local flag helper for Windows capture test
-//! hooks, plus one cross-test serialization primitive.
+//! hooks, plus two cross-test synchronization primitives.
 //!
-//! Every capture test hook needs the same shape: flip a thread-local `Cell`
-//! on, run the closure, and flip it back off even if the closure panics.
-//! Each hook module still owns its own flag (its meaning is module-specific),
-//! but the arm/run/reset sequence lives here once.
-//!
-//! `FIXTURE_APP_NAME_LOCK` addresses a different, process-wide hazard: every
-//! re-executed test fixture (`HostedFixture`, `ModalFixture`, `MenuFixture`,
-//! ...) launches `std::env::current_exe()` verbatim, so every fixture child
-//! spawned anywhere in this test binary reports the identical process image
-//! name. A live test that resolves its fixture by `--app <that name>` while
-//! a second such test's fixture is concurrently alive observes two
-//! processes sharing the name and gets `AMBIGUOUS_TARGET` instead of its own
-//! fixture. Most `wait --event` live tests avoid this entirely by seeding
-//! `CommandContext` with a `capture_signal_baseline` already scoped to their
-//! own `(pid, process_instance)` (`wait_event_live_tests.rs`'s module doc
-//! explains why that closes the hazard rather than merely narrowing it), so
-//! this lock is the remaining mitigation for the two paths with no seeding
-//! escape hatch: `app-launched` (the process does not exist yet, so there is
-//! nothing to seed against) and `wait --menu` (`wait_for_menu` resolves its
-//! target through `list_apps`, not `capture_signal_baseline`, so it never
-//! sees a seed at all). A live test on either of those two paths holds this
-//! lock for its fixture's entire lifetime plus the wait, so at most one such
-//! test's fixture exists at a time.
+//! Every capture test hook flips a thread-local `Cell` on, runs the closure,
+//! and resets it on drop even if the closure panics; the arm/run/reset lives
+//! here once. `FIXTURE_APP_NAME_LOCK` serializes the two fixture paths that
+//! cannot be seeded against a `(pid, process_instance)` baseline - `app-
+//! launched` (the process does not exist yet) and `wait --menu` (resolved
+//! through `list_apps`) - so at most one such fixture is alive at a time.
 
 #![cfg(all(test, target_os = "windows"))]
 
@@ -182,7 +165,7 @@ pub(crate) fn wait_for_foreground_to_settle() -> bool {
 }
 
 /// Waits for a live source to reach an expected value, reporting whether it did
-/// inside the budget, reporting whether it did inside the budget.
+/// inside the budget.
 ///
 /// `wait_for_menu_state` observes the fixture's own flag, set around its
 /// `TrackPopupMenu` call. The classic menu-mode bits and the UIA tool-window
@@ -255,7 +238,10 @@ pub(crate) fn shell_declined_the_surface(error: &AdapterError) -> bool {
         || overflow_absent
         || foreign_shape
         || declined_foreground
+        || crate::system::fixture::shell_skip::desktop_unobservable(error)
 }
+
+pub(crate) use crate::system::fixture::shell_skip::skip_if_desktop_unobservable;
 
 /// Maps a raise-or-resolve precondition onto the loud-skip convention, with
 /// the independent raise-response oracle standing guard over it: an error the
@@ -362,6 +348,20 @@ mod shell_decline_classification {
             "no window matches the requested identity",
         );
         assert!(!shell_declined_the_surface(&unrelated_window));
+
+        let overloaded = AdapterError::timeout("Operation exceeded its deadline")
+            .with_details(serde_json::json!({ "kind": "deadline", "timeout_ms": 30000 }));
+        assert!(
+            shell_declined_the_surface(&overloaded),
+            "a deadline-budget exhaustion under desktop load is a skip, not a failure"
+        );
+
+        let unclassified = AdapterError::timeout("the 'action-center' shell surface did not open")
+            .with_details(serde_json::json!({ "retryable": true }));
+        assert!(
+            !shell_declined_the_surface(&unclassified),
+            "a timeout without the deadline stamp keeps its product meaning"
+        );
     }
 
     #[test]
