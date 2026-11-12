@@ -1,0 +1,12 @@
+[package]
+name      = "mygo-gpui"
+version   = "0.1.0"
+edition   = "2021"
+license   = "Apache-2.0"
+
+[[bin]]
+name = "mygo-gpui"
+path = "src/main.rs"
+
+[dependencies]
+gpui = "0.2"
