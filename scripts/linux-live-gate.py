@@ -48,10 +48,10 @@ def read_tests(binary, ignored=False):
 
 def build():
     env = dict(os.environ, CARGO_INCREMENTAL="0")
-    subprocess.run(["cargo", "build", "-p", "agent-desktop", "-p", "agent-desktop-linux",
+    subprocess.run(["cargo", "build", "-p", "acdesktop", "-p", "acdesktop-linux",
                     "--bins"], env=env, check=True)
     result = subprocess.run(
-        ["cargo", "test", "-p", "agent-desktop-linux", "--lib", "--no-run",
+        ["cargo", "test", "-p", "acdesktop-linux", "--lib", "--no-run",
          "--message-format=json"], env=env, text=True, stdout=subprocess.PIPE,
     )
     rows = [json.loads(line) for line in result.stdout.splitlines()]
@@ -61,7 +61,7 @@ def build():
     result.check_returncode()
     binaries = [row["executable"] for row in rows
                 if row.get("reason") == "compiler-artifact" and row.get("executable")
-                and row["target"]["name"] == "agent_desktop_linux"]
+                and row["target"]["name"] == "acdesktop_linux"]
     if len(binaries) != 1:
         raise ValueError(f"expected one Linux library test executable, got {binaries}")
     return Path(binaries[0])
@@ -227,11 +227,11 @@ def run_bounded(command, log, timeout):
 def worker(manifest_path, tier, shard):
     manifest = json.loads(manifest_path.read_text())
     if "cli" in manifest:
-        os.environ["AGENT_DESKTOP_TEST_BINARY"] = manifest["cli"]
+        os.environ["ACDESKTOP_TEST_BINARY"] = manifest["cli"]
     directory = manifest_path.parent / tier
     save(directory / f"session-{shard}.json", {key: os.environ.get(key) for key in (
         "DISPLAY", "DBUS_SESSION_BUS_ADDRESS", "XDG_RUNTIME_DIR",
-        "AGENT_DESKTOP_PRIVATE_SESSION", "AGENT_DESKTOP_HOME", "TMPDIR")})
+        "ACDESKTOP_PRIVATE_SESSION", "ACDESKTOP_HOME", "TMPDIR")})
     rows = []
     for index, task in enumerate(manifest["shards"][tier][shard]):
         if STOPPING:
@@ -273,7 +273,7 @@ def run_tier(manifest_path, tier):
             command.append("--wm")
         command.append("--")
         if tier == "mutter":
-            command += ["env", "AGENT_DESKTOP_LIVE_WM=mutter", "bash",
+            command += ["env", "ACDESKTOP_LIVE_WM=mutter", "bash",
                         str(ROOT / "scripts/private-mutter-shell.sh"), "--"]
         command += [sys.executable, str(Path(__file__).resolve()), "--worker",
                     str(manifest_path), tier, str(shard)]
@@ -322,9 +322,9 @@ def main():
         parser.error("--timeout must be positive")
     os.chdir(ROOT)
     base = Path(
-        os.environ.get("AGENT_DESKTOP_SESSION_BASE")
-        or (Path(os.environ["XDG_RUNTIME_DIR"]) / "agent-desktop-sessions"
-            if os.environ.get("XDG_RUNTIME_DIR") else Path(f"/tmp/agent-desktop-sessions-{os.getuid()}"))
+        os.environ.get("ACDESKTOP_SESSION_BASE")
+        or (Path(os.environ["XDG_RUNTIME_DIR"]) / "acdesktop-sessions"
+            if os.environ.get("XDG_RUNTIME_DIR") else Path(f"/tmp/acdesktop-sessions-{os.getuid()}"))
     )
     if args.output is None or not (args.merge or args.list):
         base.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -360,12 +360,12 @@ def main():
         shutil.copy2(binary, frozen)
         profile = binary.parent.parent
         artifacts = {}
-        for name in ("agent-desktop", "agent-desktop-linux-clipboard-owner"):
+        for name in ("acdesktop", "acdesktop-linux-clipboard-owner"):
             target = output / "debug" / name
             shutil.copy2(profile / name, target)
             artifacts[str(target)] = hashlib.sha256(target.read_bytes()).hexdigest()
         manifest = dict(binary=str(frozen), binary_sha256=hashlib.sha256(frozen.read_bytes()).hexdigest(),
-                        cli=str(output / "debug/agent-desktop"), artifacts=artifacts,
+                        cli=str(output / "debug/acdesktop"), artifacts=artifacts,
                         source_sha256=source_hash(), tests=names, ignored=sorted(ignored),
                         selection=dict(modules=args.module, ignored_only=args.ignored_only),
                         timeout=args.timeout, shards=plan(names, ignored, args.jobs))

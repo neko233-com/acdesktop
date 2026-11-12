@@ -42,7 +42,7 @@ try:
 except GLib.Error:
     pid = None
 if pid is not None:
-    expected = ('AGENT_DESKTOP_PRIVATE_SESSION=' + os.environ['AGENT_DESKTOP_PRIVATE_SESSION']).encode()
+    expected = ('ACDESKTOP_PRIVATE_SESSION=' + os.environ['ACDESKTOP_PRIVATE_SESSION']).encode()
     assert expected in open('/proc/%s/environ' % pid, 'rb').read().split(bytes([0]))
     os.kill(pid, signal.SIGTERM)
 xml = '''<node><interface name="org.freedesktop.portal.Screenshot">
@@ -153,7 +153,7 @@ def wait_fixture(binary, env, pid):
 
 
 def matrix(binary, tier, repeats, only):
-    private = os.environ.get('AGENT_DESKTOP_PRIVATE_SESSION')
+    private = os.environ.get('ACDESKTOP_PRIVATE_SESSION')
     assert private and os.environ.get('DISPLAY') not in (None, '', ':0', ':1', ':99')
     with tempfile.TemporaryDirectory(prefix='display-matrix-', dir=private) as directory:
         root = Path(directory)

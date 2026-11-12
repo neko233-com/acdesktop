@@ -134,7 +134,7 @@ class Sender:
 @contextmanager
 def observing(ctx):
     tier = ctx.tier
-    assert tier.env["AGENT_DESKTOP_PRIVATE_SESSION"] == str(tier.runtime_dir)
+    assert tier.env["ACDESKTOP_PRIVATE_SESSION"] == str(tier.runtime_dir)
     connection = raw.connect(tier.bus_address)
     pid = raw.call(connection, "org.freedesktop.DBus", "/org/freedesktop/DBus",
                    "org.freedesktop.DBus", "GetConnectionUnixProcessID", "(s)",

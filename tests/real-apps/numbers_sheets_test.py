@@ -35,7 +35,7 @@ class NumbersSheetsTest(unittest.TestCase):
                 **os.environ,
                 "CALLS": str(calls),
                 "FAIL_CLICK": "1" if fail_click else "0",
-                "AGENT_DESKTOP_HOME": str(root),
+                "ACDESKTOP_HOME": str(root),
             },
             capture_output=True, text=True, check=False,
         )

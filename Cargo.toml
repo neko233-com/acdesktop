@@ -1,5 +1,6 @@
 [workspace]
-members         = ["crates/core", "crates/macos", "crates/windows", "crates/linux", "crates/ffi", "crates/mygo-gpui", "src"]
+members         = ["crates/core", "crates/macos", "crates/windows", "crates/linux", "crates/ffi", "src"]
+exclude         = ["crates/mygo-gpui"]
 default-members = ["crates/core", "crates/macos", "crates/windows", "crates/linux", "crates/ffi", "src"]
 resolver = "2"
 

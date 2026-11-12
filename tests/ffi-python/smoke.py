@@ -5,8 +5,8 @@ Usage:
     python3 tests/ffi-python/smoke.py <dylib_path> <header_path>
 
 Environment variables (override positional args):
-    AD_DYLIB_PATH    path to libagent_desktop_ffi.{dylib,so,dll}
-    AD_HEADER_PATH   path to crates/ffi/include/agent_desktop.h
+    AD_DYLIB_PATH    path to libacdesktop_ffi.{dylib,so,dll}
+    AD_HEADER_PATH   path to crates/ffi/include/acdesktop.h
 
 Exit codes:
     0   all legs passed

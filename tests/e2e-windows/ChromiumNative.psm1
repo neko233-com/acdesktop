@@ -119,7 +119,7 @@ function Invoke-ChromiumNativeLeftClick {
     <# A real left-button click via `SetCursorPos` + `mouse_event` - the same
        hardware-level injection family as Invoke-ChromiumNativeRightClick,
        never a message posted directly into a window's queue and never an
-       agent-desktop command. CursorOverlay.ps1's click-through leg needs
+       acdesktop command. CursorOverlay.ps1's click-through leg needs
        exactly this: a click synthesized independently of the product, so a
        WS_EX_TRANSPARENT regression on the overlay window would actually be
        caught rather than papered over by the product's own input path. #>

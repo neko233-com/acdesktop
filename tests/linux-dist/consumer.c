@@ -11,7 +11,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "agent_desktop.h"
+#include "acdesktop.h"
 
 static const char *rc_name(int32_t rc) {
   switch (rc) {

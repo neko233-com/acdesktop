@@ -133,7 +133,7 @@ def launch(tier: Tier, app: str, args: tuple[str, ...] = (), *, settle_s: float 
             event_log.unlink()
         args = args or (str(event_log),)
     if app.endswith(("qt_window.py", "zoo_qt.py")):
-        command = [os.environ.get("AGENT_DESKTOP_QT_PYTHON", "python3"), app]
+        command = [os.environ.get("ACDESKTOP_QT_PYTHON", "python3"), app]
         env.update(QT_ACCESSIBILITY="1", QT_LINUX_ACCESSIBILITY_ALWAYS_ON="1",
                    QT_QPA_PLATFORM="wayland" if tier.name == "wayland" else "xcb")
     elif app.endswith(("zoo_gtk3.py", "zoo_gtk4.py")):

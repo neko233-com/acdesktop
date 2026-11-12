@@ -15,7 +15,7 @@ Import-Module (Join-Path $PSScriptRoot 'Native.psm1') -Force -Global
 Import-Module (Join-Path $PSScriptRoot 'BoundedProcess.psm1') -Force -Global
 Import-Module (Join-Path $PSScriptRoot 'DesktopLease.psm1') -Force -Global
 
-$script:OwnershipMarkerName = '.agent-desktop-e2e-root'
+$script:OwnershipMarkerName = '.acdesktop-e2e-root'
 $script:SuiteRoot = $null
 $script:SuiteOwnerPid = $null
 $script:AgentJsonSerializer = $null
@@ -42,7 +42,7 @@ function Enter-IsolatedEnvironment {
         [long]$MaxCaptureBytes = 2097152
     )
     $hostTemp = [System.IO.Path]::GetTempPath()
-    $root = Join-Path $hostTemp ('agent-desktop-{0}-{1}-{2}' -f $Label, $PID, [guid]::NewGuid().ToString('N').Substring(0, 8))
+    $root = Join-Path $hostTemp ('acdesktop-{0}-{1}-{2}' -f $Label, $PID, [guid]::NewGuid().ToString('N').Substring(0, 8))
     New-Item -ItemType Directory -Path $root -Force | Out-Null
     Set-Content -LiteralPath (Join-Path $root $script:OwnershipMarkerName) -Value $PID -Encoding ASCII -NoNewline
 
@@ -54,9 +54,9 @@ function Enter-IsolatedEnvironment {
     $env:TEMP = Join-Path $root 'tmp'
     $env:TMP = Join-Path $root 'tmp'
     $env:CARGO_TARGET_DIR = Join-Path $root 'cargo-target'
-    $env:AGENT_DESKTOP_E2E_TIMEOUT_SECONDS = [string]$TimeoutSeconds
-    $env:AGENT_DESKTOP_E2E_MAX_CAPTURE_BYTES = [string]$MaxCaptureBytes
-    Remove-Item Env:\AGENT_DESKTOP_SESSION -ErrorAction SilentlyContinue
+    $env:ACDESKTOP_E2E_TIMEOUT_SECONDS = [string]$TimeoutSeconds
+    $env:ACDESKTOP_E2E_MAX_CAPTURE_BYTES = [string]$MaxCaptureBytes
+    Remove-Item Env:\ACDESKTOP_SESSION -ErrorAction SilentlyContinue
 
     $script:SuiteRoot = $root
     $script:SuiteOwnerPid = $PID

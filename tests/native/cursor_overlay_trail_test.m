@@ -35,10 +35,10 @@ int main(void) {
         require(ADTrailWindow == nil && ADTrailLayer == nil && ADTrailPath == NULL,
                 "trail stop must release native state");
 
-        agent_desktop_cursor_overlay_drag_begin(start.x, start.y, false);
-        require(agent_desktop_cursor_overlay_drag_active(), "drag begin must arm tracking");
-        agent_desktop_cursor_overlay_drag_end(end.x, end.y, false);
-        require(!agent_desktop_cursor_overlay_drag_active(), "drag cancel must disarm tracking");
+        acdesktop_cursor_overlay_drag_begin(start.x, start.y, false);
+        require(acdesktop_cursor_overlay_drag_active(), "drag begin must arm tracking");
+        acdesktop_cursor_overlay_drag_end(end.x, end.y, false);
+        require(!acdesktop_cursor_overlay_drag_active(), "drag cancel must disarm tracking");
     }
     return 0;
 }

@@ -68,7 +68,7 @@ class ScenarioRegressionTests(unittest.TestCase):
                 ctx = context(directory, "wayland_actions.unhealthy_shell_named_reason")
                 def run(argv, *, env, **kw):
                     self.assertTrue(Path(argv[1]).is_file())
-                    self.assertEqual(env.get("AGENT_DESKTOP_PRIVATE_SESSION"), env["XDG_RUNTIME_DIR"])
+                    self.assertEqual(env.get("ACDESKTOP_PRIVATE_SESSION"), env["XDG_RUNTIME_DIR"])
                     self.assertNotEqual(env["XDG_RUNTIME_DIR"], str(ctx.tier.runtime_dir))
                     self.assertIn("exit 1", (Path(env["PATH"].split(":")[0]) / "python3").read_text())
                     Path(env["PROBE_STARTS"]).write_text("start\n" * 8)

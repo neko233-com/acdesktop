@@ -46,7 +46,7 @@ def _default_gi_probe() -> str | None:
 
 
 def _openbox_path(env: dict[str, str]) -> Path:
-    root = env.get("AGENT_DESKTOP_WM_ROOT") or "/"
+    root = env.get("ACDESKTOP_WM_ROOT") or "/"
     return Path(root) / "usr" / "bin" / "openbox"
 
 
@@ -84,19 +84,19 @@ def check_prerequisites(
             if not script.is_file():
                 missing.append(f"missing session script for tier {tier}: {script.name}")
     if "x11-openbox" in selected and not _openbox_path(env).is_file():
-        missing.append("missing openbox: set AGENT_DESKTOP_WM_ROOT")
+        missing.append("missing openbox: set ACDESKTOP_WM_ROOT")
     reason = gi_probe()
     if reason:
         missing.append(reason)
-    binary = env.get("AGENT_DESKTOP_E2E_BIN_SRC") or env.get("AGENT_DESKTOP_E2E_BIN") or str(
-        session.HARNESS_ROOT.parent.parent / "target" / "release" / "agent-desktop"
+    binary = env.get("ACDESKTOP_E2E_BIN_SRC") or env.get("ACDESKTOP_E2E_BIN") or str(
+        session.HARNESS_ROOT.parent.parent / "target" / "release" / "acdesktop"
     )
     if not Path(binary).is_file():
         missing.append(f"missing release binary: {binary}")
     session_base = Path(
-        env.get("AGENT_DESKTOP_SESSION_BASE")
-        or (Path(env["XDG_RUNTIME_DIR"]) / "agent-desktop-sessions"
-            if env.get("XDG_RUNTIME_DIR") else Path(f"/tmp/agent-desktop-sessions-{os.getuid()}"))
+        env.get("ACDESKTOP_SESSION_BASE")
+        or (Path(env["XDG_RUNTIME_DIR"]) / "acdesktop-sessions"
+            if env.get("XDG_RUNTIME_DIR") else Path(f"/tmp/acdesktop-sessions-{os.getuid()}"))
     )
     try:
         session_base.mkdir(mode=0o700, parents=True, exist_ok=True)

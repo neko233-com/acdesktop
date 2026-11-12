@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A/B latency probe: two agent-desktop binaries against one target app.
+"""A/B latency probe: two acdesktop binaries against one target app.
 
 Modes:
   fixture  -- full probe incl. mutating actions; ONLY safe against the
@@ -27,15 +27,15 @@ ENVS = {}
 def env_for(binary):
     if binary not in ENVS:
         env = dict(os.environ)
-        env["AGENT_DESKTOP_HOME"] = tempfile.mkdtemp(prefix="ad-perf-state-")
-        env.pop("AGENT_DESKTOP_SESSION", None)
+        env["ACDESKTOP_HOME"] = tempfile.mkdtemp(prefix="ad-perf-state-")
+        env.pop("ACDESKTOP_SESSION", None)
         ENVS[binary] = env
     return ENVS[binary]
 
 
 def run(binary, *args, timeout=90):
     start = time.monotonic()
-    lease = os.environ.get("AGENT_DESKTOP_INTERACTION_LEASE_FD")
+    lease = os.environ.get("ACDESKTOP_INTERACTION_LEASE_FD")
     proc = subprocess.run(
         [binary, *args], capture_output=True, text=True, timeout=timeout, env=env_for(binary),
         pass_fds=(int(lease),) if lease else (),

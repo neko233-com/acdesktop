@@ -104,7 +104,7 @@ function Get-CursorOverlayElementCenter {
 function Get-CursorOverlayChildProcessesForSession {
     <#
     .SYNOPSIS
-        Every agent-desktop.exe process whose command line carries both the
+        Every acdesktop.exe process whose command line carries both the
         --cursor-overlay-child argv flag and SessionId - the renderer's own
         reaper matcher: PowerShell 5.1 cannot read another process's
         environment block, so the child's argv (not its env marker) is the
@@ -114,7 +114,7 @@ function Get-CursorOverlayChildProcessesForSession {
     param([Parameter(Mandatory = $true)][string]$SessionId)
     $flagPattern = [regex]::Escape('--cursor-overlay-child')
     $sessionPattern = [regex]::Escape($SessionId)
-    return @(Get-CimInstance Win32_Process -Filter "Name='agent-desktop.exe'" -ErrorAction SilentlyContinue |
+    return @(Get-CimInstance Win32_Process -Filter "Name='acdesktop.exe'" -ErrorAction SilentlyContinue |
             Where-Object { $_.CommandLine -and $_.CommandLine -match $flagPattern -and $_.CommandLine -match $sessionPattern })
 }
 

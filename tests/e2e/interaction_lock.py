@@ -6,11 +6,11 @@ import subprocess
 import sys
 
 
-LEASE_FD_ENV = "AGENT_DESKTOP_INTERACTION_LEASE_FD"
+LEASE_FD_ENV = "ACDESKTOP_INTERACTION_LEASE_FD"
 
 
 def canonical_lock_path(root="/tmp"):
-    directory = os.path.join(root, f"agent-desktop-{os.geteuid()}")
+    directory = os.path.join(root, f"acdesktop-{os.geteuid()}")
     return directory, os.path.join(directory, "interaction.lock")
 
 

@@ -135,11 +135,11 @@ def cli(binary, env, *args):
             [str(binary), *args], capture_output=True, text=True, timeout=60, env=env
         )
     except subprocess.TimeoutExpired as error:
-        raise Failure(f"agent-desktop timed out: {' '.join(args)}") from error
+        raise Failure(f"acdesktop timed out: {' '.join(args)}") from error
     try:
         return result.returncode, json.loads(result.stdout)
     except json.JSONDecodeError as error:
-        raise Failure(result.stderr.strip() or "agent-desktop returned non-JSON output") from error
+        raise Failure(result.stderr.strip() or "acdesktop returned non-JSON output") from error
 
 
 def ok(result, label):
@@ -230,11 +230,11 @@ def run(binary):
     pid = None
     close_attempted = False
 
-    with tempfile.TemporaryDirectory(prefix="agent-desktop-native-menus-") as state_home:
+    with tempfile.TemporaryDirectory(prefix="acdesktop-native-menus-") as state_home:
         env = os.environ.copy()
-        env["AGENT_DESKTOP_HOME"] = state_home
-        env.pop("AGENT_DESKTOP_SESSION", None)
-        env.pop("AGENT_DESKTOP_AGENT_ID", None)
+        env["ACDESKTOP_HOME"] = state_home
+        env.pop("ACDESKTOP_SESSION", None)
+        env.pop("ACDESKTOP_AGENT_ID", None)
         try:
             need(textedit_running() is False, "TextEdit started during preflight; no app action was attempted")
             launch = ok(cli(binary, env, "launch", "TextEdit"), "quiet TextEdit launch")
@@ -313,7 +313,7 @@ def run(binary):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--bin", required=True, help="absolute path to the built agent-desktop binary")
+    parser.add_argument("--bin", required=True, help="absolute path to the built acdesktop binary")
     return run(Path(parser.parse_args().bin))
 
 

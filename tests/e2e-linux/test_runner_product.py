@@ -32,10 +32,10 @@ def fake_tier(root: Path, name: str = "x11-openbox") -> Tier:
 
 
 def make_binary(root: Path, body: str) -> Path:
-    path = Path(root) / "fake-agent-desktop"
+    path = Path(root) / "fake-acdesktop"
     path.write_text(f"#!/bin/sh\n{body}\n")
     path.chmod(0o700)
-    helper = root / "agent-desktop-linux-clipboard-owner"
+    helper = root / "acdesktop-linux-clipboard-owner"
     helper.write_text("#!/bin/sh\necho clipboard-owner\n")
     helper.chmod(0o700)
     return path
@@ -44,13 +44,13 @@ def make_binary(root: Path, body: str) -> Path:
 class StageTests(unittest.TestCase):
     def test_staged_program_can_invoke_adjacent_clipboard_owner(self):
         with tempfile.TemporaryDirectory() as root:
-            source = make_binary(Path(root), 'exec "$(dirname "$0")/agent-desktop-linux-clipboard-owner"')
+            source = make_binary(Path(root), 'exec "$(dirname "$0")/acdesktop-linux-clipboard-owner"')
             suite = Path(root) / "suite"
             target = stage.stage_binary(source, suite)
             result = subprocess.run([str(target)], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stdout.strip(), "clipboard-owner")
-            helper = target.with_name("agent-desktop-linux-clipboard-owner")
+            helper = target.with_name("acdesktop-linux-clipboard-owner")
             helper.chmod(0o700)
             helper.write_text("#!/bin/sh\necho changed\n")
             self.assertFalse(stage.verify_staged(target, suite))
@@ -73,7 +73,7 @@ class StageTests(unittest.TestCase):
             target = stage.stage_binary(source, suite)
             self.assertTrue(target.is_file())
             self.assertFalse(os.access(target, os.W_OK))
-            self.assertTrue((suite / "bin" / "agent-desktop.sha256").is_file())
+            self.assertTrue((suite / "bin" / "acdesktop.sha256").is_file())
             self.assertTrue(stage.verify_staged(target, suite))
             second = stage.stage_binary(source, suite)
             self.assertEqual(second, target)
@@ -97,9 +97,9 @@ class StageTests(unittest.TestCase):
 
 class EnvelopeTests(unittest.TestCase):
     def test_cli_child_inherits_the_held_interaction_lease(self):
-        body = '''exec python3 -c 'import json, os; os.fstat(int(os.environ["AGENT_DESKTOP_INTERACTION_LEASE_FD"])); print(json.dumps({"ok": True, "data": {"inherited": True}}))' '''
+        body = '''exec python3 -c 'import json, os; os.fstat(int(os.environ["ACDESKTOP_INTERACTION_LEASE_FD"])); print(json.dumps({"ok": True, "data": {"inherited": True}}))' '''
         with tempfile.TemporaryFile() as lease, mock.patch.dict(
-                os.environ, {"AGENT_DESKTOP_INTERACTION_LEASE_FD": str(lease.fileno())}):
+                os.environ, {"ACDESKTOP_INTERACTION_LEASE_FD": str(lease.fileno())}):
             envelope = self.run_argv(body)
         self.assertTrue(envelope.ok, envelope.raw)
         self.assertEqual(envelope.data, {"inherited": True})
@@ -108,7 +108,7 @@ class EnvelopeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             binary = make_binary(Path(root), body)
             tier = fake_tier(Path(root))
-            with mock.patch.dict(os.environ, {"AGENT_DESKTOP_E2E_BIN": str(binary)}):
+            with mock.patch.dict(os.environ, {"ACDESKTOP_E2E_BIN": str(binary)}):
                 return product.run_product(tier, ["snapshot"], **kw)
 
     def test_valid_envelope_parses(self):
@@ -169,7 +169,7 @@ class EnvelopeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             binary = main._write_lying_binary(Path(root))
             tier = fake_tier(Path(root))
-            with mock.patch.dict(os.environ, {"AGENT_DESKTOP_E2E_BIN": str(binary)}):
+            with mock.patch.dict(os.environ, {"ACDESKTOP_E2E_BIN": str(binary)}):
                 envelope = product.run_product(tier, ["click", "@e1"])
         self.assertTrue(envelope.ok)
         self.assertEqual(envelope.data, {"headless": True})

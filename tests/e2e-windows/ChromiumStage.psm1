@@ -12,7 +12,7 @@
     the gate does not force it structurally.
 
     Nothing here touches a command envelope field (`.ok`/`.error`/
-    `.disposition`/`.data`) or invokes the staged `agent-desktop.exe` -
+    `.disposition`/`.data`) or invokes the staged `acdesktop.exe` -
     every action is a raw file write, `Start-Process`/`Get-Process` read,
     raw-Win32 foreground staging (`NativeDesktop.psm1`'s
     `Set-NativeForegroundWindow`/`Wait-NativeForegroundToSettle`, the same

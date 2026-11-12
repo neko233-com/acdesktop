@@ -310,6 +310,52 @@ jobs:
       - name: Embedded visual viewer and release workflow tests
         run: node --test src/visual_debug/viewer_filter.test.js tests/release/release-workflows.test.js
 
+      - name: Status reports accessibility granted on a live bus
+        run: |
+          cat > "$RUNNER_TEMP/status-granted.sh" <<'SCRIPT'
+          set -eu
+          JSON=$(target/release/acdesktop status)
+          printf '%s\n' "$JSON"
+          printf '%s' "$JSON" | python3 -c '
+          import json, sys
+          doc = json.load(sys.stdin)
+          assert doc.get("ok") is True, "status did not succeed"
+          state = doc["data"]["permissions"]["accessibility"]["state"]
+          assert state == "granted", "accessibility state is " + state
+          '
+          SCRIPT
+          dbus-run-session -- xvfb-run -a bash "$RUNNER_TEMP/status-granted.sh"
+
+      - name: Status and permissions report the missing bus as denied accessibility
+        run: |
+          XDG_RUNTIME_DIR=$(mktemp -d)
+          export DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent XDG_RUNTIME_DIR
+          for command in status permissions; do
+            JSON=$(target/release/acdesktop "$command")
+            printf '%s\n' "$JSON"
+            printf '%s' "$JSON" | python3 -c '
+          import json, sys
+          doc = json.load(sys.stdin)
+          assert doc.get("ok") is True, "the diagnostic failed instead of reporting the bus"
+          data = doc["data"]
+          access = (data.get("permissions") or data)["accessibility"]
+          assert access["state"] == "denied", "accessibility state is " + access["state"]
+          assert "session bus" in access["suggestion"], "suggestion does not name the session bus"
+          '
+          done
+          RC=0
+          JSON=$(target/release/acdesktop click @s8f3k2p9:e1) || RC=$?
+          test "$RC" -eq 1
+          printf '%s\n' "$JSON"
+          printf '%s' "$JSON" | python3 -c '
+          import json, sys
+          doc = json.load(sys.stdin)
+          assert doc.get("ok") is False, "click unexpectedly succeeded without a bus"
+          assert doc["error"]["code"] == "PERM_DENIED", "unexpected code " + doc["error"]["code"]
+          assert "session bus" in doc["error"]["suggestion"], "error does not carry the recovery step"
+          '
+
+
   test-windows:
     name: Test (Windows)
     runs-on: windows-latest
@@ -402,9 +448,9 @@ jobs:
           Write-Host 'OK: core source keeps windows conditionals to the 2 allowlisted shims'
 
       - name: Check Win32_UI_Shell exclusion
-        shell: powershell
+        shell: pwsh
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-win32-ui-shell-exclusion.ps1
+          pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-win32-ui-shell-exclusion.ps1
 
       - name: Clippy
         run: cargo clippy --locked -p acdesktop-core -p acdesktop-windows -p acdesktop -p acdesktop-ffi --all-targets -- -D warnings
@@ -447,13 +493,13 @@ jobs:
         run: cargo build --locked --release -p acdesktop
 
       - name: Windows E2E contract gate (scan and self-test halves)
-        shell: powershell
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-e2e-windows-contract.ps1 -SelfTest
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-e2e-windows-contract.ps1 -SelfTest
 
       - name: Seeded-failure run asserts a non-zero exit code
-        shell: powershell
+        shell: pwsh
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\e2e-windows\Run-E2E.ps1 -SelfTestSeedFailure
+          pwsh -NoProfile -ExecutionPolicy Bypass -File .\tests\e2e-windows\Run-E2E.ps1 -SelfTestSeedFailure
           if ($LASTEXITCODE -eq 0) {
             Write-Host 'FAIL: Run-E2E.ps1 -SelfTestSeedFailure exited 0; a failing leg must reach a non-zero exit code'
             exit 1
@@ -462,18 +508,18 @@ jobs:
           exit 0
 
       - name: Capture redaction gate
-        shell: powershell
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-capture-redaction.ps1
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-capture-redaction.ps1
 
       - name: run-windows-e2e-ci.ps1 refusal-guard self-test
-        shell: powershell
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\fixtures\run-windows-e2e-ci-refusal-selftest.ps1
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\fixtures\run-windows-e2e-ci-refusal-selftest.ps1
 
       - name: E2E fixture compile smoke
-        shell: powershell
+        shell: pwsh
         run: |
           $smokeOut = Join-Path $env:RUNNER_TEMP 'acdesktop-fixture-smoke'
-          powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\fixture-app-windows\build.ps1 -OutputDir $smokeOut
+          pwsh -NoProfile -ExecutionPolicy Bypass -File .\tests\fixture-app-windows\build.ps1 -OutputDir $smokeOut
           if ($LASTEXITCODE -ne 0) {
             Write-Host "FAIL: tests\fixture-app-windows\build.ps1 exited $LASTEXITCODE"
             exit 1

@@ -17,7 +17,7 @@ class ConsumerEntryTests(unittest.TestCase):
             for name in ("run-consumer.sh", "observations.sh"):
                 shutil.copy(Path(__file__).with_name(name), scripts / name)
             archive = root / "archive"
-            for name in ("lib/libagent_desktop_ffi.so", "include/agent_desktop.h"):
+            for name in ("lib/libacdesktop_ffi.so", "include/acdesktop.h"):
                 path = archive / name
                 path.parent.mkdir(exist_ok=True, parents=True)
                 path.touch()
@@ -54,7 +54,7 @@ else:
 ''')
             env = dict(os.environ, PATH=f"{doubles}:{os.environ['PATH']}",
                        FAKE_CONSUMER=str(consumer), AD_APP=str(app),
-                       AGENT_DESKTOP_PRIVATE_SESSION=str(root))
+                       ACDESKTOP_PRIVATE_SESSION=str(root))
             result = subprocess.run(["bash", str(scripts / "run-consumer.sh"), str(archive)],
                                     env=env, capture_output=True, text=True, timeout=10)
             self.assertEqual(result.returncode, 73, result.stdout + result.stderr)
@@ -62,6 +62,6 @@ else:
                                        if line.startswith('{"AD_EXPECT_REAL"')))
             self.assertEqual(observed, {
                 "AD_EXPECT_REAL": "1", "AD_APP": str(app),
-                "AD_DYLIB_PATH": str(archive / "lib/libagent_desktop_ffi.so"),
-                "AD_HEADER_PATH": str(archive / "include/agent_desktop.h"),
+                "AD_DYLIB_PATH": str(archive / "lib/libacdesktop_ffi.so"),
+                "AD_HEADER_PATH": str(archive / "include/acdesktop.h"),
             })

@@ -111,7 +111,7 @@ function Initialize-ShellComProbe {
     if (-not (Test-Path -LiteralPath $probeSource)) {
         throw "Initialize-ShellComProbe: the shell-probe source is missing at $probeSource"
     }
-    $buildDir = Join-Path ([System.IO.Path]::GetTempPath()) ('agent-desktop-shell26-' + $PID)
+    $buildDir = Join-Path ([System.IO.Path]::GetTempPath()) ('acdesktop-shell26-' + $PID)
     New-Item -ItemType Directory -Path $buildDir -Force | Out-Null
     $exe = Join-Path $buildDir 'shell-probe.exe'
     $needsBuild = -not (Test-Path -LiteralPath $exe)

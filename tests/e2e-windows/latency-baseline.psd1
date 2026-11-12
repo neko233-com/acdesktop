@@ -9,7 +9,7 @@
 
         What does exist, committed 2026-08-17, is
         `probes/windows/24-fixture-e2e/captures/cost-baseline-devbox.json`
-        (min-of-seven, warm-up discarded) - four whole `agent-desktop`
+        (min-of-seven, warm-up discarded) - four whole `acdesktop`
         CLI invocations, not harness Assert-Effect legs: `snapshot --app
         notepad.exe -i`, `snapshot --app explorer.exe -i`, `list-apps`,
         `list-windows`. The four entries below key each command exactly

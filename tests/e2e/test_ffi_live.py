@@ -5,7 +5,7 @@ import unittest
 
 from ffi_live import EXECUTE_ARGS, EXECUTE_TIMEOUT_ARGS, Action, ref_for
 
-HEADER = pathlib.Path(__file__).resolve().parents[2] / "crates/ffi/include/agent_desktop.h"
+HEADER = pathlib.Path(__file__).resolve().parents[2] / "crates/ffi/include/acdesktop.h"
 
 
 SCALAR_CTYPES = {

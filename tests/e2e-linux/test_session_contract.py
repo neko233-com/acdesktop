@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 
 from runner import session
 
-SKIP_LIVE_ENV = "AGENT_DESKTOP_E2E_SKIP_LIVE"
+SKIP_LIVE_ENV = "ACDESKTOP_E2E_SKIP_LIVE"
 
 
 def live_allowed() -> bool:
@@ -205,8 +205,8 @@ class EnvFileTests(unittest.TestCase):
             base = Path(directory)
             state = base / "state"
             state.mkdir()
-            values = {"AGENT_DESKTOP_PRIVATE_SESSION": str(base),
-                      "AGENT_DESKTOP_HOME": str(state), "DBUS_SESSION_BUS_ADDRESS": "unix:path=/private/bus",
+            values = {"ACDESKTOP_PRIVATE_SESSION": str(base),
+                      "ACDESKTOP_HOME": str(state), "DBUS_SESSION_BUS_ADDRESS": "unix:path=/private/bus",
                       "LD_LIBRARY_PATH": "/private/wrapper-libraries"}
             with mock.patch.dict(os.environ, {"PATH": "/private/tools/bin"}):
                 tier = session._build_tier("x11-openbox", values)
@@ -219,8 +219,8 @@ class EnvFileTests(unittest.TestCase):
             root = Path(directory)
             state = root / "state"
             state.mkdir()
-            tier = session._build_tier("wayland", {"AGENT_DESKTOP_PRIVATE_SESSION": directory,
-                "AGENT_DESKTOP_HOME": str(state), "DBUS_SESSION_BUS_ADDRESS": "unix:path=/private/bus",
+            tier = session._build_tier("wayland", {"ACDESKTOP_PRIVATE_SESSION": directory,
+                "ACDESKTOP_HOME": str(state), "DBUS_SESSION_BUS_ADDRESS": "unix:path=/private/bus",
                 "DISPLAY": ":100", "WAYLAND_DISPLAY": "wayland-owned"})
             self.assertIsNone(tier.display)
             self.assertNotIn("DISPLAY", tier.env)
@@ -280,14 +280,14 @@ class StubWrapperTests(unittest.TestCase):
     def healthy_stub(self) -> Path:
         return self.stub_session(
             'while [ "$1" != "--" ]; do shift; done; shift\n'
-            'rt=$(mktemp -d "$AGENT_DESKTOP_SESSION_BASE/rt.XXXXXX")\n'
+            'rt=$(mktemp -d "$ACDESKTOP_SESSION_BASE/rt.XXXXXX")\n'
             'export XDG_RUNTIME_DIR=$rt\n'
             'export TMPDIR=$rt/tmp\n'
             'export DBUS_SESSION_BUS_ADDRESS=unix:path=$rt/bus\n'
-            'export AGENT_DESKTOP_PRIVATE_SESSION=$rt\n'
+            'export ACDESKTOP_PRIVATE_SESSION=$rt\n'
             'mkdir -p "$rt/ad-home" "$rt/tmp"\n'
             "printf 'XDG_RUNTIME_DIR=%s\\nDISPLAY=%s\\nDBUS_SESSION_BUS_ADDRESS=%s\\n"
-            "AGENT_DESKTOP_PRIVATE_SESSION=%s\\nAGENT_DESKTOP_HOME=%s\\nTMPDIR=%s\\n' \\\n"
+            "ACDESKTOP_PRIVATE_SESSION=%s\\nACDESKTOP_HOME=%s\\nTMPDIR=%s\\n' \\\n"
             '  "$rt" ":201" "$DBUS_SESSION_BUS_ADDRESS" "$rt" "$rt/ad-home" "$TMPDIR" > "$AD_TIER_ENV_FILE"\n'
             'printf \'%s %s\\n\' "$AD_RUNNER_PID" "$AD_RUNNER_START" > "$rt/harness-owner"\n'
             'trap \'rm -rf -- "$rt"\' EXIT\n'
@@ -296,8 +296,8 @@ class StubWrapperTests(unittest.TestCase):
 
     def env(self):
         return {
-            "AGENT_DESKTOP_SESSION_BASE": str(self.base),
-            "AGENT_DESKTOP_E2E_SUITE": str(self.suite),
+            "ACDESKTOP_SESSION_BASE": str(self.base),
+            "ACDESKTOP_E2E_SUITE": str(self.suite),
         }
 
     def test_start_tier_builds_and_tears_down(self):
@@ -373,7 +373,7 @@ class LiveTierTests(unittest.TestCase):
         suite = Path(tempfile.mkdtemp(prefix="ad-e2e-live-suite-"))
         for name in ("x11-openbox", "x11-mutter", "wayland"):
             with self.subTest(tier=name), \
-                mock.patch.dict(os.environ, {"AGENT_DESKTOP_E2E_SUITE": str(suite)}):
+                mock.patch.dict(os.environ, {"ACDESKTOP_E2E_SUITE": str(suite)}):
                 with session.start_tier(name, 120.0) as tier:
                     self.assertTrue(tier.runtime_dir.is_dir())
                     self.assertTrue(tier.display or tier.wayland_display)

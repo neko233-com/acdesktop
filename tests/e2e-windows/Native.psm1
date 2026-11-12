@@ -6,7 +6,7 @@
     file-identity and exclusivity-probe reads are how Enter-DesktopLease
     (DesktopLease.psm1) mirrors crates/windows/src/system/interaction_lease's
     canonical-path resolution and its adoption protocol without going
-    through agent-desktop.exe itself; the job-object primitives are how
+    through acdesktop.exe itself; the job-object primitives are how
     BoundedProcess.psm1 guarantees a spawned tree cannot outlive its
     deadline.
 

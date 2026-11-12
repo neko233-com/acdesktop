@@ -195,8 +195,8 @@ def _signal_process(pid: int, sig: int) -> None:
 
 
 def _build_tier(name: str, env_values: dict[str, str]) -> Tier:
-    runtime_dir = Path(env_values["AGENT_DESKTOP_PRIVATE_SESSION"])
-    state_root = Path(env_values["AGENT_DESKTOP_HOME"])
+    runtime_dir = Path(env_values["ACDESKTOP_PRIVATE_SESSION"])
+    state_root = Path(env_values["ACDESKTOP_HOME"])
     state_root.chmod(0o700)
     env = {
         "HOME": os.environ.get("HOME", str(Path.home())),
@@ -282,7 +282,7 @@ def _env_runtime_dir(env_file: Path, base: Path, existing: set[Path]) -> Path | 
             continue
     if not env_file.exists():
         return None
-    value = _parse_env_file(env_file.read_text()).get("AGENT_DESKTOP_PRIVATE_SESSION", "")
+    value = _parse_env_file(env_file.read_text()).get("ACDESKTOP_PRIVATE_SESSION", "")
     return Path(value) if value else None
 
 
@@ -326,16 +326,16 @@ def _teardown(
 @contextlib.contextmanager
 def start_tier(name: str, deadline: float):
     argv = _tier_argv(name)
-    work_dir = Path(os.environ.get("AGENT_DESKTOP_E2E_SUITE") or tempfile.mkdtemp(prefix="ad-tier-"))
+    work_dir = Path(os.environ.get("ACDESKTOP_E2E_SUITE") or tempfile.mkdtemp(prefix="ad-tier-"))
     work_dir.mkdir(parents=True, exist_ok=True)
     env_file = work_dir / f"{name}.env"
     release_file = work_dir / f"{name}.release"
     for marker in (env_file, Path(f"{env_file}.tmp"), release_file):
         marker.unlink(missing_ok=True)
     base = Path(
-        os.environ.get("AGENT_DESKTOP_SESSION_BASE")
-        or (Path(os.environ["XDG_RUNTIME_DIR"]) / "agent-desktop-sessions"
-            if os.environ.get("XDG_RUNTIME_DIR") else Path(f"/tmp/agent-desktop-sessions-{os.getuid()}"))
+        os.environ.get("ACDESKTOP_SESSION_BASE")
+        or (Path(os.environ["XDG_RUNTIME_DIR"]) / "acdesktop-sessions"
+            if os.environ.get("XDG_RUNTIME_DIR") else Path(f"/tmp/acdesktop-sessions-{os.getuid()}"))
     )
     existing = set(base.glob("rt.*"))
     child_env = dict(os.environ)

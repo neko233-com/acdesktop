@@ -6,7 +6,7 @@ from pathlib import Path
 
 from runner.session import _load_bounded_process
 
-HELPER_NAME = "agent-desktop-linux-clipboard-owner"
+HELPER_NAME = "acdesktop-linux-clipboard-owner"
 
 
 def _sha256(path: Path) -> str:
@@ -21,9 +21,9 @@ def stage_binary(source: Path, suite_dir: Path, bounded=None) -> Path:
     source = Path(source)
     bin_dir = Path(suite_dir) / "bin"
     bin_dir.mkdir(parents=True, exist_ok=True)
-    for name, original in ((HELPER_NAME, source.with_name(HELPER_NAME)), ("agent-desktop", source)):
+    for name, original in ((HELPER_NAME, source.with_name(HELPER_NAME)), ("acdesktop", source)):
         _stage_image(original, bin_dir / name)
-    target = bin_dir / "agent-desktop"
+    target = bin_dir / "acdesktop"
     bounded = bounded or _load_bounded_process()
     result = bounded.run_bounded([str(target), "--version"], timeout_seconds=15)
     if result.returncode != 0:

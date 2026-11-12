@@ -54,7 +54,7 @@ int main(void) {
         [stage addSublayer:pointer];
 
         NSString *small = writePNG(@"ad-cursor-small", 20, 30);
-        require(agent_desktop_cursor_overlay_image(0, small.fileSystemRepresentation, 4.0, 2.0),
+        require(acdesktop_cursor_overlay_image(0, small.fileSystemRepresentation, 4.0, 2.0),
                 "image path must be accepted");
         ADPointerImageApply(window, pointer);
         require(ADImageLayer.superlayer == stage, "image must be a sibling of the pointer");
@@ -85,7 +85,7 @@ int main(void) {
         struct stat before;
         require(stat(original.fileSystemRepresentation, &before) == 0,
                 "original image stat must succeed");
-        agent_desktop_cursor_overlay_image(0, original.fileSystemRepresentation, 0.0, 0.0);
+        acdesktop_cursor_overlay_image(0, original.fileSystemRepresentation, 0.0, 0.0);
         ADPointerImageApply(window, pointer);
         require(pointer.hidden && near(ADImageLayer.bounds.size.width, 20.0) &&
                     near(ADImageLayer.bounds.size.height, 30.0),
@@ -108,9 +108,9 @@ int main(void) {
 
         AgentDesktopCursorStyle style = *ADStyle();
         style.size = 4.0;
-        agent_desktop_cursor_overlay_style(&style);
+        acdesktop_cursor_overlay_style(&style);
         NSString *large = writePNG(@"ad-cursor-large", 200, 200);
-        agent_desktop_cursor_overlay_image(0, large.fileSystemRepresentation, 0.0, 0.0);
+        acdesktop_cursor_overlay_image(0, large.fileSystemRepresentation, 0.0, 0.0);
         ADPointerImageApply(window, pointer);
         CGSize fitted = ADImageLayer.bounds.size;
         require(fitted.width <= 152.0 + 0.001 && fitted.height <= 172.0 + 0.001,
@@ -122,18 +122,18 @@ int main(void) {
         require(ADImageLayer.superlayer == nil && !pointer.hidden,
                 "a missing image must fall back to the arrow");
 
-        agent_desktop_cursor_overlay_image(0, small.fileSystemRepresentation, 0.0, 0.0);
+        acdesktop_cursor_overlay_image(0, small.fileSystemRepresentation, 0.0, 0.0);
         ADPointerImageApply(window, pointer);
         require(pointer.hidden, "a restored image must be drawn again");
-        agent_desktop_cursor_overlay_image(0, NULL, 0.0, 0.0);
+        acdesktop_cursor_overlay_image(0, NULL, 0.0, 0.0);
         ADPointerImageApply(window, pointer);
         require(ADImageLayer.superlayer == nil && !pointer.hidden,
                 "clearing the image must restore the arrow");
 
         style.size = 1.0;
-        agent_desktop_cursor_overlay_style(&style);
+        acdesktop_cursor_overlay_style(&style);
         NSString *hand = writePNG(@"ad-cursor-hand", 26, 28);
-        agent_desktop_cursor_overlay_image(1, hand.fileSystemRepresentation, 8.0, 0.0);
+        acdesktop_cursor_overlay_image(1, hand.fileSystemRepresentation, 8.0, 0.0);
         ADPointerImageApply(window, pointer);
         require(!pointer.hidden && ADImageLayer.superlayer == nil,
                 "a pointer image alone must leave the arrow until arrival");
@@ -141,7 +141,7 @@ int main(void) {
         require(pointer.hidden && near(ADImageLayer.bounds.size.width, 26.0) &&
                     near(ADImageLayer.anchorPoint.x, 8.0 / 26.0),
                 "arrival on a control must show the pointer image at its hotspot");
-        agent_desktop_cursor_overlay_image(0, small.fileSystemRepresentation, 4.0, 2.0);
+        acdesktop_cursor_overlay_image(0, small.fileSystemRepresentation, 4.0, 2.0);
         ADPointerImageSelect(window, pointer, false);
         require(pointer.hidden && near(ADImageLayer.bounds.size.width, 20.0),
                 "departure must switch back to the arrow image");
@@ -158,7 +158,7 @@ int main(void) {
         require(near(ADImageLayer.bounds.size.width, 26.0),
                 "a release scheduled before a newer arrival must not hide that arrival's pointer");
         ADPointerImageSelect(window, pointer, false);
-        agent_desktop_cursor_overlay_image(0, NULL, 0.0, 0.0);
+        acdesktop_cursor_overlay_image(0, NULL, 0.0, 0.0);
         ADPointerImageApply(window, pointer);
         require(!pointer.hidden && ADImageLayer.superlayer == nil,
                 "departure without an arrow image must show the built-in arrow");
@@ -169,7 +169,7 @@ int main(void) {
         NSString *limit = writePNG(@"ad-cursor-limit", 1024, 32);
         require(ADImagePixelsFit([NSData dataWithContentsOfFile:limit]),
                 "1024-pixel-wide IHDR must pass the native bound");
-        agent_desktop_cursor_overlay_image(0, limit.fileSystemRepresentation, 0.0, 0.0);
+        acdesktop_cursor_overlay_image(0, limit.fileSystemRepresentation, 0.0, 0.0);
         ADPointerImageSelect(window, pointer, false);
         ADPointerImageApply(window, pointer);
         require(pointer.hidden && ADImageLayer.superlayer != nil,
@@ -183,7 +183,7 @@ int main(void) {
                 "1025-pixel-wide IHDR must fail the native bound");
         require([[NSData dataWithBytes:header length:sizeof(header)] writeToFile:bomb atomically:YES],
                 "oversized fixture must be written");
-        agent_desktop_cursor_overlay_image(0, bomb.fileSystemRepresentation, 0.0, 0.0);
+        acdesktop_cursor_overlay_image(0, bomb.fileSystemRepresentation, 0.0, 0.0);
         ADPointerImageSelect(window, pointer, false);
         ADPointerImageApply(window, pointer);
         require(!pointer.hidden && ADImageLayer.superlayer == nil,
@@ -193,7 +193,7 @@ int main(void) {
         bytes[18] = bytes[22] = 0;
         bytes[19] = bytes[23] = 32;
         require([broken writeToFile:bomb atomically:YES], "invalid fixture must be written");
-        agent_desktop_cursor_overlay_image(0, bomb.fileSystemRepresentation, 0.0, 0.0);
+        acdesktop_cursor_overlay_image(0, bomb.fileSystemRepresentation, 0.0, 0.0);
         ADPointerImageApply(window, pointer);
         require(!pointer.hidden && ADImageLayer.superlayer == nil,
                 "PNG decode failure must restore the arrow");
@@ -227,7 +227,7 @@ int main(void) {
                 "replacement must be a decodable non-PNG image");
         for (NSData *data in @[tiff, [@"%PDF-1.7\ninvalid" dataUsingEncoding:NSUTF8StringEncoding]]) {
             NSString *swapped = writePNG(@"ad-cursor-swapped", 20, 30);
-            agent_desktop_cursor_overlay_image(0, swapped.fileSystemRepresentation, 0.0, 0.0);
+            acdesktop_cursor_overlay_image(0, swapped.fileSystemRepresentation, 0.0, 0.0);
             ADPointerImageApply(window, pointer);
             require(pointer.hidden, "PNG must be drawn before replacement");
             require([data writeToFile:swapped atomically:YES], "replacement must be written");
@@ -237,7 +237,7 @@ int main(void) {
             [[NSFileManager defaultManager] removeItemAtPath:swapped error:nil];
         }
         NSString *fifo = writePNG(@"ad-cursor-fifo", 20, 30);
-        agent_desktop_cursor_overlay_image(0, fifo.fileSystemRepresentation, 0.0, 0.0);
+        acdesktop_cursor_overlay_image(0, fifo.fileSystemRepresentation, 0.0, 0.0);
         ADPointerImageApply(window, pointer);
         require(pointer.hidden, "PNG must be drawn before FIFO replacement");
         require([[NSFileManager defaultManager] removeItemAtPath:fifo error:nil],

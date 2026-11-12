@@ -93,7 +93,7 @@ LISTENER_ALLOWLIST = {
 }
 LISTENER = re.compile(r"(?<![A-Za-z0-9_])(?:(?:UnixListener|TcpListener|UdpSocket|UnixDatagram)\s*::\s*bind\w*"
                       r"|CreateNamedPipe[AW]?|NamedPipeServer|ServerOptions|libc\s*::\s*listen)(?![A-Za-z0-9_])")
-HOST_MARKER = "AGENT_DESKTOP_INTERNAL_COMMAND_HOST"
+HOST_MARKER = "ACDESKTOP_INTERNAL_COMMAND_HOST"
 HOST_MARKER_ALLOWLIST = {"crates/macos/src/system/process/legacy_host.rs"}
 TEST_FILE = re.compile(r"(^|/)tests/|_tests\.rs$|test_support")
 TEST_MODULE = re.compile(r"#\s*\[\s*cfg\s*\(\s*test\s*\)\s*\]\s*(?:pub(?:\s*\([^)]*\))?\s+)?mod\s+\w+\s*\{")
@@ -355,8 +355,8 @@ def check(repo):
                 continue
             rel = os.path.relpath(f, repo)
             for b in banned:
-                if re.search(rf"(?<![A-Za-z0-9_])agent_desktop_{b}(?![A-Za-z0-9_])", src.code):
-                    err("G3", f"{rel} names agent_desktop_{b}")
+                if re.search(rf"(?<![A-Za-z0-9_])acdesktop_{b}(?![A-Za-z0-9_])", src.code):
+                    err("G3", f"{rel} names acdesktop_{b}")
             targets = [(m, lit) for m, lit, _ in includes(src)] + [("#[path]", lit) for lit, _, _ in path_attrs(src)]
             for macro, lit in targets:
                 if lit is None:
@@ -561,7 +561,7 @@ for _p in PLATFORMS:
     CLEAN[f"crates/{_p}/src/adapter.rs"] = "pub struct A;\nimpl PlatformAdapter for A {}\n"
     for _layer, _trait in (("tree", "ObservationOps"), ("actions", "ActionOps"), ("input", "InputOps"), ("system", "SystemOps")):
         CLEAN[f"crates/{_p}/src/{_layer}/mod.rs"] = "mod adapter;\n"
-        CLEAN[f"crates/{_p}/src/{_layer}/adapter.rs"] = f"use agent_desktop_core::{_trait} as _;\nimpl {_trait} for crate::adapter::A {{}}\n"
+        CLEAN[f"crates/{_p}/src/{_layer}/adapter.rs"] = f"use acdesktop_core::{_trait} as _;\nimpl {_trait} for crate::adapter::A {{}}\n"
     CLEAN[f"crates/{_p}/src/notifications/mod.rs"] = "#[cfg(test)]\n#[path = \"double_tests.rs\"]\nmod double_tests;\n"
     CLEAN[f"crates/{_p}/src/notifications/double_tests.rs"] = "struct D;\nimpl SystemOps for D {}\n"
 
@@ -576,8 +576,8 @@ PLANTS = {
            ("Cargo.toml", CLEAN["Cargo.toml"].replace('smallvec = "1"', 'smallvec = { package = "x11rb", version = "0.14" }')),
            ("crates/core/Cargo.toml", CLEAN["crates/core/Cargo.toml"].replace("[package]\n", '[package]\nbuild = "custom.rs"\n')),
            ("crates/core/Cargo.toml", CLEAN["crates/core/Cargo.toml"] + '[dependencies.thiserror]\npackage = "zbus"\nversion = "5"\n')],
-    "G3": [("crates/core/src/tree/leak.rs", "use agent_desktop_macos::MacOSAdapter;\n"),
-           ("crates/linux/src/tree/leak.rs", "fn f() { let _ = agent_desktop_windows::X; }\n")],
+    "G3": [("crates/core/src/tree/leak.rs", "use acdesktop_macos::MacOSAdapter;\n"),
+           ("crates/linux/src/tree/leak.rs", "fn f() { let _ = acdesktop_windows::X; }\n")],
     "G4": [("crates/core/src/tree/leak.rs", "const S: &str = include_str!(\"../../../macos/src/adapter.rs\");\n"),
            ("crates/core/src/tree/leak.rs", "const S: &str = include_str! { \"../../../macos/src/adapter.rs\" };\n"),
            ("crates/core/src/tree/leak.rs", "const S: &str = include_str!(\"../../../\\x6dacos/src/adapter.rs\");\n"),
@@ -597,7 +597,7 @@ PLANTS = {
            ("src/helper.rs", "\n"),
            ("crates/core/src/wait/mod.rs", None)],
     "G8": [("crates/linux/src/input/keyboard.rs", "impl SystemOps for crate::adapter::A {}\n"),
-           ("crates/linux/src/system/adapter.rs", "use agent_desktop_core::SystemOps as LifecycleOps;\nimpl LifecycleOps for crate::adapter::A {}\n"),
+           ("crates/linux/src/system/adapter.rs", "use acdesktop_core::SystemOps as LifecycleOps;\nimpl LifecycleOps for crate::adapter::A {}\n"),
            ("crates/linux/src/input/fake_adapter.rs", "impl SystemOps for crate::adapter::A {}\n"),
            ("crates/linux/src/input/mod.rs", "mod adapter;\n#[path = \"real_tests.rs\"]\nmod real_tests;\n"),
            ("crates/linux/src/input/keys.rs", "impl/* c /* n */ */SystemOps for crate::adapter::A {}\n")],
@@ -617,7 +617,7 @@ PLANTS["G12"] = [
     ("crates/macos/src/system/host.rs", "fn f() { let _ = std::os::unix::net::UnixListener::bind(\"/tmp/h.sock\"); }\n"),
     ("crates/core/src/system/host.rs", "fn f() { let _ = std::net::TcpListener::bind((\"127.0.0.1\", 0)); }\n"),
     ("crates/windows/src/system/host.rs", "fn f() { let _ = CreateNamedPipeW; }\n"),
-    ("src/host.rs", "const MARKER: &str = \"AGENT_DESKTOP_INTERNAL_COMMAND_HOST=1\";\n"),
+    ("src/host.rs", "const MARKER: &str = \"ACDESKTOP_INTERNAL_COMMAND_HOST=1\";\n"),
 ]
 SUPPORT = {"G2": {"crates/core/custom.rs": "fn main() {}\n"},
            "G8": {"crates/linux/src/input/real_tests.rs": "impl SystemOps for crate::adapter::A {}\n"}}

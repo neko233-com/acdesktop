@@ -97,10 +97,10 @@ def failed_command_result(
 
 def sample_runner(require_stats=False):
     return types.SimpleNamespace(
-        binary="agent-desktop",
+        binary="acdesktop",
         label="current",
         environment={},
-        trace_path="/tmp/agent-desktop-run-sample-test.jsonl",
+        trace_path="/tmp/acdesktop-run-sample-test.jsonl",
         trace_offset=0,
         require_stats=require_stats,
     )
@@ -182,7 +182,7 @@ class MetricsIntegrityTests(unittest.TestCase):
             command_result({"snapshot_id": "noise"}),
             command_result({"property": "role", "value": "button"}),
         ]
-        runner = types.SimpleNamespace(binary="agent-desktop", label="current", environment={})
+        runner = types.SimpleNamespace(binary="acdesktop", label="current", environment={})
         sample_data = {"snapshot_id": "target", "ref_id": "@target:e1", "role": "button"}
 
         with patch("electron_metrics.run_bounded", side_effect=responses):
@@ -191,7 +191,7 @@ class MetricsIntegrityTests(unittest.TestCase):
             )
 
     def test_exact_namespace_rejects_invalid_get_property_contract(self):
-        runner = types.SimpleNamespace(binary="agent-desktop", label="current", environment={})
+        runner = types.SimpleNamespace(binary="acdesktop", label="current", environment={})
         sample_data = {"snapshot_id": "target", "ref_id": "@target:e1", "role": "button"}
 
         for data in (

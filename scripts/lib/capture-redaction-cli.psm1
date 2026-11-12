@@ -5,7 +5,7 @@
 
     probes/windows/common.ps1's own Test-CaptureRedaction catches the
     machine-wide residue classes (user name, machine name, profile paths,
-    domain SIDs). It has no idea that agent-desktop's own JSON envelope
+    domain SIDs). It has no idea that acdesktop's own JSON envelope
     carries real target content in a small, fixed set of fields regardless
     of which machine produced it: `name`, `value`, `description`, `title`,
     `app_name`, `body`, `attribution` (the element fields plus the serialized NotificationInfo
@@ -63,7 +63,7 @@ function Test-CliRedactionValueReduced {
     <#
     .SYNOPSIS
         True when a captured field's decoded value is empty, an
-        agent-desktop "no meaningful name" sentinel, or a
+        acdesktop "no meaningful name" sentinel, or a
         Protect-ProbeName-shaped reduction. False for any other literal
         text - the fail-safe direction, since a value this function cannot
         prove reduced must be treated as unreduced content.

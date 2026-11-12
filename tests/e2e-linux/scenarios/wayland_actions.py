@@ -125,7 +125,7 @@ def unhealthy_shell_named_reason(ctx: LegContext) -> None:
             path.write_text("#!/bin/sh\n" + body + "\n")
             path.chmod(0o700)
         env = dict(ctx.tier.env, XDG_RUNTIME_DIR=str(root),
-                   AGENT_DESKTOP_PRIVATE_SESSION=str(root),
+                   ACDESKTOP_PRIVATE_SESSION=str(root),
                    PATH=str(tools) + os.pathsep + ctx.tier.env["PATH"],
                    PROBE_STARTS=str(starts), PROBE_CLIENTS=str(clients))
         read = lambda: root.is_dir()

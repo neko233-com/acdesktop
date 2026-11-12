@@ -32,7 +32,7 @@ function Get-TargetBinary {
     param()
     if (-not $script:TargetExe) {
         $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-        $default = Join-Path $repoRoot 'target\release\agent-desktop.exe'
+        $default = Join-Path $repoRoot 'target\release\acdesktop.exe'
         $script:TargetExe = [pscustomobject]@{ FilePath = $default; PrefixArgs = @() }
     }
     return $script:TargetExe
