@@ -110,6 +110,86 @@ acdesktop snapshot --app Finder -i
 
 ---
 
+## 同时操作多个
+
+用 `batch --parallel` 跨 app 并行执行 —— 相当于同时操控多个。
+
+```bash
+# 并行抓取多个 app 的 UI 树（全 observation，天然零副作用）
+acdesktop batch --parallel '[
+  {"command":"snapshot","args":{"app":"Finder","compact":true}},
+  {"command":"snapshot","args":{"app":"Chrome","compact":true}},
+  {"command":"snapshot","args":{"app":"微信","compact":true}},
+  {"command":"list-windows","args":{"app":"Finder"}}
+]'
+# 3 个 snapshot + list-windows 并行完成，耗时 ≈ 单次 snapshot
+```
+
+**安全分桶策略 —— 不牺牲正确性：**
+
+| 命令类 | 跨 app | 同 app | 原因 |
+|---|---|---|---|
+| Observation（snapshot / find / list-*） | ✅ 并行 | ✅ 并行 | 纯读，零副作用 |
+| Action（click / type / drag / launch） | ✅ 并行 | ❌ 严格串行 | 跨进程 UI 树互不干扰，但同 app 内焦点/状态/文本输入会竞态 |
+| Global（press / key-down / mouse-* / clipboard-*） | ❌ 等所有桶跑完才执行 | ❌ 串行 | 只有一个键盘、一个鼠标、一个剪贴板 |
+
+**不能在 `--parallel` 里用的命令**（直接 INVALID_ARGS）：`wait` / `cursor-overlay` / `sandbox` / `batch`（嵌套）/ `session gc/end` / `trace` —— 它们依赖之前 action 的结果或涉及全局状态。
+
+并发数由 `--max-workers` 控制（默认 = CPU 核心数，上限 8）。没有引入任何新依赖，全用 `std::thread::scope`。
+
+---
+
+## 极快模式
+
+跳过所有 post-action wait，让 agent-desktop 响应最快：
+
+```bash
+# 单次
+acdesktop --fast click @s8f3k2p9:e5
+
+# 永久：写入 ~/.acdesktop/config.json
+acdesktop config set fast_mode true
+```
+
+开启后所有 `--wait-for` / `--wait-for-gone` / `--wait-timeout` 参数被忽略。
+
+---
+
+## 自动更新 + 用户配置
+
+acdesktop 每次调用时静默检查新版本（默认 6 小时一次，可配置）。发现新版本只提示，不自动安装。
+
+```bash
+acdesktop update check          # 手动检查
+acdesktop update apply          # 调用 install.sh / install.ps1 自更新，替换后下次启动生效
+acdesktop update auto on        # 开启自动更新提示（默认开启）
+acdesktop update auto off       # 完全关闭
+acdesktop update auto status
+
+acdesktop config show           # 查看完整配置
+acdesktop config set auto_update false
+acdesktop config path           # 打印 ~/.acdesktop/config.json 路径
+```
+
+`~/.acdesktop/config.json`：
+
+```json
+{
+  "auto_update": true,
+  "fast_mode": false,
+  "last_version_check": 0,
+  "check_interval_secs": 21600
+}
+```
+
+也可以直接用环境变量一键关闭自动更新（CI 脚本场景）：
+
+```bash
+ACDESKTOP_NO_AUTO_UPDATE=1 acdesktop status
+```
+
+---
+
 ## 设计原则
 
 - **原生，不猜像素。** 所有定位都走 OS 无障碍 API（macOS Accessibility、Windows UI Automation），不做屏幕截图 + 图像匹配。
