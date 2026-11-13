@@ -40,6 +40,7 @@ observation, actions and capture there fail or return nothing.
 | Displays | `list-displays` | Works |
 | Clipboard | `clipboard-get`, `clipboard-set`, `clipboard-clear` | Works; typed text and image content |
 | Wait | `wait` | Works for ms, `--element`, `--window`, `--text`, `--menu`, `--menu-closed`, `--event` and `--notification` |
+| Game session | `game` | Works on Windows 10 version 2004 or newer. Runs a timed input and capture plan. Any input requires `--headed`; reports describe capture timing and visual changes. |
 | Notifications | `list-notifications`, `dismiss-notification`, `dismiss-all-notifications`, `notification-action` | Works over the Action Center. Pass `--headed` when the center is closed |
 | Cursor overlay | `cursor-overlay` | Works. `enable` returns `data.rendered: true` only after the renderer acknowledges over its pipe. See `references/shell-and-overlay.md` |
 | System | `status`, `permissions`, `version`, `batch`, `skills`, `session`, `trace` | Works |
@@ -95,6 +96,87 @@ observation, actions and capture there fail or return nothing.
 - Ref actions are semantic UI Automation calls in headless and `--headed` mode, except `right-click`, `double-click`, `triple-click`, `type` and `focus`, which are physical or take focus and need `--headed`.
 - A ref resolves only when it was the only element in the window its snapshot captured with its role, native id, name and description, and exactly one live element still matches. Uniqueness counts the whole window, not the shallow tree a `--skeleton` or `--max-depth` snapshot presents, so a twin below the cut still refuses the ref. Identical twins, such as several identical `Delete` buttons, are refused with `AMBIGUOUS_TARGET`, `details.kind: identity_not_unique`, before anything reaches the app; a live second match is `saved_ref_ambiguous`, and a removed element is `STALE_REF`, `saved_ref_absent`. Take a fresh snapshot after a list changes, and use `--headed mouse-click --xy` when you must pick one of two identical controls.
 - The cursor overlay plays its per-action travel only for headless semantic actions. A `--headed` action moves the real cursor instead.
+- Windows CLI control commands show a click-through notice while they run. Its text follows the Windows display language, with English as the fallback. A `game` session shows it only when its plan contains input. If the notice cannot be displayed, control fails before input is sent.
+
+## Game sessions
+
+`game` drives one window as a timed session instead of a sequence of separate
+commands: it keeps a single capture session open, plays a JSON input plan, and
+writes `report.json` with capture timing and visual-change metrics. Visual
+change is not proof of input delivery or a player's psychological flow.
+
+```powershell
+acdesktop game --app MyGame --plan plan.json --out .\session --headed
+Get-Content .\session\report.json
+```
+
+A plan schedules events by `at_ms` and names the reactions to measure:
+
+```json
+{
+  "duration_ms": 8000,
+  "fps": 30,
+  "brief_response": true,
+  "events": [
+    { "at_ms": 500, "action": "key", "key": "space", "hold_ms": 60 },
+    { "at_ms": 1500, "action": "mouse-move", "x": 640, "y": 360 },
+    { "at_ms": 1800, "action": "mouse-click", "x": 640, "y": 360 },
+    { "at_ms": 2500, "action": "gesture", "gesture": "tap", "x": 640, "y": 360 },
+    { "at_ms": 3000, "action": "gesture", "gesture": "pinch-out", "x": 640, "y": 360, "distance": 200 }
+  ],
+  "probes": [
+    { "name": "jump", "event": 0, "timeout_ms": 1500, "min_change": 0.002 }
+  ]
+}
+```
+
+- Event `x` and `y` are client-area pixels. The session adds the window's
+  client origin before injecting. Window captures can include borders.
+- Mouse input moves the system cursor. Set `capture_cursor: true` in the plan
+  and pass `--save-frames` to include the visible cursor in saved frames; a
+  separate cursor-free capture supplies the report's metrics. The option
+  requires Windows 10 version 2004 or newer.
+- `gesture` covers `tap`, `double-tap`, `long-press`, the four swipes,
+  `pinch-in`/`pinch-out`, `rotate-cw`/`rotate-ccw`, `two-finger-tap` and the
+  four three-finger swipes, plus single-finger `draw-s`, `circle-cw`, and
+  `circle-ccw`. `touch` injects raw simultaneous contacts; both
+  use Windows touch injection and need an interactive desktop. Injection is
+  not proof of app recognition; verify the target's own events.
+- Before three or more contacts on Windows 11, turn off **Three- and
+  four-finger touch gestures** in **Settings → Bluetooth & devices → Touch**.
+  Then set `acknowledge_system_gesture_conflict: true` in the plan. Without
+  that acknowledgement the command refuses before input. It does not verify
+  the Windows setting; with it enabled the system can switch windows or
+  desktops. The Unity fixture observed three contacts after the setting was
+  disabled. Restore the setting if needed after testing.
+- `touch-path` accepts timed `frames` with simultaneous contacts. Each frame
+  includes all currently held contacts, and the last frame releases each one.
+  Use it for drawing, circles, dragging, and a joystick with another finger.
+- A probe's `event` is the index in `events`. Its latency is the first sampled
+  comparable frame at or after the dispatch whose changed ratio clears
+  `min_change`; the first frame is only a baseline. Unrelated animation can
+  satisfy it.
+- For short tool responses, set `brief_response: true` in the plan. The
+  response has `summary.probe_summary` counts instead of the per-probe list;
+  read `report.json` when individual probe results are needed.
+- `report.json` holds `duration_ms` (what actually ran), `planned_ms`,
+  `truncated`, `frame_metrics` (fps, interval spread, dropped frames),
+  `input_metrics` (dispatch jitter), `probes`, and `flow` (`active_ratio`,
+  `change_events`, `longest_still_ms`, `rhythm_regularity`,
+  `responsiveness`). These metrics cannot establish player engagement or flow.
+- Pass `--save-frames` to keep sampled frames as
+  `session/frames/frame-NNNN.png`; without it, frames are compared and
+  dropped, so a long session stays flat in memory. The writer drops frames
+  rather than slowing the timeline; `frames_saved` reports the count.
+  `session/frames/frames.jsonl` records each saved file and session timestamp.
+- `--duration-ms` and `--timeout-ms` override the plan's duration and the
+  wall-clock budget. Without `--timeout-ms` the budget is the duration plus
+  20 seconds. `truncated: true` means the session stopped early; raise
+  `--timeout-ms`. Any input requires `--headed`, and only a plan with
+  events focuses the window, so an observation-only session can run in the
+  background.
+- Normal completion and error paths attempt to release held input. Forced
+  process termination can prevent cleanup.
 
 ## References
 

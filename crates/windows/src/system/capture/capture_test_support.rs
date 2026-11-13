@@ -3,7 +3,8 @@
 //!
 //! Every consumer needs `HOME`/`USERPROFILE` pointed at a scratch directory
 //! this process owns for the length of one test, restored (and removed) on
-//! the way out. Each call site keeps its own temp-directory prefix even
+//! the way out. An existing `ACDESKTOP_HOME` also points inside that scratch
+//! directory until the test ends. Each call site keeps its own prefix even
 //! though the isolation is identical: naming apart is what keeps two suites
 //! in the same test binary from colliding on one scratch home if their
 //! process id and nanosecond timestamp ever coincided.
@@ -50,6 +51,7 @@ pub(crate) fn live_graphics_capture_lock() -> MutexGuard<'static, ()> {
 pub(crate) struct HomeIsolation {
     previous_home: Option<std::ffi::OsString>,
     previous_profile: Option<std::ffi::OsString>,
+    previous_state: Option<std::ffi::OsString>,
     root: PathBuf,
     _lock: MutexGuard<'static, ()>,
 }
@@ -73,13 +75,18 @@ impl HomeIsolation {
         crate::system::private_file::tests::protect_test_directory(&root);
         let previous_home = std::env::var_os("HOME");
         let previous_profile = std::env::var_os("USERPROFILE");
+        let previous_state = std::env::var_os("ACDESKTOP_HOME");
         unsafe {
             std::env::set_var("HOME", &root);
             std::env::set_var("USERPROFILE", &root);
+            if previous_state.is_some() {
+                std::env::set_var("ACDESKTOP_HOME", root.join(".acdesktop"));
+            }
         }
         Self {
             previous_home,
             previous_profile,
+            previous_state,
             root,
             _lock: lock,
         }
@@ -100,9 +107,16 @@ impl Drop for HomeIsolation {
             Some(value) => unsafe { std::env::set_var("USERPROFILE", value) },
             None => unsafe { std::env::remove_var("USERPROFILE") },
         }
+        match &self.previous_state {
+            Some(value) => unsafe { std::env::set_var("ACDESKTOP_HOME", value) },
+            None => unsafe { std::env::remove_var("ACDESKTOP_HOME") },
+        }
         let _ = std::fs::remove_dir_all(&self.root);
     }
 }
+
+#[path = "capture_test_support_tests.rs"]
+mod tests;
 
 pub(crate) fn install_windows_private_file() {
     let _ = acdesktop_core::install_private_file_ops(Box::new(WindowsPrivateFile::new()));

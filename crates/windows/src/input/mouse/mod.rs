@@ -21,7 +21,7 @@ use acdesktop_core::{
 };
 
 use crate::input::mouse::mouse_click_guard::{CLICK_SUGGESTION, ClickReleaseGuard};
-use crate::input::mouse::mouse_coord::NormalizedPoint;
+pub(crate) use crate::input::mouse::mouse_coord::NormalizedPoint;
 use crate::input::mouse::mouse_modifier::press_modifiers;
 use crate::input::mouse::mouse_send::{
     MOUSEEVENTF_HWHEEL, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEDOWN,
@@ -274,6 +274,8 @@ pub(super) mod mouse_click_guard;
 pub(super) mod mouse_coord;
 pub(super) mod mouse_modifier;
 pub(crate) mod mouse_send;
+
+pub(crate) use mouse_coord::normalize_point;
 #[cfg(all(test, target_os = "windows"))]
 #[path = "mouse_tests.rs"]
 mod tests;

@@ -57,6 +57,10 @@ pub(super) mod keyboard_event;
 pub(super) mod keyboard_map;
 pub(super) mod keyboard_send;
 pub(super) mod keyboard_text;
+
+pub(crate) use keyboard_event::key_input;
+pub(crate) use keyboard_map::resolve_key;
+pub(crate) use keyboard_send::post_keyboard_inputs;
 #[cfg(test)]
 #[path = "keyboard_tests.rs"]
 mod tests;

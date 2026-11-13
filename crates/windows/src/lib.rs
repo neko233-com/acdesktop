@@ -9,6 +9,8 @@ pub mod tree;
 
 pub use adapter::WindowsAdapter;
 #[cfg(target_os = "windows")]
+pub use system::cursor_overlay::notice::ControlNotice;
+#[cfg(target_os = "windows")]
 pub use system::private_file::WindowsPrivateFile;
 #[cfg(target_os = "windows")]
 pub use system::runtime::com_runtime::bootstrap_hosted_library;

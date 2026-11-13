@@ -10,7 +10,10 @@ spec.loader.exec_module(assets)
 class ReleaseAssetsTest(unittest.TestCase):
     def test_exact_names_missing_extra_and_duplicates(self):
         names = sorted(assets.expected_assets("1.2.3"))
-        self.assertEqual(len(names), 15)
+        self.assertEqual(len(names), 16)
+        msi = "acdesktop-v1.2.3-x86_64-pc-windows-msvc.msi"
+        self.assertIn(msi, names)
+        self.assertEqual(assets.validate("1.2.3", [name for name in names if name != msi])[0], [msi])
         self.assertEqual(assets.validate("1.2.3", names), ([], [], False))
         self.assertTrue(assets.validate("1.2.3", names[1:])[0])
         self.assertTrue(assets.validate("1.2.3", names + ["unexpected"])[1])
@@ -21,5 +24,6 @@ class ReleaseAssetsTest(unittest.TestCase):
         lines = ["a" * 64 + "  " + name for name in archives]
         self.assertTrue(assets.validate_checksums("1.2.3", "\n".join(lines)))
         self.assertFalse(assets.validate_checksums("1.2.3", "\n".join(lines[:-1])))
+        self.assertFalse(assets.validate_checksums("1.2.3", "\n".join(line for line in lines if not line.endswith(".msi"))))
         self.assertFalse(assets.validate_checksums("1.2.3", "\n".join(lines + [lines[0]])))
         self.assertFalse(assets.validate_checksums("1.2.3", "invalid"))

@@ -31,6 +31,11 @@ on:
       - 'tests/linux-dist/**'
       - 'tests/ffi-python/**'
       - 'scripts/ci-ffi-helper-discovery-smoke.sh'
+      - 'scripts/package-windows-msi.ps1'
+      - 'scripts/windows-release.wxs'
+      - 'scripts/windows-game-preview.wxs'
+      - 'scripts/fixtures/windows-msi-selftest.ps1'
+      - 'scripts/fixtures/windows-msi-upgrade-selftest.ps1'
 
 permissions: {}
 
@@ -192,6 +197,25 @@ jobs:
           $hash = (Get-FileHash $tarball -Algorithm SHA256).Hash.ToLower()
           "$hash  $tarball" | Out-File -Encoding ascii "${tarball}.sha256"
 
+      - name: Install WiX (Windows x64)
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        shell: pwsh
+        run: |
+          $toolDir = Join-Path $env:RUNNER_TEMP 'acdesktop-wix'
+          dotnet tool install wix --tool-path $toolDir --version 5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Add-Content -Path $env:GITHUB_PATH -Value $toolDir
+
+      - name: Build and verify MSI (Windows x64)
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        shell: pwsh
+        run: |
+          $binary = "target/${{ matrix.target }}/release/acdesktop.exe"
+          $msi = 'acdesktop-dryrun-x64.msi'
+          ./scripts/package-windows-msi.ps1 -Binary $binary -OutputFile $msi -Release
+          ./scripts/fixtures/windows-msi-selftest.ps1 -Msi $msi -ExpectedBinary $binary -Release
+          ./scripts/fixtures/windows-msi-upgrade-selftest.ps1 -Msi $msi -Binary $binary
+
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -199,6 +223,8 @@ jobs:
           path: |
             acdesktop-v*.tar.gz
             acdesktop-v*.tar.gz.sha256
+            acdesktop-dryrun-x64.msi
+            acdesktop-dryrun-x64.msi.sha256
           retention-days: 1
 
   ffi:

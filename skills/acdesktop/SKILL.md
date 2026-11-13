@@ -29,6 +29,12 @@ Examples use a POSIX shell. In PowerShell, quote every ref (`'@s8f3k2p9:e1'`), b
 2. Run `acdesktop skills get platform`. It loads the skill for the OS the binary runs on (macOS, Windows or Linux).
 3. For flags and syntax, run `acdesktop <command> --help`. This skill does not repeat flag lists.
 
+For a timed game test on Windows, use `game` with a JSON input plan and read
+the Windows skill's Game sessions section. Plans with input require `--headed`.
+The report measures capture timing and picture changes; verify the game's own
+input events and player experience independently. Other platforms return
+`PLATFORM_NOT_SUPPORTED` for this command.
+
 ## The loop
 
 Use `find` when you know the role or exact name. Otherwise map the app first and drill into one region.

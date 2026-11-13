@@ -2,8 +2,8 @@ use acdesktop_core::{
     AccessibilityNode, ActionOps, AdapterError, AppInfo, ClipboardContent, ClipboardFormat,
     Deadline, DragParams, ElementState, InputOps, InteractionLease, KeyCombo, LiveElement,
     MouseEvent, NativeHandle, ObservationOps, ObservationRequest, ObservationRoot, OperationReport,
-    ProcessIdentity, Rect, RefEntry, SnapshotSurface, SurfaceInfo, TreeOptions, WindowFilter,
-    WindowInfo,
+    OperationTarget, Point, ProcessIdentity, Rect, RefEntry, SnapshotSurface, SurfaceInfo,
+    TouchContact, TreeOptions, WindowFilter, WindowInfo,
 };
 use std::collections::HashSet;
 use std::sync::{Mutex, MutexGuard, PoisonError};
@@ -265,6 +265,25 @@ impl InputOps for WindowsAdapter {
         let report = OperationReport::drag_dispatched(&params);
         crate::input::drag::synthesize_drag(params, lease.deadline())?;
         Ok(report)
+    }
+
+    fn touch_frame(
+        &self,
+        contacts: &[TouchContact],
+        lease: &InteractionLease,
+    ) -> Result<OperationReport, AdapterError> {
+        crate::input::touch::send_touch_frame(contacts, lease.deadline())?;
+        let point = contacts
+            .first()
+            .map(|contact| Point {
+                x: f64::from(contact.x),
+                y: f64::from(contact.y),
+            })
+            .unwrap_or(Point { x: 0.0, y: 0.0 });
+        Ok(OperationReport::delivered_unverified(
+            "touch",
+            OperationTarget::Pointer { point },
+        ))
     }
 
     fn clear_clipboard(&self, lease: &InteractionLease) -> Result<OperationReport, AdapterError> {

@@ -131,12 +131,15 @@ test('the Linux CLI archive is built from both executables and listed exactly', 
   }
 });
 
-test('the release publishes fifteen assets and waits for the archive contents check', () => {
+test('the release publishes sixteen assets and waits for the archive contents check', () => {
   assert.match(releaseWorkflow, /check-release-assets\.py local/);
   assert.match(releaseWorkflow, /check-release-assets\.py remote/);
   const publish = releaseWorkflow.match(/publish-github:\n[\s\S]*?needs: \[([^\]]*)\]/);
   assert.ok(publish && publish[1].includes('linux-archive-contents'));
   assert.match(jobBlock(releaseWorkflow, 'linux-archive-contents'), /check-linux-archive-contents\.sh all/);
+  assert.match(jobBlock(releaseWorkflow, 'build'), /windows-msi-selftest\.ps1/);
+  assert.match(jobBlock(dryRunWorkflow, 'cli'), /windows-msi-selftest\.ps1/);
+  assert.match(jobBlock(releaseWorkflow, 'publish-github'), /\.\/\*\.msi/);
 });
 
 test('the dry run grants no write scope and has no publish step', () => {

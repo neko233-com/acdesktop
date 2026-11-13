@@ -28,6 +28,9 @@ pub(crate) mod image_identity;
 pub(crate) mod label;
 pub(crate) mod monitors;
 #[cfg(target_os = "windows")]
+pub(crate) mod notice;
+pub(crate) mod notice_language;
+#[cfg(target_os = "windows")]
 pub(crate) mod parked_flush;
 pub(crate) mod peer;
 pub(crate) mod pipe_name;

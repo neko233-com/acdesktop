@@ -15,6 +15,7 @@ class ReleasePolicyTest(unittest.TestCase):
         for old, new in (("- target: aarch64-apple-darwin", "- target: missing"),
                          ("ffi-release-panic-guard, linux-archive-contents]", "linux-archive-contents]"),
                          ("check-release-assets.py local", "missing-asset-check.py local"),
+                         ("windows-msi-selftest.ps1", "missing-msi-selftest.ps1"),
                          ("actions/attest-build-provenance@", "invalid-attestation@"),
                          ("--draft=false", "--draft=true"),
                          ("scripts/checkout-release-source.sh", "scripts/missing.sh")):

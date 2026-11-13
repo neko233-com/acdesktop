@@ -1,0 +1,25 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="acdesktop Game Preview" Manufacturer="acdesktop" Version="$(var.Version)"
+           UpgradeCode="a89d3b27-0f4d-4ed1-ac03-2011aaa46036" Scope="perUser">
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer acdesktop Game Preview is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="low" />
+    <Property Id="INSTALLFOLDER">
+      <RegistrySearch Id="PreviousInstallFolder" Root="HKCU" Key="Software\acdesktop\GamePreview"
+                      Name="InstallDir" Type="raw" />
+    </Property>
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="INSTALLFOLDER" Name="acdesktop-game-preview">
+        <Component Id="GamePreviewExecutable" Guid="DCA7E20A-3BEE-4B41-97C8-7D018774AB46">
+          <File Id="AcdesktopExecutable" Source="$(var.Binary)" />
+          <RegistryValue Root="HKCU" Key="Software\acdesktop\GamePreview" Name="Installed"
+                         Type="integer" Value="1" KeyPath="yes" />
+          <RegistryValue Root="HKCU" Key="Software\acdesktop\GamePreview" Name="InstallDir"
+                         Type="string" Value="[INSTALLFOLDER]" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+    <Feature Id="GamePreview">
+      <ComponentRef Id="GamePreviewExecutable" />
+    </Feature>
+  </Package>
+</Wix>

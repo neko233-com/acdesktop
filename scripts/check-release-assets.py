@@ -12,7 +12,8 @@ TARGETS = (
 def expected_assets(version):
     cli = {f"acdesktop-v{version}-{target}.tar.gz" for target in TARGETS}
     ffi = {f"acdesktop-ffi-v{version}-{target}.{'zip' if 'windows' in target else 'tar.gz'}" for target in TARGETS}
-    return cli | ffi | {"checksums.txt", "install.sh", "install.ps1"}
+    msi = {f"acdesktop-v{version}-x86_64-pc-windows-msvc.msi"}
+    return cli | ffi | msi | {"checksums.txt", "install.sh", "install.ps1"}
 
 
 def validate(version, names):
@@ -39,7 +40,7 @@ def main():
         return 2
     version = sys.argv[2]
     if sys.argv[1] == "local":
-        names = [p.name for p in Path.cwd().iterdir() if p.is_file() and (p.name.endswith((".tar.gz", ".zip")) or p.name in {"checksums.txt", "install.sh", "install.ps1"})]
+        names = [p.name for p in Path.cwd().iterdir() if p.is_file() and (p.name.endswith((".tar.gz", ".zip", ".msi")) or p.name in {"checksums.txt", "install.sh", "install.ps1"})]
     else:
         names = [asset["name"] for asset in json.load(sys.stdin)["assets"]]
     if sys.argv[1] == "local" and not validate_checksums(version, Path("checksums.txt").read_text(encoding="utf-8")):

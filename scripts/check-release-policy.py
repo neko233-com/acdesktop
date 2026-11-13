@@ -24,11 +24,14 @@ def violations(text):
             errors.append(f"{name}: target matrix is incomplete or duplicated")
         if "scripts/checkout-release-source.sh" not in section:
             errors.append(f"{name}: release source verification missing")
+    for required in ("package-windows-msi.ps1", "windows-msi-selftest.ps1", "windows-msi-upgrade-selftest.ps1", "acdesktop-v*.msi.sha256"):
+        if required not in job(text, "build"):
+            errors.append(f"build: MSI gate missing {required}")
     publish = job(text, "publish-github")
     needs = re.search(r"(?m)^    needs: \[([^\]]+)\]", publish)
     if not needs or set(needs.group(1).replace(" ", "").split(",")) != GATES:
         errors.append("publish-github: required gates missing")
-    for required in ("contents: write", "id-token: write", "attestations: write", "actions/attest-build-provenance@", "checksums.txt", "install.sh", "install.ps1"):
+    for required in ("contents: write", "id-token: write", "attestations: write", "actions/attest-build-provenance@", "checksums.txt", "install.sh", "install.ps1", "./*.msi", "*.msi"):
         if required not in publish:
             errors.append(f"publish-github: missing {required}")
     for required in ("sha256sum --check checksums.txt", "check-release-assets.py local", "check-release-assets.py remote"):

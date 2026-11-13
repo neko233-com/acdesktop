@@ -220,4 +220,15 @@ fn a_multi_acdesktop_action_needs_an_agent_id_on_every_platform() {
     assert!(!agent_id_missing(&click, true, Some("agent-a")));
     assert!(!agent_id_missing(&click, false, None));
     assert!(!agent_id_missing(&Commands::Status, true, None));
+    let game = Commands::Game(crate::cli_args::game::GameArgs {
+        app: None,
+        window_id: None,
+        plan: "plan.json".into(),
+        out: "out".into(),
+        duration_ms: None,
+        timeout_ms: None,
+        save_frames: false,
+    });
+    assert!(agent_id_missing(&game, true, None));
+    assert!(!agent_id_missing(&game, true, Some("agent-a")));
 }

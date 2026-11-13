@@ -74,7 +74,7 @@ fn classify(cmd: &Commands) -> Class {
         | NotificationAction(_) => Class::Action,
 
         Wait(_) | CursorOverlay(_) | Batch(_) | Session(_) | Skills(_) | Trace(_) | Sandbox(_)
-        | Update(_) | Config(_) => Class::Illegal,
+        | Game(_) | Update(_) | Config(_) => Class::Illegal,
     }
 }
 
