@@ -67,8 +67,10 @@ try {
         if ($entries.Count -ne 1) { throw 'The upgrade did not preserve exactly one PATH entry.' }
     }
     $remove = Start-Process msiexec.exe -ArgumentList @('/x', $newProduct, '/qn', '/norestart') -WindowStyle Hidden -Wait -PassThru
+    $beforeEntries = @($originalPath -split ';' | Where-Object { $_ }) -join "`n"
+    $afterEntries = @([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { $_ }) -join "`n"
     if ($remove.ExitCode -ne 0 -or (Product-State $newProduct) -ne -1 -or (Test-Path -LiteralPath $installed) -or
-        [Environment]::GetEnvironmentVariable('Path', 'User') -ne $originalPath) {
+        $afterEntries -cne $beforeEntries) {
         throw 'The upgraded MSI did not uninstall cleanly.'
     }
     $success = $true

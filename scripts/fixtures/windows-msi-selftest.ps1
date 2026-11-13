@@ -56,7 +56,9 @@ try {
     if ((Test-Path -LiteralPath $binary) -or $state -ne -1) {
         throw "MSI uninstall left its binary or product registration behind; log: $uninstallLog"
     }
-    if ($Release -and [Environment]::GetEnvironmentVariable('Path', 'User') -ne $originalPath) {
+    $beforeEntries = @($originalPath -split ';' | Where-Object { $_ }) -join "`n"
+    $afterEntries = @([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { $_ }) -join "`n"
+    if ($Release -and $afterEntries -cne $beforeEntries) {
         throw 'MSI uninstall did not restore the original user PATH.'
     }
     $success = $true
