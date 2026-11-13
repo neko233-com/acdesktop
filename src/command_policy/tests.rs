@@ -14,11 +14,14 @@ fn permission_report_is_collected_only_for_permission_consumers() {
     let batch = Commands::Batch(crate::cli_args::batch::BatchArgs {
         commands_json: "[]".into(),
         stop_on_error: false,
+        parallel: false,
+        max_workers: 1,
         timeout_ms: 1,
     });
     let open_system_surface =
         Commands::OpenSystemSurface(crate::cli_args::system::OpenSystemSurfaceArgs {
             surface: crate::cli_args::Surface::ActionCenter,
+            timeout_ms: None,
         });
 
     assert!(requires_permission_report(&status));

@@ -122,9 +122,7 @@ fn verify_pointer_identity(
 ) -> Result<(), AdapterError> {
     match hit? {
         acdesktop_core::adapter::hit_test::HitTestResult::ReachesTarget => {}
-        acdesktop_core::adapter::hit_test::HitTestResult::InterceptedBy {
-            role, name, ..
-        } => {
+        acdesktop_core::adapter::hit_test::HitTestResult::InterceptedBy { role, name, .. } => {
             return Err(AdapterError::new(
                 ErrorCode::ActionFailed,
                 "Physical input point is intercepted by another accessibility element",

@@ -1,44 +1,14 @@
 # Installing acdesktop
 
-Install the `acdesktop` npm package with npm, pnpm, Yarn, or Bun. It needs Node 18 or later and bundles native executables and platform helpers for macOS, Windows, and Linux, on x64 and ARM64:
+Install the native CLI from a [release archive](https://github.com/neko233-com/acdesktop/releases), or build it from source. The install scripts support macOS ARM64 and Windows ARM64:
 
 ```bash
-npm install -g acdesktop
-acdesktop version
+curl -fsSL https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.sh | bash
 ```
 
-Without `-g`, the command goes to `./node_modules/.bin` instead of your PATH. Run it with `npx acdesktop`, or install globally.
-
-## Homebrew
-
-On macOS and Linux, install from Homebrew's default catalog:
-
-```bash
-brew install acdesktop
-acdesktop version
+```powershell
+irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.ps1 | iex
 ```
-
-The formula lives in `Homebrew/homebrew-core`. It builds from the tagged source, installs the platform helper beside
-the CLI, and Homebrew manages its own bottles. Homebrew's automation picks up new release tags, so a new version can
-reach Homebrew after npm and GitHub Releases. Upgrade with `brew upgrade acdesktop`.
-
-## Scoop and older installations
-
-There is no official Scoop package yet. This repository no longer maintains a custom Homebrew tap or Scoop bucket;
-existing custom installations remain pinned to their installed version.
-
-If an older installation shadows the command, uninstall it through its original package manager. Check resolution
-with `command -v acdesktop` on macOS/Linux or `Get-Command acdesktop` on Windows.
-
-## Blocked install scripts
-
-The npm package's `postinstall` script replaces the Node launcher with a link to the native binary. Some package managers block install scripts, and npm 12 does by default. Then every call runs through the Node launcher, which adds about 125 ms. The launcher prints a one-time notice to stderr. Allow the script and reinstall:
-
-```bash
-npm install -g acdesktop --allow-scripts=acdesktop
-```
-
-For a project install, run `npm install-scripts approve acdesktop` inside the project, then `npm rebuild acdesktop`. The approve command only edits the project's `package.json` and fails for a global install.
 
 ## Release archives
 
@@ -72,7 +42,7 @@ The CLI looks for the helper in its own directory, so move the two together.
 
 **macOS** needs Accessibility permission. Screenshots also need Screen Recording. Some commands need Automation permission for System Events, and report it when it is missing. `acdesktop permissions` reports the state without prompting. `permissions --request` shows the system prompts. `permissions --guide` opens System Settings with an on-screen guide for Accessibility and Screen Recording.
 
-**Windows** needs no grant for apps at your terminal's integrity level. An app running as administrator can be read, but only an elevated agent can send it input. The binary is unsigned. SmartScreen may warn on a browser download, and antivirus may quarantine it. On a clean Windows 11 install, Smart App Control blocks it, and no download method or launch mode avoids that. Turn Smart App Control off to run it. npm installs do not trigger SmartScreen. To restore a quarantined file, first check its SHA-256 checksum against the release.
+**Windows** needs no grant for apps at your terminal's integrity level. An app running as administrator can be read, but only an elevated agent can send it input. The binary is unsigned. SmartScreen may warn on a browser download, and antivirus may quarantine it. On a clean Windows 11 install, Smart App Control blocks it, and no download method or launch mode avoids that. Turn Smart App Control off to run it. To restore a quarantined file, first check its SHA-256 checksum against the release.
 
 **Linux** needs Ubuntu 24.04 or later on x86_64 or aarch64, with a glibc 2.35 floor. Ubuntu 22.04's AT-SPI bridge aborts on `Action.GetActions`. Run the CLI inside the user's graphical session, with `at-spi2-core` installed. A TTY, an SSH shell, or a container without that session's bus, display, and runtime environment sees no apps. `acdesktop status` activates and checks the accessibility bus. An empty `supported_surfaces` list means the bus did not answer.
 

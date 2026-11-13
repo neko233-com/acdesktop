@@ -1,14 +1,14 @@
 ---
 title: C library
 navTitle: Overview
-description: Call agent-desktop in process through libagent_desktop_ffi, the C ABI over the same core and platform adapters as the CLI.
+description: Call acdesktop in process through libacdesktop_ffi, the C ABI over the same core and platform adapters as the CLI.
 ---
 
-The C library exposes agent-desktop as a shared library: `libagent_desktop_ffi.dylib` on macOS, `libagent_desktop_ffi.so` on Linux, and `agent_desktop_ffi.dll` on Windows. Your program calls `ad_*` functions instead of starting the CLI for each command. Any language with a C FFI can load it; `tests/ffi-python/smoke.py` is the tested reference. The header is `crates/ffi/include/agent_desktop.h`.
+The C library exposes acdesktop as a shared library: `libacdesktop_ffi.dylib` on macOS, `libacdesktop_ffi.so` on Linux, and `acdesktop_ffi.dll` on Windows. Your program calls `ad_*` functions instead of starting the CLI for each command. Any language with a C FFI can load it; `tests/ffi-python/smoke.py` is the tested reference. The header is `crates/ffi/include/acdesktop.h`.
 
 ## Relationship to the CLI
 
-The library and the CLI run the same core and the same platform adapter; the `agent-desktop` binary and the `agent-desktop-ffi` crate are the only two places that connect a platform adapter to core.
+The library and the CLI run the same core and the same platform adapter; the `acdesktop` binary and the `acdesktop-ffi` crate are the only two places that connect a platform adapter to core.
 
 - **Same envelope.** The command-backed functions return the CLI's JSON envelope as an owned string. See [JSON output](/desktop/json-output).
 - **Same refs.** `ad_snapshot` writes a refmap under the same [state root](/desktop/configuration#state-root) and returns qualified refs, which `ad_execute_by_ref` resolves strictly. A bare `@e5` returns `AD_RESULT_ERR_INVALID_ARGS`.
@@ -31,7 +31,7 @@ The library and the CLI run the same core and the same platform adapter; the `ag
 
 - `ad_snapshot` reads the owner selected by `surface`. On macOS, `menu` and `menubar` are application-owned and need no document window; window-owned snapshots include `data.window`. The ABI has no window id, skeleton mode, or `--root` drill-down; use the CLI for those.
 - `ad_wait` does not expose `wait --event` or `--window-id`.
-- The library carries no skills. Read the FFI guide with `agent-desktop skills get ffi` from the CLI.
+- The library carries no skills. Read the FFI guide with `acdesktop skills get ffi` from the CLI.
 
 ## ABI version
 

@@ -19,7 +19,7 @@ class CliReceiptTests(unittest.TestCase):
                  "Status and permissions report the missing bus as denied accessibility")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            binary = root / "target/release/agent-desktop"
+            binary = root / "target/release/acdesktop"
             binary.parent.mkdir(parents=True)
             binary.write_text(f"#!{sys.executable}\n" + textwrap.dedent('''
                 import json, os, sys

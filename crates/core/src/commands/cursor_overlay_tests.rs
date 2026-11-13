@@ -15,10 +15,7 @@ fn session_and_overlay_responses_show_portable_activation_guidance() {
     let expected = session::activation_export(id);
 
     assert_eq!(started["next"], expected);
-    assert_eq!(
-        started["activation"]["environment"],
-        "ACDESKTOP_SESSION"
-    );
+    assert_eq!(started["activation"]["environment"], "ACDESKTOP_SESSION");
     assert_eq!(started["activation"]["value"], id);
 
     let enabled = execute(

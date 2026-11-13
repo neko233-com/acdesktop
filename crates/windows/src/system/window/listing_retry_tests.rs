@@ -5,7 +5,7 @@ use acdesktop_core::ErrorCode;
 use super::*;
 
 use crate::system::fixture::test_time::deadline;
-use crate::system::runtime::hresult::{E_FAIL, E_UNEXPECTED};
+use crate::system::runtime::hresult::{E_FAIL, E_UNEXPECTED, UIA_E_TIMEOUT};
 use crate::tree::automation::{UiaFailure, uia_failure_error};
 
 fn race_error() -> AdapterError {
@@ -102,6 +102,28 @@ fn a_teardown_read_failure_survives_narrowing_as_a_retryable_error() {
     assert_eq!(error.code, ErrorCode::AppUnresponsive);
     assert!(error.is_transient_incomplete_read());
     assert!(error.permits_retry_by_default());
+}
+
+#[test]
+fn an_incomplete_uia_read_is_retried_without_repeating_an_action() {
+    let calls = Cell::new(0);
+    let result = retry_transient_window_race(
+        deadline(10_000),
+        AdapterError::is_transient_incomplete_read,
+        || {
+            calls.set(calls.get() + 1);
+            if calls.get() == 1 {
+                Err(narrow_to_permitted_codes(uia_failure_error(
+                    UiaFailure::Hresult(UIA_E_TIMEOUT),
+                    "read desktop children",
+                )))
+            } else {
+                Ok(42)
+            }
+        },
+    );
+    assert_eq!(result.expect("transient read recovers"), 42);
+    assert_eq!(calls.get(), 2);
 }
 
 #[test]

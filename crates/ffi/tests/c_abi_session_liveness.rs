@@ -3,7 +3,9 @@ mod common;
 use acdesktop_core::session::{
     GcOptions, SessionTraceMode, StartSessionOptions, gc, start_session, write_manifest,
 };
-use common::{ad_adapter_create_with_session, ad_adapter_destroy, with_isolated_home};
+use common::{
+    ad_adapter_create, ad_adapter_create_with_session, ad_adapter_destroy, with_isolated_home,
+};
 use std::ffi::CString;
 use std::time::Duration;
 
@@ -17,6 +19,9 @@ use std::time::Duration;
 #[test]
 fn session_scoped_adapter_holds_liveness_until_destroyed() {
     with_isolated_home(|| {
+        let bootstrap = unsafe { ad_adapter_create() };
+        assert!(!bootstrap.is_null());
+        unsafe { ad_adapter_destroy(bootstrap) };
         let mut manifest = start_session(StartSessionOptions {
             name: None,
             trace: SessionTraceMode::Off,

@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if command -v python3 >/dev/null 2>&1 && python3 -c 'import sys; assert sys.version_info >= (3, 7)' >/dev/null 2>&1; then
+  PYTHON=python3
+elif command -v python >/dev/null 2>&1 && python -c 'import sys; assert sys.version_info >= (3, 7)' >/dev/null 2>&1; then
+  PYTHON=python
+else
+  echo "Python 3.7 or later is required" >&2
+  exit 1
+fi
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
@@ -40,7 +49,7 @@ lock_version_for() {
   ' Cargo.lock
 }
 
-workspace_version="$(node scripts/release-version.js)"
+workspace_version="$("$PYTHON" scripts/release-version.py)"
 
 packages=(
   acdesktop

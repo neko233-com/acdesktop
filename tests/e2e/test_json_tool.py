@@ -31,12 +31,12 @@ class RunBoundedTests(unittest.TestCase):
         with tempfile.TemporaryFile() as lease:
             os.set_inheritable(lease.fileno(), True)
             environment = os.environ.copy()
-            environment["AGENT_DESKTOP_INTERACTION_LEASE_FD"] = str(lease.fileno())
+            environment["ACDESKTOP_INTERACTION_LEASE_FD"] = str(lease.fileno())
             result = run_bounded(
                 [
                     sys.executable,
                     "-c",
-                    "import os; os.fstat(int(os.environ['AGENT_DESKTOP_INTERACTION_LEASE_FD'])); print('inherited')",
+                    "import os; os.fstat(int(os.environ['ACDESKTOP_INTERACTION_LEASE_FD'])); print('inherited')",
                 ],
                 timeout_seconds=2,
                 max_capture_bytes=1024,
@@ -51,12 +51,12 @@ class RunBoundedTests(unittest.TestCase):
         with tempfile.TemporaryFile() as lease:
             os.set_inheritable(lease.fileno(), True)
             environment = os.environ.copy()
-            environment["AGENT_DESKTOP_INTERACTION_LEASE_FD"] = str(lease.fileno())
+            environment["ACDESKTOP_INTERACTION_LEASE_FD"] = str(lease.fileno())
             result = run_bounded(
                 [
                     "/bin/sh",
                     "-c",
-                    'test -z "${AGENT_DESKTOP_INTERACTION_LEASE_FD+x}" && '
+                    'test -z "${ACDESKTOP_INTERACTION_LEASE_FD+x}" && '
                     'test ! -e "/dev/fd/$1" && printf "not inherited\\n"',
                     "lease-check",
                     str(lease.fileno()),

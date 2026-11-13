@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    AdapterError, AppInfo, Deadline, DeliverySemantics, ErrorCode, ProcessId,
-};
+use acdesktop_core::{AdapterError, AppInfo, Deadline, DeliverySemantics, ErrorCode, ProcessId};
 use std::time::Duration;
 
 use super::app_ops::is_protected_process;

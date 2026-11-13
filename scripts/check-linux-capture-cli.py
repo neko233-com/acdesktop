@@ -196,7 +196,7 @@ def permissions_leg():
 def main():
     global AD, WORK, SCRIPT
     AD = sys.argv[1]
-    WORK = tempfile.mkdtemp(prefix="adcap-cli-", dir=os.environ["AGENT_DESKTOP_PRIVATE_SESSION"])
+    WORK = tempfile.mkdtemp(prefix="adcap-cli-", dir=os.environ["ACDESKTOP_PRIVATE_SESSION"])
     SCRIPT = os.path.join(WORK, "painter.py")
     with open(SCRIPT, "w") as painter:
         painter.write(PAINTER)

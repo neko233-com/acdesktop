@@ -1,8 +1,6 @@
 use std::collections::VecDeque;
 
-use acdesktop_core::{
-    ClipboardContent, ClipboardFormat, Deadline, DeliverySemantics, ErrorCode,
-};
+use acdesktop_core::{ClipboardContent, ClipboardFormat, Deadline, DeliverySemantics, ErrorCode};
 
 use super::*;
 

@@ -1,7 +1,7 @@
 import SwiftUI
 
 // A deterministic, deliberately *diverse* accessibility surface for
-// agent-desktop end-to-end tests. The goal is to mirror how real macOS apps
+// acdesktop end-to-end tests. The goal is to mirror how real macOS apps
 // vary — refs assigned to some elements and not others, state exposed as a
 // value here and as content there, draggable things that are not buttons,
 // nested tables and outlines, sheets and popovers and menus — so the CLI is
@@ -335,7 +335,7 @@ struct AgentDeskFixtureApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
     var body: some Scene {
         WindowGroup("AgentDesk Fixture") {
-            if ProcessInfo.processInfo.environment["AGENT_DESKTOP_FIXTURE_REF_CHURN"] == "1" {
+            if ProcessInfo.processInfo.environment["ACDESKTOP_FIXTURE_REF_CHURN"] == "1" {
                 RefChurnView()
             } else {
                 ContentView()
@@ -356,7 +356,7 @@ struct AgentDeskFixtureApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var isBackgroundFixture: Bool {
-        ProcessInfo.processInfo.environment["AGENT_DESKTOP_FIXTURE_NO_ACTIVATE"] == "1"
+        ProcessInfo.processInfo.environment["ACDESKTOP_FIXTURE_NO_ACTIVATE"] == "1"
     }
 
     func applicationWillFinishLaunching(_ notification: Notification) {

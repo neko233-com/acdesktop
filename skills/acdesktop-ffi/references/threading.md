@@ -88,13 +88,13 @@ process lifetime, or quiesce active adapter calls before unregistering it.
 Runtime serialization is not thread affinity. For example, CPython's GIL does
 not guarantee that two FFI calls execute on the same OS thread. Store native
 handles only in thread-confined objects, or avoid them and use
-snapshot-qualified refs. Rust, Swift, Node, Go, and managed runtimes need the
+snapshot-qualified refs. Rust, Swift, Go, and managed runtimes need the
 same discipline when tasks can migrate between worker threads.
 
 ## Accessibility permission identity
 
 `ad_check_permissions` calls macOS `AXIsProcessTrusted()`, which reports trust
-for the hosting executable (`python3`, `node`, a Swift app, and so on), not for
+for the hosting executable (`python3`, a Swift app, and so on), not for
 the dylib as a separate executable. Permission prompts and deployment guidance
 must identify the host process that loads `libacdesktop_ffi.dylib`.
 

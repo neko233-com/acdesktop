@@ -195,10 +195,9 @@ pub unsafe extern "C" fn ad_adapter_create_with_session(session: *const c_char) 
             if let Err(app_err) = validate_session_id(id) {
                 let adapter_err = match app_err {
                     AppError::Adapter(e) => e,
-                    other => AdapterError::new(
-                        acdesktop_core::ErrorCode::InvalidArgs,
-                        other.to_string(),
-                    ),
+                    other => {
+                        AdapterError::new(acdesktop_core::ErrorCode::InvalidArgs, other.to_string())
+                    }
                 };
                 error::set_last_error(&adapter_err);
                 return std::ptr::null_mut();

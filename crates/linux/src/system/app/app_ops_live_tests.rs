@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    Deadline, ObservationOps, SystemOps, system::launch_options::LaunchOptions,
-};
+use acdesktop_core::{Deadline, ObservationOps, SystemOps, system::launch_options::LaunchOptions};
 
 use crate::LinuxAdapter;
 use crate::system::close::close_live_tests::rig::Orphan;

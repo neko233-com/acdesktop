@@ -19,7 +19,7 @@ The window commands (`resize-window`, `move-window`, `minimize`, `maximize`, `re
 Starts an app, or attaches to a running instance, and returns once its process is running. A running process and a visible window are separate facts, so `window` appears in the result only when the app already has one.
 
 ```bash
-agent-desktop launch <APP> [--timeout MS] [--arg VALUE]... [--env KEY=VALUE]... [--cwd PATH] \
+acdesktop launch <APP> [--timeout MS] [--arg VALUE]... [--env KEY=VALUE]... [--cwd PATH] \
                            [--no-attach] [--activate] [--cdp [PORT]]
 ```
 
@@ -40,7 +40,7 @@ agent-desktop launch <APP> [--timeout MS] [--arg VALUE]... [--env KEY=VALUE]... 
 </table>
 
 ```bash
-agent-desktop launch gtk3-demo
+acdesktop launch gtk3-demo
 ```
 
 ```json
@@ -93,7 +93,7 @@ Platform limits: the accepted `APP` forms differ by OS. See [macOS](/desktop/pla
 Quits an app and all its windows, and succeeds only after the process is seen gone. No command closes a single window: click that window's Close button instead.
 
 ```bash
-agent-desktop close-app <APP> [--force]
+acdesktop close-app <APP> [--force]
 ```
 
 <table>
@@ -143,7 +143,7 @@ Platform limits: graceful close needs an X11 client on Linux, and the protected 
 Lists running GUI apps.
 
 ```bash
-agent-desktop list-apps [--app NAME] [--timeout-ms MS]
+acdesktop list-apps [--app NAME] [--timeout-ms MS]
 ```
 
 <table>
@@ -184,7 +184,7 @@ agent-desktop list-apps [--app NAME] [--timeout-ms MS]
 Lists windows. `data` is the array itself.
 
 ```bash
-agent-desktop list-windows [--app NAME] [--timeout-ms MS]
+acdesktop list-windows [--app NAME] [--timeout-ms MS]
 ```
 
 <table>
@@ -226,7 +226,7 @@ agent-desktop list-windows [--app NAME] [--timeout-ms MS]
 Brings a window to the front and succeeds only when the OS reports that window as focused on two consecutive reads.
 
 ```bash
-agent-desktop focus-window [--window-id ID] [--app NAME] [--title TEXT]
+acdesktop focus-window [--window-id ID] [--app NAME] [--title TEXT]
 ```
 
 <table>
@@ -267,7 +267,7 @@ Platform limits: Linux needs X11. See [Linux](/desktop/platforms/linux) and [Win
 Sets a window's width and height.
 
 ```bash
-agent-desktop resize-window --width PX --height PX [--app NAME] [--window-id ID]
+acdesktop resize-window --width PX --height PX [--app NAME] [--window-id ID]
 ```
 
 <table>
@@ -282,7 +282,7 @@ agent-desktop resize-window --width PX --height PX [--app NAME] [--window-id ID]
 </table>
 
 ```bash
-agent-desktop resize-window --app gedit --width 800 --height 600
+acdesktop resize-window --app gedit --width 800 --height 600
 ```
 
 ```json
@@ -324,7 +324,7 @@ Platform limits: the tolerance differs by OS, and on Linux window control uses a
 Moves a window to screen coordinates.
 
 ```bash
-agent-desktop move-window --x=X --y=Y [--app NAME] [--window-id ID]
+acdesktop move-window --x=X --y=Y [--app NAME] [--window-id ID]
 ```
 
 <table>
@@ -345,7 +345,7 @@ The result has the same shape as [`resize-window`](#resize-window), with step la
 Minimizes a window.
 
 ```bash
-agent-desktop minimize [--app NAME] [--window-id ID]
+acdesktop minimize [--app NAME] [--window-id ID]
 ```
 
 <table>
@@ -385,7 +385,7 @@ A minimized window reports its elements as offscreen, so ref actions on it fail 
 Maximizes a window, or zooms it on macOS. Flags are the same as [`minimize`](#minimize). The step label is `window_maximize`, and a verified report names `details.verification_scope: "window_maximized_state"`.
 
 ```bash
-agent-desktop maximize [--app NAME] [--window-id ID]
+acdesktop maximize [--app NAME] [--window-id ID]
 ```
 
 ## restore
@@ -393,7 +393,7 @@ agent-desktop maximize [--app NAME] [--window-id ID]
 Restores a minimized or maximized window. Flags are the same as [`minimize`](#minimize).
 
 ```bash
-agent-desktop restore [--app NAME] [--window-id ID]
+acdesktop restore [--app NAME] [--window-id ID]
 ```
 
 `restore` has no single read-back across its cases, so a successful report is `delivered_unverified`:

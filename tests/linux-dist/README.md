@@ -27,41 +27,35 @@ desktop reproduction.
 
 Build the CLI, FFI library and clipboard owner from the same checkout. Create
 the CLI and FFI archives using the release workflow layout. Run each of the
-first three commands inside its own private session. `scripts/private-session.sh --wm` starts a
+first two commands inside its own private session. `scripts/private-session.sh --wm` starts a
 private session bus, Xvfb display and Openbox; it looks for Openbox at
 `$ACDESKTOP_WM_ROOT/usr/bin/openbox` (`ACDESKTOP_WM_ROOT` defaults to `/`).
 Set it to an alternate installation root when needed. The apt
 packages the checks need are listed in the `linux-consumer` job of
-`.github/workflows/release-dry-run.yml`; the npm check also needs Node and npm.
+`.github/workflows/release-dry-run.yml`.
 
 ```sh
 export ACDESKTOP_WM_ROOT=/
 scripts/private-session.sh --wm -- tests/linux-dist/run-consumer.sh <extracted-ffi-directory>
 scripts/private-session.sh --wm -- scripts/ci-ffi-helper-discovery-smoke.sh
-scripts/private-session.sh --wm -- tests/linux-dist/run-npm-install.sh <archives-directory>
 python3 -I -m unittest discover -s tests/ffi-python -p 'test_linux_helper.py'
 python3 -I -m unittest discover -s tests/linux-dist -p 'test_*.py'
 ```
 
 `<extracted-ffi-directory>` is the extracted FFI archive, holding
 `lib/libacdesktop_ffi.so` and `include/acdesktop.h`.
-`<archives-directory>` holds the CLI archive for this architecture
-(`acdesktop-v*-<target>.tar.gz`); `run-npm-install.sh` serves it through a
-PATH-first `curl` double so the postinstall download and checksum path runs.
-
 The FFI discovery script expects the library in `target/release-ffi` (or
 `target/release`) and the owner in `target/release`; the consumer job copies
 both there from the extracted FFI archive. The script copies both into a fresh
 directory and empties PATH during clipboard calls. A foreign GTK reader must
 receive the payload after adapter destruction, then observe an empty selection
-after clear. The npm check applies the same contract after the installed CLI
-process exits. The release dry-run installs the GTK 3 typelib, runs the fake
+after clear. The release dry-run installs the GTK 3 typelib, runs the fake
 contracts, and stages the discovery check from that job's extracted archive.
 
 The consumer also runs the real ctypes smoke against the extracted library
 and header while Calculator is registered, requiring complete main-thread
 and worker-thread snapshots with refs. A smoke failure fails the consumer.
-Both C and npm click checks require a readable baseline different from `7`
+The C click check requires a readable baseline different from `7`
 before dispatch, a unique button ref, and an independent readback of `7`.
 Clipboard clear accepts only the reader's no-text status; observer errors
 fail the check. The deterministic tests listed above cover these contracts
@@ -96,4 +90,4 @@ invalidate this check.
 
 Measured results for this tooling are recorded in `probes/linux/FINDINGS.md`:
 `L22-16` (glibc 2.35 floor), `L22-18` (apt package set), `L22-19` (hosted-runner
-capability) and `L22-20` (npm install and detached clipboard ownership).
+capability).

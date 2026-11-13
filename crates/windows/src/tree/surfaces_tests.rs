@@ -62,7 +62,6 @@ mod shell_surfaces {
 
     use super::super::super::fixture::fixture_modal::ModalFixture;
     use super::super::super::fixture::{HostedFixture, bootstrap};
-    use super::super::super::walk::walker_fake::deadline;
     use crate::adapter::WindowsAdapter;
     use crate::system::fixture::test_support::{
         SHELL_SURFACE_LOCK, or_skip_shell, shell_declined_the_surface, stage_foreground,
@@ -78,6 +77,10 @@ mod shell_surfaces {
     use std::time::Duration;
 
     const STATE_TIMEOUT: Duration = Duration::from_secs(5);
+
+    fn deadline() -> acdesktop_core::Deadline {
+        acdesktop_core::Deadline::after(30_000).expect("surface observation deadline")
+    }
 
     /// Finally-style cleanup: whatever a test raised is dismissed when the
     /// test body exits, on any path, so a failed assertion never leaks a
@@ -310,13 +313,32 @@ mod shell_surfaces {
             if !advertised.contains(&kind) {
                 continue;
             }
-            let already_up = resolve_surface(kind, deadline())
-                .expect("the desktop is readable")
-                .is_some();
+            let already_up = match resolve_surface(kind, deadline()) {
+                Ok(resolved) => resolved.is_some(),
+                Err(error)
+                    if crate::system::fixture::test_support::skip_if_desktop_unobservable(
+                        "the desktop is readable",
+                        &error,
+                    ) =>
+                {
+                    continue;
+                }
+                Err(error) => panic!("the desktop is readable: {error:?}"),
+            };
             let info = match already_up {
-                true => resolve_surface(kind, deadline())
-                    .expect("the desktop is readable")
-                    .expect("checked above"),
+                true => match resolve_surface(kind, deadline()) {
+                    Ok(Some(info)) => info,
+                    Err(error)
+                        if crate::system::fixture::test_support::skip_if_desktop_unobservable(
+                            "the desktop is readable",
+                            &error,
+                        ) =>
+                    {
+                        continue;
+                    }
+                    Err(error) => panic!("the desktop is readable: {error:?}"),
+                    _ => unreachable!("checked above"),
+                },
                 false => {
                     let witness = witness_desktop();
                     let Some(info) = or_skip_shell(

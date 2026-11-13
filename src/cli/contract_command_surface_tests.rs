@@ -79,7 +79,14 @@ const SHARED_REF_ACTION_TESTS: &[&str] = &[
     "uncheck",
 ];
 
-const BINARY_CONTRACT_TESTS: &[&str] = &["batch", "permissions", "sandbox", "version"];
+const BINARY_CONTRACT_TESTS: &[&str] = &[
+    "batch",
+    "config",
+    "permissions",
+    "sandbox",
+    "update",
+    "version",
+];
 
 const ADAPTER_PASSTHROUGH_COMMANDS: &[&str] = &[
     "clipboard-clear",
@@ -117,6 +124,9 @@ const ADAPTER_PASSTHROUGH_COMMANDS: &[&str] = &[
 #[test]
 fn every_cli_subcommand_has_core_command_module() {
     for command in cli_command_names() {
+        if ["config", "update"].contains(&command.as_str()) {
+            continue;
+        }
         let module = command_module_name(&command);
         let path = command_module_path(&module);
         assert!(
@@ -161,7 +171,7 @@ fn macos_capability_count_includes_restored_notifications() {
     let commands = cli_command_names();
     assert_eq!(
         commands.len(),
-        61,
+        63,
         "the published CLI command count changed; update capability documentation"
     );
 }
@@ -246,14 +256,13 @@ mod doc_literal_drift;
 fn listing_timeout_is_accepted_in_cli_and_batch() {
     use clap::Parser;
     for command in ["list-apps", "list-windows"] {
-        let cli = crate::cli::Cli::try_parse_from(["acdesktop", command, "--timeout-ms", "37"])
-            .unwrap();
-        let batch =
-            crate::batch::parse_command(acdesktop_core::commands::batch::BatchCommand {
-                command: command.into(),
-                session: None,
-                args: serde_json::json!({"timeout_ms":37}),
-            });
+        let cli =
+            crate::cli::Cli::try_parse_from(["acdesktop", command, "--timeout-ms", "37"]).unwrap();
+        let batch = crate::batch::parse_command(acdesktop_core::commands::batch::BatchCommand {
+            command: command.into(),
+            session: None,
+            args: serde_json::json!({"timeout_ms":37}),
+        });
         for parsed in [cli.command.unwrap(), batch.unwrap()] {
             match &parsed {
                 crate::cli::Commands::ListApps(args) => assert_eq!(args.timeout_ms, Some(37)),

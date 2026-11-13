@@ -1,4 +1,4 @@
-"""Run by name inside scripts/private-session.sh --wm with AGENT_DESKTOP_E2E_BIN."""
+"""Run by name inside scripts/private-session.sh --wm with ACDESKTOP_E2E_BIN."""
 
 import json
 import os
@@ -108,9 +108,9 @@ class ResolveShiftLive(unittest.TestCase):
         self.assert_old_ref_refuses(True)
 
     def assert_old_ref_refuses(self, reparent):
-        self.assertIn("AGENT_DESKTOP_PRIVATE_SESSION", os.environ)
+        self.assertIn("ACDESKTOP_PRIVATE_SESSION", os.environ)
         self.assertNotIn(os.environ["DISPLAY"], (":0", ":1", ":99"))
-        binary = os.environ["AGENT_DESKTOP_E2E_BIN"]
+        binary = os.environ["ACDESKTOP_E2E_BIN"]
         mode = "--fixture-depth" if reparent else "--fixture"
         with subprocess.Popen([sys.executable, str(Path(__file__).resolve()), mode]) as app:
             try:
@@ -154,7 +154,7 @@ class ResolveShiftLive(unittest.TestCase):
                          if node.get("name") == "Save" and node.get("role") == "button"]
                 self.assertEqual(len(saves), 2, snapshot)
                 old_ref = saves[0]["ref_id"]
-                refmap_path = (Path(os.environ["AGENT_DESKTOP_HOME"]) / "snapshots" /
+                refmap_path = (Path(os.environ["ACDESKTOP_HOME"]) / "snapshots" /
                                snapshot["data"]["snapshot_id"] / "refmap.json")
                 refmap = json.loads(refmap_path.read_text())
                 entry = refmap["inner"]["@" + old_ref.split(":")[-1]]

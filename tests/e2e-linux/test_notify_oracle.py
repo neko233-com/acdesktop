@@ -27,7 +27,7 @@ class NotificationIdTests(unittest.TestCase):
 class IsolationTests(unittest.TestCase):
     def test_foreign_server_is_rejected_before_monitor_or_sender(self):
         tier = SimpleNamespace(runtime_dir=Path("/private"), bus_address="private-bus",
-                               env={"AGENT_DESKTOP_PRIVATE_SESSION": "/private"})
+                               env={"ACDESKTOP_PRIVATE_SESSION": "/private"})
         with patch.object(notify.raw, "connect"), patch.object(notify.raw, "call", return_value=(42,)), \
                 patch.object(notify.proc, "facts", return_value=(1, 1, "gnome-shell", {"XDG_RUNTIME_DIR": "/live"})), \
                 patch.object(notify, "monitor") as monitor, patch.object(notify, "send") as send:

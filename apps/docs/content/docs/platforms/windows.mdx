@@ -1,10 +1,10 @@
 ---
 title: Windows
 navTitle: Windows
-description: Requirements, permissions and elevation, per-command capabilities, app naming, surfaces, PowerShell notes, and troubleshooting for agent-desktop on Windows.
+description: Requirements, permissions and elevation, per-command capabilities, app naming, surfaces, PowerShell notes, and troubleshooting for acdesktop on Windows.
 ---
 
-agent-desktop reads Windows apps through UI Automation (UIA). The loop, refs, JSON envelope, sessions, and traces match every platform, so this page covers only what differs on Windows. The Windows behavior here is checked against the Windows adapter, its tests, and the Windows skill (`agent-desktop skills get windows`); it was not run for these docs. Examples elsewhere are POSIX shell; the PowerShell forms are in [Use PowerShell](#use-powershell).
+acdesktop reads Windows apps through UI Automation (UIA). The loop, refs, JSON envelope, sessions, and traces match every platform, so this page covers only what differs on Windows. The Windows behavior here is checked against the Windows adapter, its tests, and the Windows skill (`acdesktop skills get windows`); it was not run for these docs. Examples elsewhere are POSIX shell; the PowerShell forms are in [Use PowerShell](#use-powershell).
 
 ## Requirements
 
@@ -17,8 +17,8 @@ agent-desktop reads Windows apps through UI Automation (UIA). The loop, refs, JS
 Windows has no grant dialog for UI Automation; access is controlled by integrity level.
 
 - Apps at your terminal's integrity level need no grant. `permissions` reports `accessibility: granted` when UIA answers, and `automation: not_required`. `permissions --guide` returns `PLATFORM_NOT_SUPPORTED`.
-- An app running as administrator can be read but not driven from a lower-integrity terminal, because User Interface Privilege Isolation (UIPI) blocks the input. agent-desktop compares the process tokens before sending anything and returns `PERM_DENIED` with `E_ACCESSDENIED` in `platform_detail`. Run agent-desktop from a terminal elevated to the same level.
-- Elevated and non-elevated runs cannot share a state root; the second fails with `INTERNAL`, "private file parent is owned by a foreign principal". Give the elevated run its own `AGENT_DESKTOP_HOME`.
+- An app running as administrator can be read but not driven from a lower-integrity terminal, because User Interface Privilege Isolation (UIPI) blocks the input. acdesktop compares the process tokens before sending anything and returns `PERM_DENIED` with `E_ACCESSDENIED` in `platform_detail`. Run acdesktop from a terminal elevated to the same level.
+- Elevated and non-elevated runs cannot share a state root; the second fails with `INTERNAL`, "private file parent is owned by a foreign principal". Give the elevated run its own `ACDESKTOP_HOME`.
 
 ## What works headless
 
@@ -56,13 +56,13 @@ Ref actions are semantic UIA calls headless and under `--headed`, except the one
 
 ## Use PowerShell
 
-PowerShell reads a bare `@token` as its splatting operator and drops the argument before agent-desktop sees it. Quote every ref:
+PowerShell reads a bare `@token` as its splatting operator and drops the argument before acdesktop sees it. Quote every ref:
 
 ```powershell
-agent-desktop set-value '@s8f3k2p9:e1' "hello"
-$env:AGENT_DESKTOP_HOME = "$env:TEMP\ad-scratch"
-$start = agent-desktop session start | ConvertFrom-Json
-$env:AGENT_DESKTOP_SESSION = $start.data.session_id
+acdesktop set-value '@s8f3k2p9:e1' "hello"
+$env:ACDESKTOP_HOME = "$env:TEMP\ad-scratch"
+$start = acdesktop session start | ConvertFrom-Json
+$env:ACDESKTOP_SESSION = $start.data.session_id
 ```
 
 Use `$env:NAME = 'value'` instead of `export`, and `| ConvertFrom-Json` instead of `jq`. An unquoted ref fails with `INVALID_ARGS`. `cmd.exe` and bash need no quoting.
@@ -101,4 +101,4 @@ Chromium 138 and later exposes a full UIA tree with no flag, but the first read 
   </tbody>
 </table>
 
-More cases are in `agent-desktop skills get windows troubleshooting`.
+More cases are in `acdesktop skills get windows troubleshooting`.

@@ -7,15 +7,15 @@ export const navbarBrand: GeistdocsNavbarBrand = "labs";
 
 export const Logo = () => (
   <span className="font-semibold text-gray-1000 text-lg leading-none tracking-[-3%]">
-    agent-desktop
+    acdesktop
   </span>
 );
 
 export const github = {
   branch: "main",
   editPath: "apps/docs/content/docs/{path}",
-  owner: "vercel-labs",
-  repo: "agent-desktop",
+  owner: "neko233-com",
+  repo: "acdesktop",
 };
 
 export const nav = [
@@ -24,21 +24,21 @@ export const nav = [
     href: "/desktop",
   },
   {
-    label: "npm",
-    href: "https://www.npmjs.com/package/agent-desktop",
+    label: "Releases",
+    href: "https://github.com/neko233-com/acdesktop/releases",
     external: true,
   },
 ];
 
 export const suggestions = [
-  "How do I install agent-desktop?",
-  "What platforms does agent-desktop support?",
+  "How do I install acdesktop?",
+  "What platforms does acdesktop support?",
 ];
 
-export const title = "agent-desktop";
+export const title = "acdesktop";
 
 export const prompt =
-  "Answer questions about agent-desktop using the documentation.";
+  "Answer questions about acdesktop using the documentation.";
 
 export const ai = {
 } satisfies GeistdocsAIConfig;

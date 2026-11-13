@@ -8,7 +8,7 @@ Do not open a public issue for suspected vulnerabilities. Include the affected v
 
 ## Scope
 
-Security reports are in scope for the CLI, npm installer, FFI boundary, release artifacts, GitHub Actions workflows, and platform adapters.
+Security reports are in scope for the CLI, installation scripts, FFI boundary, release artifacts, GitHub Actions workflows, and platform adapters.
 
 ## Response
 

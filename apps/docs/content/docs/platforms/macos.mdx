@@ -1,26 +1,26 @@
 ---
 title: macOS
 navTitle: macOS
-description: Requirements, permissions, per-command capabilities, app naming, surfaces, and troubleshooting for agent-desktop on macOS.
+description: Requirements, permissions, per-command capabilities, app naming, surfaces, and troubleshooting for acdesktop on macOS.
 ---
 
-agent-desktop reads macOS apps through the Accessibility (AX) API. The loop, refs, JSON envelope, sessions, and traces match every platform, so this page covers only what differs on macOS. The macOS behavior here is checked against the macOS adapter, its tests, and the macOS skill (`agent-desktop skills get macos`); it was not run for these docs.
+acdesktop reads macOS apps through the Accessibility (AX) API. The loop, refs, JSON envelope, sessions, and traces match every platform, so this page covers only what differs on macOS. The macOS behavior here is checked against the macOS adapter, its tests, and the macOS skill (`acdesktop skills get macos`); it was not run for these docs.
 
 ## Requirements
 
 - macOS 13 or later, Intel or Apple Silicon.
-- Accessibility permission for the app that launches agent-desktop, such as Terminal, iTerm2, VS Code, or your agent's host app. If System Settings lists the `agent-desktop` binary separately, grant it too.
+- Accessibility permission for the app that launches acdesktop, such as Terminal, iTerm2, VS Code, or your agent's host app. If System Settings lists the `acdesktop` binary separately, grant it too.
 - Screen Recording permission, only for `screenshot` and for `session start --screenshots`.
 - Automation permission for System Events, only where a command reports it missing, such as opening Notification Center.
 
 ## Grant and check permissions
 
-The grant belongs to the app that launched agent-desktop, not to the shell. A different terminal or an IDE needs its own grant.
+The grant belongs to the app that launched acdesktop, not to the shell. A different terminal or an IDE needs its own grant.
 
-1. Run `agent-desktop permissions`. It does not prompt.
-2. If a permission is `denied`, run `agent-desktop permissions --guide`. It opens System Settings at the missing permission with a panel that shows which app to add, and returns at once with `data.guide` set to `started`, `already_running`, or `not_needed`.
+1. Run `acdesktop permissions`. It does not prompt.
+2. If a permission is `denied`, run `acdesktop permissions --guide`. It opens System Settings at the missing permission with a panel that shows which app to add, and returns at once with `data.guide` set to `started`, `already_running`, or `not_needed`.
 3. If the guide cannot run, open **System Settings > Privacy & Security > Accessibility**, add the launching app, and turn it on.
-4. Run `agent-desktop permissions` again and confirm `granted`. The app does not need a restart.
+4. Run `acdesktop permissions` again and confirm `granted`. The app does not need a restart.
 
 ```json
 {
@@ -39,7 +39,7 @@ The grant belongs to the app that launched agent-desktop, not to the shell. A di
 
 ## What works headless
 
-Ref actions are headless by default. Under `--headed`, `click`, `right-click`, `type`, `clear`, and `scroll` use physical paths first, except a click on an item in the application's native menu bar hierarchy: agent-desktop activates the owning app and calls `AXPress` without moving the cursor. A headless click on these menu items calls `AXPress` without activating the app. `right-click` can use `AXShowMenu` headless when the item provides it. Under `--headed`, right-click, double-click, and triple-click support windowless native menu items by focusing the app and keeping pointer verification. `hover` and `drag` still require the ref's source window and fail with `ACTION_NOT_SUPPORTED` when it has none. Other ref-target pointer actions focus the exact owning window and verify the hit target before delivery. A window-backed popup uses its live owning window even when its snapshot is application-owned. `expand`, `collapse`, `set-value`, `select`, `toggle`, `check`, `uncheck`, `focus`, and `scroll-to` stay semantic. See [Headed mode](/desktop/guides/headed-mode).
+Ref actions are headless by default. Under `--headed`, `click`, `right-click`, `type`, `clear`, and `scroll` use physical paths first, except a click on an item in the application's native menu bar hierarchy: acdesktop activates the owning app and calls `AXPress` without moving the cursor. A headless click on these menu items calls `AXPress` without activating the app. `right-click` can use `AXShowMenu` headless when the item provides it. Under `--headed`, right-click, double-click, and triple-click support windowless native menu items by focusing the app and keeping pointer verification. `hover` and `drag` still require the ref's source window and fail with `ACTION_NOT_SUPPORTED` when it has none. Other ref-target pointer actions focus the exact owning window and verify the hit target before delivery. A window-backed popup uses its live owning window even when its snapshot is application-owned. `expand`, `collapse`, `set-value`, `select`, `toggle`, `check`, `uncheck`, `focus`, and `scroll-to` stay semantic. See [Headed mode](/desktop/guides/headed-mode).
 
 <table>
   <thead>
@@ -75,11 +75,11 @@ Judge delivery by observation. AX return codes do not prove an effect: an app ca
 - The primary modifier is `cmd`: `press cmd+c`. Punctuation keys work as the symbol or by name (`comma`, `period`, `slash`).
 - `cmd+q`, `cmd+shift+q`, `cmd+alt+esc`, `ctrl+cmd+q`, and `cmd+shift+delete` return `POLICY_DENIED` unless you pass `--force`. To quit an app, use `close-app`.
 - `press cmd+s --app "TextEdit"` sends keys to one app without focusing it.
-- When agent-desktop opens Notification Center, it closes it afterward and restores the previous focus. Pass `--expected-app` and `--expected-title` on a single dismiss or action, because the stack shifts. Use `wait --notification --app "App"` for banners that vanish before you can list them.
+- When acdesktop opens Notification Center, it closes it afterward and restores the previous focus. Pass `--expected-app` and `--expected-title` on a single dismiss or action, because the stack shifts. Use `wait --notification --app "App"` for banners that vanish before you can list them.
 
 ## Chromium and Electron
 
-agent-desktop turns on web accessibility in a Chromium renderer when it needs it. For a dense running app, take a skeleton and drill with `--root`. For the web contents of an Electron app you can launch fresh, `launch "App" --cdp` opens a DevTools endpoint for agent-browser. See [Chromium and Electron apps](/desktop/guides/chromium-and-electron).
+acdesktop turns on web accessibility in a Chromium renderer when it needs it. For a dense running app, take a skeleton and drill with `--root`. For the web contents of an Electron app you can launch fresh, `launch "App" --cdp` opens a DevTools endpoint for agent-browser. See [Chromium and Electron apps](/desktop/guides/chromium-and-electron).
 
 ## Troubleshooting
 
@@ -98,4 +98,4 @@ agent-desktop turns on web accessibility in a Chromium renderer when it needs it
   </tbody>
 </table>
 
-More cases are in `agent-desktop skills get macos troubleshooting`.
+More cases are in `acdesktop skills get macos troubleshooting`.

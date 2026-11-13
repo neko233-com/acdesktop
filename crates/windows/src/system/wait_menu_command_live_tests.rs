@@ -30,7 +30,44 @@ const RECV_TIMEOUT: Duration = Duration::from_secs(20);
 const STATE_TIMEOUT: Duration = Duration::from_secs(5);
 const WAIT_TIMEOUT_MS: u64 = 10_000;
 
-use crate::system::fixture::live_identity::own_image_name;
+struct UniqueMenuFixture {
+    fixture: Option<MenuFixture>,
+    executable: std::path::PathBuf,
+    image: String,
+}
+
+impl UniqueMenuFixture {
+    fn spawn() -> Self {
+        let source = std::env::current_exe().expect("test executable");
+        let image = format!(
+            "acdesktop-menu-wait-{}-{}.exe",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("clock")
+                .as_nanos()
+        );
+        let executable = std::env::temp_dir().join(&image);
+        std::fs::copy(source, &executable).expect("copy unique fixture executable");
+        let fixture = MenuFixture::spawn_from(&executable).expect("the menu fixture starts");
+        Self {
+            fixture: Some(fixture),
+            executable,
+            image,
+        }
+    }
+
+    fn fixture(&self) -> &MenuFixture {
+        self.fixture.as_ref().expect("fixture is alive")
+    }
+}
+
+impl Drop for UniqueMenuFixture {
+    fn drop(&mut self) {
+        drop(self.fixture.take());
+        let _ = std::fs::remove_file(&self.executable);
+    }
+}
 
 const AMBIGUOUS_APP_NAME_RETRIES: u32 = 10;
 const AMBIGUOUS_APP_NAME_RETRY_DELAY: Duration = Duration::from_millis(300);
@@ -99,8 +136,9 @@ fn wait_menu_finds_the_fixtures_context_menu_opened_mid_wait_through_the_command
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
     let _stage = crate::tree::fixture::fixture_window::on_screen_stage();
-    let fixture = MenuFixture::spawn().expect("the menu fixture starts");
-    let receiver = spawn_menu_wait(SurfaceWait::Menu, own_image_name());
+    let unique = UniqueMenuFixture::spawn();
+    let fixture = unique.fixture();
+    let receiver = spawn_menu_wait(SurfaceWait::Menu, unique.image.clone());
 
     thread::sleep(OPEN_AFTER);
     fixture.open_context_menu();
@@ -124,12 +162,13 @@ fn wait_menu_closed_finds_the_already_open_menu_dismissed_mid_wait_through_the_c
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner());
     let _stage = crate::tree::fixture::fixture_window::on_screen_stage();
-    let fixture = MenuFixture::spawn().expect("the menu fixture starts");
+    let unique = UniqueMenuFixture::spawn();
+    let fixture = unique.fixture();
     fixture.open_context_menu();
     assert!(fixture.wait_for_menu_state(true, STATE_TIMEOUT));
     thread::sleep(Duration::from_millis(250));
 
-    let receiver = spawn_menu_wait(SurfaceWait::MenuClosed, own_image_name());
+    let receiver = spawn_menu_wait(SurfaceWait::MenuClosed, unique.image.clone());
 
     thread::sleep(OPEN_AFTER);
     fixture.dismiss_context_menu();

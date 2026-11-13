@@ -14,12 +14,12 @@ from json_tool import run_bounded
 
 TRACE_LIMIT_BYTES = 16 * 1024 * 1024
 HELPER_ENV = (
-    "AGENT_DESKTOP_PERMISSION_HELPER",
-    "AGENT_DESKTOP_PERMISSION_OPERATION",
-    "AGENT_DESKTOP_PERMISSION_TOKEN",
-    "AGENT_DESKTOP_PERMISSION_PARENT_PID",
-    "AGENT_DESKTOP_PERMISSION_PARENT_INSTANCE",
-    "AGENT_DESKTOP_PERMISSION_EXECUTABLE",
+    "ACDESKTOP_PERMISSION_HELPER",
+    "ACDESKTOP_PERMISSION_OPERATION",
+    "ACDESKTOP_PERMISSION_TOKEN",
+    "ACDESKTOP_PERMISSION_PARENT_PID",
+    "ACDESKTOP_PERMISSION_PARENT_INSTANCE",
+    "ACDESKTOP_PERMISSION_EXECUTABLE",
 )
 
 
@@ -39,7 +39,7 @@ def isolated_environment(root, label):
     os.makedirs(home, exist_ok=True)
     environment = os.environ.copy()
     environment["HOME"] = home
-    environment.pop("AGENT_DESKTOP_SESSION", None)
+    environment.pop("ACDESKTOP_SESSION", None)
     for name in HELPER_ENV:
         environment.pop(name, None)
     return environment
@@ -312,7 +312,7 @@ def main():
         write_report(args.out, measure(args))
     except (MeasurementError, OSError, ValueError) as error:
         write_report(args.out, {
-            "schema": "agent-desktop-electron-live-v3", "ok": False, "app": args.app,
+            "schema": "acdesktop-electron-live-v3", "ok": False, "app": args.app,
             "error": {"kind": "measurement_failed", "message": str(error)},
         })
         print(str(error), file=sys.stderr)

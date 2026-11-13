@@ -6,6 +6,7 @@ use acdesktop_core::{
 use super::shell_surface::{
     SurfaceDismiss, SurfaceFamily, SurfaceKindRow, SurfaceRaise, kebab, refusal_error, row_for,
 };
+use super::shell_surface_errors::timeout_error;
 #[cfg(all(test, target_os = "windows"))]
 pub(in crate::system) use super::shell_surface_raise::accelerator_probe;
 use super::shell_surface_raise::raise_row;
@@ -55,89 +56,30 @@ pub(in crate::system) fn open_row(
     if !row.exists_on_build {
         return Err(refusal_error(row));
     }
-    if let Some(existing) = super::shell_surface::resolve_row(row, deadline)?
-        && surface_presented(row, deadline)?
+    let (existing, pre_raise_children) = match &row.family {
+        SurfaceFamily::Immersive {
+            expected_class,
+            host_images,
+            landmarks,
+        } => super::shell_surface_immersive::resolve_with_witness(
+            expected_class,
+            host_images,
+            landmarks,
+            deadline,
+        )?,
+        SurfaceFamily::Win32Class(_) => (
+            super::shell_surface::resolve_row(row, deadline)?,
+            Vec::new(),
+        ),
+    };
+    if let Some(existing) = existing
+        && resolved_surface_presented(row, deadline)?
     {
         return Ok(existing);
     }
-    let pre_raise_children = match &row.family {
-        SurfaceFamily::Immersive { .. } => {
-            super::shell_surface_immersive::witness_immersive_children()?
-        }
-        SurfaceFamily::Win32Class(_) => Vec::new(),
-    };
     raise_row(row, deadline)?;
-    poll_until_observed(row, deadline, &pre_raise_children)
-}
-
-/// The open is never reported from the fact that the accelerator was sent or
-/// the chevron invoked - the shell can simply decline - so every open ends in
-/// an observed, presented resolve or a `TIMEOUT`, polled at a bounded
-/// interval that grows the way the launch observer's does rather than
-/// sleeping a fixed guess. The resolve alone is not enough: it matches the
-/// overflow's window while the surface is still hidden, so the presented
-/// read rides alongside it. A raise that presents a same-class, same-host
-/// surface matching none of the kind's landmarks resolves as the named
-/// foreign-shape refusal instead of burning the deadline - the raise
-/// presented something, and it is not the measured shape.
-fn poll_until_observed(
-    row: &SurfaceKindRow,
-    deadline: Deadline,
-    pre_raise_children: &[isize],
-) -> Result<WindowInfo, AdapterError> {
-    let mut interval = std::time::Duration::from_millis(50);
-    let mut foreign_since: Option<std::time::Instant> = None;
-    loop {
-        if deadline.remaining().is_zero() {
-            return Err(timeout_error(
-                row,
-                "did not open within the deadline",
-                "shell_surface_not_opened",
-            ));
-        }
-        deadline.ensure_remaining()?;
-        if let Some(observed) = super::shell_surface::resolve_row(row, deadline)?
-            && surface_presented(row, deadline)?
-        {
-            return Ok(observed);
-        }
-        if let SurfaceFamily::Immersive { landmarks, .. } = &row.family {
-            let client = crate::tree::automation::automation_client()?;
-            let foreign = super::shell_surface_immersive::raise_presented_foreign_shape(
-                &client,
-                pre_raise_children,
-                landmarks,
-            )?;
-            if foreign_shape_settled(&mut foreign_since, foreign, std::time::Instant::now()) {
-                return Err(super::shell_surface_immersive::foreign_shape_error(
-                    landmarks,
-                ));
-            }
-        }
-        let remaining = deadline.remaining();
-        std::thread::sleep(interval.min(remaining));
-        interval = (interval * 3 / 2).min(std::time::Duration::from_millis(250));
-    }
-}
-
-/// How long a raise-presented window must stay landmark-free before it is
-/// called a foreign shape. A surface that is still loading uncloaks before
-/// its tree carries a landmark, and a toast arriving during the raise is a
-/// landmark-free window that is not the surface, so a single poll's answer
-/// would refuse an open that one more poll resolves.
-const FOREIGN_SHAPE_SETTLE: std::time::Duration = std::time::Duration::from_millis(500);
-
-fn foreign_shape_settled(
-    since: &mut Option<std::time::Instant>,
-    foreign_now: bool,
-    now: std::time::Instant,
-) -> bool {
-    if !foreign_now {
-        *since = None;
-        return false;
-    }
-    let first = *since.get_or_insert(now);
-    now.duration_since(first) >= FOREIGN_SHAPE_SETTLE
+    super::shell_surface_poll::poll_until_observed(row, deadline, &pre_raise_children)
+        .map_err(after_delivery)
 }
 
 /// Dismisses a shell surface and returns once it is observed no longer
@@ -170,16 +112,27 @@ pub(in crate::system) fn close_row(
                 super::shell_surface_kinds::VK_ESCAPE,
                 deadline,
             )?;
-            poll_until_gone(row, deadline)
+            poll_until_gone(row, deadline).map_err(after_delivery)
         }
         SurfaceDismiss::RaiseThenEscape => raise_then_escape(row, deadline),
         SurfaceDismiss::Toggle => {
             if let SurfaceRaise::Accelerator { modifiers, key } = row.raise {
                 super::shell_surface_raise::send_chord(modifiers, key, deadline)?;
             }
-            poll_until_gone(row, deadline)
+            poll_until_gone(row, deadline).map_err(after_delivery)
         }
     }
+}
+
+fn after_delivery(mut error: AdapterError) -> AdapterError {
+    if let Some(mut details) = error.details.take() {
+        if let Some(object) = details.as_object_mut() {
+            object.insert("retryable".into(), serde_json::Value::Bool(false));
+        }
+        error = error.with_details(details);
+    }
+    error.suggestion = Some("Observe the shell surface before deciding whether to retry".into());
+    error.with_disposition(DeliverySemantics::delivered_unverified())
 }
 
 /// How long a re-raise is given to have been a toggle before the dismissal
@@ -205,12 +158,13 @@ const FOREGROUND_SETTLE: std::time::Duration = std::time::Duration::from_millis(
 #[cfg(target_os = "windows")]
 fn raise_then_escape(row: &SurfaceKindRow, deadline: Deadline) -> Result<(), AdapterError> {
     super::shell_surface_raise::raise_row(row, deadline)?;
-    if settles_absent(row, deadline)? {
+    if settles_absent(row, deadline).map_err(after_delivery)? {
         return Ok(());
     }
-    await_foreground(row, deadline)?;
-    super::shell_surface_raise::send_chord(&[], super::shell_surface_kinds::VK_ESCAPE, deadline)?;
-    poll_until_gone(row, deadline)
+    await_foreground(row, deadline).map_err(after_delivery)?;
+    super::shell_surface_raise::send_chord(&[], super::shell_surface_kinds::VK_ESCAPE, deadline)
+        .map_err(after_delivery)?;
+    poll_until_gone(row, deadline).map_err(after_delivery)
 }
 
 #[cfg(target_os = "windows")]
@@ -280,7 +234,14 @@ fn surface_owns_foreground(row: &SurfaceKindRow, deadline: Deadline) -> Result<b
             host_images,
             landmarks,
             ..
-        } => super::shell_surface_immersive::window_is_surface(root, host_images, landmarks),
+        } => {
+            let raw = root as isize;
+            let host_images = *host_images;
+            let landmarks = *landmarks;
+            super::bounded_read::read(deadline, move || {
+                super::shell_surface_immersive::window_is_surface(raw as _, host_images, landmarks)
+            })
+        }
         SurfaceFamily::Win32Class(_) => Ok(false),
     }
 }
@@ -336,6 +297,25 @@ pub(in crate::system) fn close_row(
 /// state is the top-level window's visibility; the immersive family's is the
 /// resolver's own root-membership-and-cloak predicate (A26-2).
 #[cfg(target_os = "windows")]
+pub(super) fn resolved_surface_presented(
+    row: &SurfaceKindRow,
+    deadline: Deadline,
+) -> Result<bool, AdapterError> {
+    match row.family {
+        SurfaceFamily::Immersive { .. } => Ok(true),
+        SurfaceFamily::Win32Class(_) => surface_presented(row, deadline),
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub(super) fn resolved_surface_presented(
+    _row: &SurfaceKindRow,
+    _deadline: Deadline,
+) -> Result<bool, AdapterError> {
+    Err(AdapterError::not_supported("resolve shell surface"))
+}
+
+#[cfg(target_os = "windows")]
 fn surface_presented(row: &SurfaceKindRow, deadline: Deadline) -> Result<bool, AdapterError> {
     use windows_sys::Win32::UI::WindowsAndMessaging::IsWindowVisible;
 
@@ -374,16 +354,6 @@ fn poll_until_gone(row: &SurfaceKindRow, deadline: Deadline) -> Result<(), Adapt
     }
 }
 
-fn timeout_error(row: &SurfaceKindRow, outcome: &str, kind: &'static str) -> AdapterError {
-    AdapterError::timeout(format!("the '{}' shell surface {outcome}", kebab(row.kind)))
-        .with_suggestion(
-            "Retry: the shell can decline an accelerator or an invoke without reporting it; \
-         a build that lacks the surface refuses instead of timing out",
-        )
-        .with_details(serde_json::json!({ "kind": kind, "retryable": true }))
-        .with_disposition(DeliverySemantics::not_delivered())
-}
-
 #[cfg(all(test, target_os = "windows"))]
 #[path = "shell_surface_command_live_tests.rs"]
 mod command_live_tests;
@@ -391,7 +361,3 @@ mod command_live_tests;
 #[cfg(all(test, target_os = "windows"))]
 #[path = "shell_surface_close_tests.rs"]
 mod close_tests;
-
-#[cfg(test)]
-#[path = "shell_surface_settle_tests.rs"]
-mod settle_tests;

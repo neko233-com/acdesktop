@@ -3,13 +3,13 @@
 //! # 安全模型
 //!
 //! - **Observation 命令**（snapshot/find/get/is/list-*）：纯读，跨 app 全并行
-//! - **Action 命令**（click/type/drag/scroll/launch…）：跨 app 并行，**同 app 严格按原始顺序串行**
-//! - **Global 命令**（press/key/down/up/mouse-*/clipboard-*）：全局单例资源，**等所有 bucket 结束后串行**
+//! - Semantic ref actions can run across verified process identities; other actions run as barriers.
+//! - Global operations run between the entries that precede and follow them.
 //! - **Illegal in parallel**：wait / cursor-overlay / sandbox / batch / session / trace —— 直接 INVALID_ARGS
 //!
 //! # 实现
 //!
-//! 零第三方依赖：`std::thread::scope`（1.63+）让所有 bucket 并行跑；
+//! 零第三方依赖：`std::thread::scope`让所有 bucket 并行跑；
 //! `PlatformAdapter: Send + Sync` 让 adapter 可以跨线程安全引用。
 
 use acdesktop_core::{
@@ -20,9 +20,7 @@ use serde_json::{Value, json};
 
 use crate::{cli::Commands, cli_args::batch::BatchArgs, dispatch};
 
-use super::{
-    result_entry::{MAX_BATCH_OUTPUT_BYTES, bounded_completed_entry, not_started_entry},
-};
+use super::result_entry::{MAX_BATCH_OUTPUT_BYTES, bounded_completed_entry, not_started_entry};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Class {
@@ -35,47 +33,48 @@ enum Class {
 fn classify(cmd: &Commands) -> Class {
     use Commands::*;
     match cmd {
-        Snapshot(_) | Find(_) | Screenshot(_) | Get(_) | Is(_) | ListWindows(_)
-        | ListDisplays | ListApps(_) | ListSurfaces(_) | ListNotifications(_)
-        | Status | Version | Permissions(_) => Class::Observation,
+        Snapshot(_) | Find(_) | Screenshot(_) | Get(_) | Is(_) | ListWindows(_) | ListDisplays
+        | ListApps(_) | ListSurfaces(_) | ListNotifications(_) | Status | Version
+        | Permissions(_) => Class::Observation,
 
-        Press(_) | KeyDown(_) | KeyUp(_)
-        | MouseMove(_) | MouseClick(_) | MouseDown(_) | MouseUp(_) | MouseWheel(_)
-        | ClipboardSet(_) | ClipboardClear | ClipboardGet(_) => Class::Global,
+        Press(_) | KeyDown(_) | KeyUp(_) | MouseMove(_) | MouseClick(_) | MouseDown(_)
+        | MouseUp(_) | MouseWheel(_) | ClipboardSet(_) | ClipboardClear | ClipboardGet(_) => {
+            Class::Global
+        }
 
-        Click(_) | DoubleClick(_) | TripleClick(_) | RightClick(_) | Type(_)
-        | SetValue(_) | Clear(_) | Focus(_) | Select(_) | Toggle(_) | Check(_)
-        | Uncheck(_) | Expand(_) | Collapse(_) | Scroll(_) | ScrollTo(_)
-        | Hover(_) | Drag(_)
-        | Launch(_) | CloseApp(_) | FocusWindow(_) | ResizeWindow(_) | MoveWindow(_)
-        | Minimize(..) | Maximize(..) | Restore(..)
+        Click(_)
+        | DoubleClick(_)
+        | TripleClick(_)
+        | RightClick(_)
+        | Type(_)
+        | SetValue(_)
+        | Clear(_)
+        | Focus(_)
+        | Select(_)
+        | Toggle(_)
+        | Check(_)
+        | Uncheck(_)
+        | Expand(_)
+        | Collapse(_)
+        | Scroll(_)
+        | ScrollTo(_)
+        | Hover(_)
+        | Drag(_)
+        | Launch(_)
+        | CloseApp(_)
+        | FocusWindow(_)
+        | ResizeWindow(_)
+        | MoveWindow(_)
+        | Minimize(..)
+        | Maximize(..)
+        | Restore(..)
         | OpenSystemSurface(_)
-        | DismissNotification(_) | DismissAllNotifications(..) | NotificationAction(_) => Class::Action,
+        | DismissNotification(_)
+        | DismissAllNotifications(..)
+        | NotificationAction(_) => Class::Action,
 
-        Wait(_) | CursorOverlay(_) | Batch(_)
-        | Session(_) | Skills(_) | Trace(_) | Sandbox(_)
+        Wait(_) | CursorOverlay(_) | Batch(_) | Session(_) | Skills(_) | Trace(_) | Sandbox(_)
         | Update(_) | Config(_) => Class::Illegal,
-    }
-}
-
-/// 从命令里提取"归属于哪个 target bucket"。没有明确 app 的命令默认进 `_ref_only` 或 `_global`。
-fn target_key(cmd: &Commands) -> String {
-    use Commands::*;
-    match cmd {
-        // app 是 String（必填）
-        Launch(a) => a.app.clone(),
-        CloseApp(a) => a.app.clone(),
-        // app 是 Option<String>
-        FocusWindow(a) => a.app.clone().unwrap_or_else(|| "_global".to_string()),
-        ResizeWindow(a) => a.scope.app.clone().unwrap_or_else(|| "_unknown".to_string()),
-        MoveWindow(a) => a.scope.app.clone().unwrap_or_else(|| "_unknown".to_string()),
-        // RefArgs 没有 app 字段，只靠 ref_id —— 无法判断属于哪个 app，保守进 ref_only 桶
-        Click(_) | DoubleClick(_) | TripleClick(_) | RightClick(_)
-        | Clear(_) | Focus(_) | Toggle(_) | Check(_) | Uncheck(_)
-        | Expand(_) | Collapse(_) | ScrollTo(_)
-        | Type(_) | SetValue(_) | Select(_) | Scroll(_) | Hover(_) | Drag(_)
-        => "_ref_only".to_string(),
-        _ => "_global".to_string(),
     }
 }
 
@@ -85,15 +84,17 @@ pub(super) fn execute_parallel(
     permission_report: &PermissionReport,
     context: &CommandContext,
 ) -> Result<Value, AppError> {
+    if args.stop_on_error {
+        return super::execution::execute(args, adapter, permission_report, context);
+    }
     let deadline = Deadline::after(args.timeout_ms)
         .map_err(|e| e.with_disposition(DeliverySemantics::not_delivered()))?;
     let batch_context = context.clone().with_inherited_deadline(deadline);
 
-    let mut prepared =
+    let prepared =
         super::preparation::prepare(&args.commands_json, permission_report, &batch_context)?;
     let total = prepared.len();
 
-    // --- 前置安全检查 ---
     for (i, p) in prepared.iter().enumerate() {
         if classify(&p.command) == Class::Illegal {
             return Err(AppError::invalid_input(format!(
@@ -103,105 +104,94 @@ pub(super) fn execute_parallel(
         }
     }
 
-    // --- 分桶：move Commands 进桶，避免 Clone ---
-    // buckets: String key → Vec<(original_index, command, class)>
-    // Commands 不可 Clone，所以必须 move。
-    let mut buckets: std::collections::BTreeMap<String, Vec<(usize, Commands, Class)>> =
-        std::collections::BTreeMap::new();
-    for (i, p) in prepared.iter_mut().enumerate() {
-        let cmd = std::mem::replace(&mut p.command, Commands::Version);
-        let cls = classify(&cmd);
-        let key = match cls {
-            Class::Global => "_global".to_string(),
-            _ => target_key(&cmd),
-        };
-        buckets.entry(key).or_default().push((i, cmd, cls));
-    }
-
-    // 分 non_global vs global（global 最后串行）
-    let mut non_global_buckets = Vec::new();
-    let mut global_bucket: Option<(String, Vec<(usize, Commands, Class)>)> = None;
-    for (k, v) in buckets {
-        if k == "_global" {
-            global_bucket = Some((k, v));
-        } else {
-            non_global_buckets.push((k, v));
-        }
-    }
+    let names: Vec<String> = prepared.iter().map(|item| item.name.clone()).collect();
+    let segments = plan_segments(prepared, super::parallel_identity::process_key);
 
     let all_results = std::sync::Mutex::new(vec![None; total]);
-    let elapsed = std::time::Instant::now();
-    let max_workers = args.max_workers.max(1).min(non_global_buckets.len().max(1));
-
-    // --- 跨桶并行：所有 non-global bucket 一起跑，由 OS 线程调度 ---
-    // thread::scope 自动等待所有 spawn 完成后再退出。
-    std::thread::scope(|s| {
-        let mut handles = Vec::new();
-        for (bucket_key, bucket_cmds) in non_global_buckets {
-            let ctx = batch_context.clone();
-            let results_ref = &all_results;
-            let deadline_ref = deadline;
-            let perm_ref = permission_report;
-            let adapter_ref = adapter;
-
-            handles.push(s.spawn(move || {
-                run_bucket_owned(
-                    &bucket_key,
-                    bucket_cmds,
-                    adapter_ref,
-                    perm_ref,
-                    &ctx,
-                    &deadline_ref,
-                    results_ref,
-                )
-            }));
-        }
-        for h in handles {
-            let _ = h.join();
-        }
-    });
-
-    // --- global bucket 串行（最后跑，不和其他桶抢输入设备） ---
-    if let Some((key, cmds)) = global_bucket {
-        run_bucket_owned(
-            &key,
-            cmds,
-            adapter,
-            permission_report,
-            &batch_context,
-            &deadline,
-            &all_results,
-        );
-    }
-
-    // --- 组装输出 ---
-    let mut results: Vec<Value> = Vec::with_capacity(total);
+    let max_workers = args.max_workers.max(1).min(total.max(1));
+    let parallelism = segments
+        .iter()
+        .map(Vec::len)
+        .max()
+        .unwrap_or(0)
+        .min(max_workers);
+    let worker_context = WorkerContext {
+        adapter,
+        permission_report,
+        deadline,
+        results: &all_results,
+    };
+    let mut results = Vec::with_capacity(total);
     let mut used = 0usize;
     let mut completed = 0usize;
-    let mut oversized = false;
-
-    for i in 0..total {
-        let entry = all_results.lock().unwrap()[i]
-            .take()
-            .unwrap_or_else(|| {
-                not_started_entry(
-                    i,
-                    prepared[i].name.as_str(),
-                    "parallel_bucket_aborted",
-                    AppError::invalid_input(format!("命令 {i} 因桶级 abort 未执行")),
-                )
+    let mut stopped = None;
+    for segment in segments {
+        let mut indices: Vec<usize> = segment
+            .iter()
+            .flat_map(|bucket| bucket.iter().map(|(index, _)| *index))
+            .collect();
+        indices.sort_unstable();
+        let mut buckets: std::collections::VecDeque<_> = segment.into();
+        while !buckets.is_empty() {
+            let joined = std::thread::scope(|scope| {
+                let mut handles = Vec::new();
+                let mut spawned = true;
+                for _ in 0..max_workers {
+                    let Some(commands) = buckets.pop_front() else {
+                        break;
+                    };
+                    let worker = &worker_context;
+                    match std::thread::Builder::new()
+                        .spawn_scoped(scope, move || run_bucket_owned(commands, worker))
+                    {
+                        Ok(handle) => handles.push(handle),
+                        Err(_) => {
+                            spawned = false;
+                            break;
+                        }
+                    }
+                }
+                handles
+                    .into_iter()
+                    .fold(spawned, |ok, handle| handle.join().is_ok() && ok)
             });
-        if entry.get("execution").and_then(|v| v.as_str()) == Some("completed") {
-            completed += 1;
+            if !joined {
+                return Err(acdesktop_core::AdapterError::new(
+                    acdesktop_core::ErrorCode::Internal,
+                    "Parallel batch worker failed; delivery of in-flight commands is uncertain",
+                )
+                .with_disposition(DeliverySemantics::uncertain())
+                .into());
+            }
         }
-        let (entry, oversized_now) =
-            bounded_completed_entry(i, prepared[i].name.as_str(), entry, used);
-        if oversized_now {
-            oversized = true;
+        let mut stored = all_results
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        let mut oversized = false;
+        for i in indices {
+            let Some(entry) = stored[i].take() else {
+                return Err(acdesktop_core::AdapterError::new(
+                    acdesktop_core::ErrorCode::Internal,
+                    "Parallel batch lost a command result",
+                )
+                .with_disposition(DeliverySemantics::uncertain())
+                .into());
+            };
+            if entry.get("execution").and_then(|v| v.as_str()) == Some("completed") {
+                completed += 1;
+            }
+            let (entry, limit_hit) = bounded_completed_entry(i, &names[i], entry, used);
+            oversized |= limit_hit;
+            used =
+                used.saturating_add(super::bounded_json::serialized_size(&entry).saturating_add(1));
+            results.push(entry);
         }
-        let size = super::bounded_json::serialized_size(&entry).saturating_add(1);
-        used = used.saturating_add(size);
-        results.push(entry);
+        if oversized {
+            stopped = Some(
+                json!({ "reason": "output_limit", "after_index": results.len().saturating_sub(1) }),
+            );
+            break;
+        }
     }
 
     let mut body = json!({
@@ -210,47 +200,120 @@ pub(super) fn execute_parallel(
             "atomic": false,
             "order": "target-group-parallel",
             "parallel_by_target": true,
-            "cross_target_parallelism": max_workers,
+            "cross_target_parallelism": parallelism,
             "batch_retries": false,
         },
         "total_entries": total,
         "completed_entries": completed,
         "not_started_entries": total.saturating_sub(completed),
         "timeout_ms": args.timeout_ms,
-        "elapsed_ms": elapsed.elapsed().as_millis(),
+        "elapsed_ms": deadline.elapsed().as_millis(),
         "limits": {
             "max_entries": super::preparation::MAX_BATCH_ENTRIES,
             "max_input_bytes": super::preparation::MAX_BATCH_JSON_BYTES,
             "max_output_bytes": MAX_BATCH_OUTPUT_BYTES,
         },
     });
-    if oversized {
-        body["stopped"] = json!({ "reason": "output_limit" });
+    if let Some(stopped) = stopped {
+        body["stopped"] = stopped;
     }
-
+    if super::bounded_json::serialized_size(&body) > MAX_BATCH_OUTPUT_BYTES {
+        let disposition = if completed == 0 {
+            DeliverySemantics::not_delivered()
+        } else {
+            DeliverySemantics::uncertain()
+        };
+        return Err(acdesktop_core::AdapterError::new(
+            acdesktop_core::ErrorCode::Internal,
+            "Batch response exceeded its output contract after final serialization",
+        )
+        .with_disposition(disposition)
+        .into());
+    }
     Ok(body)
 }
 
-/// 桶内执行：按原始顺序串行处理每个 command（action 类同桶串行防止竞态）
-fn run_bucket_owned(
-    bucket_key: &str,
-    cmds: Vec<(usize, Commands, Class)>,
-    adapter: &dyn PlatformAdapter,
-    permission_report: &PermissionReport,
-    batch_context: &CommandContext,
-    deadline: &Deadline,
-    results: &std::sync::Mutex<Vec<Option<Value>>>,
-) {
-    for (index, cmd, _class) in cmds {
-        if deadline.is_expired() {
-            let error = AppError::invalid_input(format!("并行 bucket '{bucket_key}' 超时"));
-            let entry = not_started_entry(index, bucket_key, "deadline", error);
-            results.lock().unwrap()[index] = Some(entry);
-            break;
+type IndexedCommand = (usize, super::preparation::PreparedCommand);
+type Segments = Vec<Vec<Vec<IndexedCommand>>>;
+
+fn plan_segments(
+    prepared: Vec<super::preparation::PreparedCommand>,
+    key_for: impl Fn(&super::preparation::PreparedCommand) -> Option<String>,
+) -> Segments {
+    let mut segments = Vec::new();
+    let mut buckets = std::collections::BTreeMap::<String, Vec<_>>::new();
+    let mut prior_class = None;
+    for (index, item) in prepared.into_iter().enumerate() {
+        let class = classify(&item.command);
+        let key = match class {
+            Class::Observation if !matches!(&item.command, Commands::Screenshot(_)) => {
+                Some(format!("read:{index}"))
+            }
+            Class::Action => key_for(&item).map(|key| format!("process:{key}")),
+            _ => None,
+        };
+        if key.is_none() || prior_class.is_some_and(|prior| prior != class) {
+            if !buckets.is_empty() {
+                segments.push(
+                    std::mem::take(&mut buckets)
+                        .into_values()
+                        .collect::<Vec<_>>(),
+                );
+            }
+            prior_class = None;
         }
-        let item_context = batch_context.clone().with_inherited_deadline(*deadline);
-        let execution = dispatch::dispatch(cmd, adapter, permission_report, &item_context);
-        let entry = super::result_entry::completed_entry(index, bucket_key, execution);
-        results.lock().unwrap()[index] = Some(entry);
+        if let Some(key) = key {
+            buckets.entry(key).or_default().push((index, item));
+            prior_class = Some(class);
+        } else {
+            segments.push(vec![vec![(index, item)]]);
+        }
+    }
+    if !buckets.is_empty() {
+        segments.push(buckets.into_values().collect::<Vec<_>>());
+    }
+
+    segments
+}
+
+struct WorkerContext<'a> {
+    adapter: &'a dyn PlatformAdapter,
+    permission_report: &'a PermissionReport,
+    deadline: Deadline,
+    results: &'a std::sync::Mutex<Vec<Option<Value>>>,
+}
+
+fn run_bucket_owned(
+    commands: Vec<(usize, super::preparation::PreparedCommand)>,
+    worker: &WorkerContext<'_>,
+) {
+    for (index, item) in commands {
+        let entry = if worker.deadline.is_expired() {
+            let error = acdesktop_core::AdapterError::timeout(
+                "Batch deadline elapsed before the entry started",
+            )
+            .with_disposition(DeliverySemantics::not_delivered());
+            not_started_entry(index, &item.name, "deadline", error.into())
+        } else if let Some(session) = super::execution::session_ended_for(&item) {
+            let error = super::execution::batch_session_ended(index, &item.name, &session);
+            not_started_entry(index, &item.name, "session_ended", error)
+        } else {
+            let item_context = item.context.with_inherited_deadline(worker.deadline);
+            let result = dispatch::dispatch(
+                item.command,
+                worker.adapter,
+                worker.permission_report,
+                &item_context,
+            );
+            super::result_entry::completed_entry(index, &item.name, result)
+        };
+        worker
+            .results
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())[index] = Some(entry);
     }
 }
+
+#[cfg(test)]
+#[path = "execution_parallel_tests.rs"]
+mod tests;

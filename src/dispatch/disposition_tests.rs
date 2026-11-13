@@ -173,6 +173,8 @@ fn batch_entries_settle_their_failures_by_their_own_command() {
         BatchArgs {
             commands_json: commands.to_string(),
             stop_on_error: false,
+            parallel: false,
+            max_workers: 1,
             timeout_ms: 60_000,
         },
         &FailingAdapter(AdapterError::timeout("stalled")),

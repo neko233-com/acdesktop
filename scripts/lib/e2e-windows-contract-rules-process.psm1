@@ -114,7 +114,7 @@ function Test-Rule10StagedBinaryInvocation {
     <#
     .SYNOPSIS
         Rule 10: only Invoke-GuardedAgent may invoke the staged
-        agent-desktop.exe. Catches the `&` call operator (including on a
+        acdesktop.exe. Catches the `&` call operator (including on a
         variable this file itself assigned from a matching string literal -
         the tracked-assignment half below), Start-Process, Start-Job,
         Invoke-Expression, and a static [...Process]::Start(...) call, each
@@ -133,7 +133,7 @@ function Test-Rule10StagedBinaryInvocation {
     [CmdletBinding()]
     param($Parsed)
     $hits = New-Object System.Collections.Generic.List[object]
-    $bindingRegex = '(?i)(agent-desktop|StagedBinary|AgentDesktopBinary)'
+    $bindingRegex = '(?i)(acdesktop|StagedBinary|AgentDesktopBinary)'
 
     $assignedBindingVars = New-Object System.Collections.Generic.HashSet[string]
     foreach ($assign in (Find-E2EAstNodes -Ast $Parsed.Ast -Predicate { $args[0] -is [System.Management.Automation.Language.AssignmentStatementAst] })) {

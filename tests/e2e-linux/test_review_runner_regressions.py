@@ -28,7 +28,7 @@ class RunnerRegressionTests(unittest.TestCase):
             with tier():
                 handlers[signal.SIGHUP](signal.SIGHUP, None)
         with tempfile.TemporaryDirectory() as directory, \
-             patch.dict(os.environ, AGENT_DESKTOP_E2E_SUITE=directory), \
+             patch.dict(os.environ, ACDESKTOP_E2E_SUITE=directory), \
              patch.object(main, "_acquire_lease", return_value=None), \
              patch.object(gate, "check_prerequisites", return_value=[]), \
              patch.object(stage, "stage_binary", return_value=Path(directory) / "binary"), \
@@ -70,7 +70,7 @@ class RunnerRegressionTests(unittest.TestCase):
                 if sig == signal.SIGKILL:
                     self.assertFalse(members, "wrapper was killed before sweeping its members")
                     order.append("kill")
-            with patch.dict(os.environ, AGENT_DESKTOP_SESSION_BASE=str(base), AGENT_DESKTOP_E2E_SUITE=str(suite)), \
+            with patch.dict(os.environ, ACDESKTOP_SESSION_BASE=str(base), ACDESKTOP_E2E_SUITE=str(suite)), \
                  patch.object(session.subprocess, "Popen", return_value=wrapper), \
                  patch.object(session, "_wait_for_health", side_effect=unhealthy), \
                  patch.object(session, "_signal_process", side_effect=send), \

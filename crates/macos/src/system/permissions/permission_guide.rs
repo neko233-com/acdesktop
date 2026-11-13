@@ -298,10 +298,7 @@ mod tests {
             )),
             Some(PathBuf::from("/System/Applications/Utilities/Terminal.app"))
         );
-        assert_eq!(
-            outermost_app(Path::new("/usr/local/bin/acdesktop")),
-            None
-        );
+        assert_eq!(outermost_app(Path::new("/usr/local/bin/acdesktop")), None);
     }
 
     #[test]

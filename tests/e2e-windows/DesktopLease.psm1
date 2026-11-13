@@ -4,7 +4,7 @@
     DesktopLease.psm1 - the top half of tests/e2e/interaction_lock.py: the
     desktop-exclusivity lease this platform has never had, and the two
     lease-adoption spawn entry points every later scenario unit calls
-    through rather than invoking agent-desktop.exe directly. Split out of
+    through rather than invoking acdesktop.exe directly. Split out of
     Harness.psm1 purely to keep both modules under the 400-line cap.
 #>
 
@@ -14,7 +14,7 @@ Import-Module (Join-Path $PSScriptRoot 'Native.psm1') -Force -Global
 Import-Module (Join-Path $PSScriptRoot 'BoundedProcess.psm1') -Force -Global
 
 $script:LockFileName = 'interaction.lock'
-$script:DesktopLeaseHandoffEnvName = 'AGENT_DESKTOP_E2E_DESKTOP_LEASE_HANDLE'
+$script:DesktopLeaseHandoffEnvName = 'ACDESKTOP_E2E_DESKTOP_LEASE_HANDLE'
 $script:DesktopLeaseHandle = $null
 $script:DesktopLeaseAdopted = $null
 
@@ -24,7 +24,7 @@ function Get-CanonicalDesktopLockPath {
         Resolves the canonical lock path the same way
         crates/windows/src/system/interaction_lease's canonical_lock_path()
         does: GetSystemWindowsDirectoryW's drive, then
-        ProgramData\agent-desktop\<token user SID>\interaction.lock, with
+        ProgramData\acdesktop\<token user SID>\interaction.lock, with
         the SID read through GetTokenInformation(TokenUser) - never from
         %LOCALAPPDATA%, %TEMP%, %TMP% or %HOME%, all of which this harness's
         own isolated environment has already redirected.
@@ -39,14 +39,14 @@ function Get-CanonicalDesktopLockPath {
     $driveRoot = $windowsDirectory.Substring(0, $separatorIndex + 1)
     $programData = Join-Path $driveRoot 'ProgramData'
     $sid = Get-NativeProcessTokenUserSid
-    return Join-Path (Join-Path (Join-Path $programData 'agent-desktop') $sid) $script:LockFileName
+    return Join-Path (Join-Path (Join-Path $programData 'acdesktop') $sid) $script:LockFileName
 }
 
 function New-PrivateLeaseDirectory {
     <#
     .SYNOPSIS
         Creates the lock file's immediate parent directory - the per-SID
-        leaf, never the shared `agent-desktop` root above it - with a
+        leaf, never the shared `acdesktop` root above it - with a
         protected three-principal DACL (SYSTEM, BUILTIN\Administrators, the
         token user) on first creation only, mirroring
         crates/windows/src/system/interaction_lease/directory.rs's
@@ -82,7 +82,7 @@ function Enter-DesktopLease {
     .SYNOPSIS
         R15b's harness-side half of the handoff protocol. Exactly one
         acquisition per entry path: adopts the inherited handle named by
-        AGENT_DESKTOP_E2E_DESKTOP_LEASE_HANDLE when it is set (the CI entry
+        ACDESKTOP_E2E_DESKTOP_LEASE_HANDLE when it is set (the CI entry
         path, where scripts/run-windows-e2e-ci.ps1 already opened it before
         the build), or opens the canonical path itself with a share mode of
         zero when the variable is absent (a developer invoking Run-E2E.ps1
@@ -223,7 +223,7 @@ function Invoke-Guarded {
         Spawns a non-product child (the fixture, a helper) with no lease
         inheritance - the default-deny opt-in KTD4 requires. Every
         environment variable this call passes strips
-        AGENT_DESKTOP_INTERACTION_LEASE_HANDLE even when this process
+        ACDESKTOP_INTERACTION_LEASE_HANDLE even when this process
         happens to have one set, so a fixture launched through this entry
         point cannot hold the desktop lock after the harness releases it.
     #>
@@ -244,9 +244,9 @@ function Invoke-Guarded {
 function Invoke-GuardedAgent {
     <#
     .SYNOPSIS
-        Spawns a staged agent-desktop.exe invocation with the desktop lease
+        Spawns a staged acdesktop.exe invocation with the desktop lease
         made inheritable for exactly this one spawn: HANDLE_FLAG_INHERIT is
-        set immediately before Start(), AGENT_DESKTOP_INTERACTION_LEASE_HANDLE
+        set immediately before Start(), ACDESKTOP_INTERACTION_LEASE_HANDLE
         is passed with the held handle's value, and the flag is cleared
         again once the spawn returns - never left inheritable for the
         run's duration (KTD4). Every invocation of the staged binary in

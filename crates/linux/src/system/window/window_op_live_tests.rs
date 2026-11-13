@@ -89,8 +89,7 @@ pub(in crate::system) fn spawn(launched: &mut Launched, kind: &str) -> u32 {
         },
     );
     if kind == "qt" {
-        let python =
-            std::env::var("ACDESKTOP_QT_PYTHON").unwrap_or_else(|_| "python3".to_owned());
+        let python = std::env::var("ACDESKTOP_QT_PYTHON").unwrap_or_else(|_| "python3".to_owned());
 
         return launched.spawn_with_env(
             &python,

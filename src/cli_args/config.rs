@@ -16,5 +16,10 @@ pub(crate) enum ConfigAction {
     /// 打印配置文件路径
     Path,
     /// 设置单个字段：set fast_mode true | set auto_update false
-    Set { key: String, value: String },
+    Set {
+        #[arg(help = "Configuration field")]
+        key: String,
+        #[arg(help = "JSON value or string")]
+        value: String,
+    },
 }

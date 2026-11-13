@@ -4,7 +4,7 @@ navTitle: Waiting
 description: Wait for a desktop app to reach a state without fixed sleeps. Choose between the post-action wait flags and the wait command, and read a timeout.
 ---
 
-A fixed sleep either wastes time or races the app. agent-desktop gives you two waits that poll for a condition instead: the post-action `--wait-for` flags, which wait inside the command you already run, and the `wait` command, which waits on its own. Every flag is in the [`wait` reference](/desktop/commands/wait) and in [Post-action wait flags](/desktop/configuration#post-action-wait-flags).
+A fixed sleep either wastes time or races the app. acdesktop gives you two waits that poll for a condition instead: the post-action `--wait-for` flags, which wait inside the command you already run, and the `wait` command, which waits on its own. Every flag is in the [`wait` reference](/desktop/commands/wait) and in [Post-action wait flags](/desktop/configuration#post-action-wait-flags).
 
 ## Choose the wait
 
@@ -30,8 +30,8 @@ A fixed sleep either wastes time or races the app. agent-desktop gives you two w
 `--wait-for` polls the ref's original process until the selector matches, then returns a fresh snapshot with the action's own report under `after_action`, so you can act on the new refs at once. Application-owned refs keep their source surface. Window-owned refs stay pinned to their original window, including refs captured from a sheet, alert, popover, focused view, or window-owned Linux menu:
 
 ```bash
-agent-desktop click @s8f3k2p9:e5 --wait-for "button:Done" --wait-timeout 10000
-agent-desktop click @s8f3k2p9:e5 --wait-for-gone "progressindicator"
+acdesktop click @s8f3k2p9:e5 --wait-for "button:Done" --wait-timeout 10000
+acdesktop click @s8f3k2p9:e5 --wait-for-gone "progressindicator"
 ```
 
 If the wait times out, the action already ran: the error keeps the action's delivery in `error.disposition` and its report in `details.after_action`. Read the app before you retry the action.
@@ -41,7 +41,7 @@ If the wait times out, the action already ran: the error keeps the action's deli
 Use `wait --element` when you hold a ref and need a condition on it. The verify step of the [quick start](/desktop/quick-start#verify) waits for the calculator display to read `7`, which took 286 ms after the click:
 
 ```bash
-agent-desktop wait --element @s2txcl95uvubmn:e6 --predicate value --value 7 --timeout 5000
+acdesktop wait --element @s2txcl95uvubmn:e6 --predicate value --value 7 --timeout 5000
 ```
 
 Use `--predicate actionable --action type` before typing into a field that is still loading. You rarely need a wait before a plain click: ref actions already wait for their target to become actionable.
@@ -51,8 +51,8 @@ Use `--predicate actionable --action type` before typing into a field that is st
 A window can exist before its content does. Wait for the window, then for the content:
 
 ```bash
-agent-desktop wait --window "Save As" --app gedit --timeout 10000
-agent-desktop wait --text "Save" --app gedit --timeout 10000
+acdesktop wait --window "Save As" --app gedit --timeout 10000
+acdesktop wait --text "Save" --app gedit --timeout 10000
 ```
 
 `--window` matches a title that contains your text. If an app has a document and a dialog open, `wait --text` returns `AMBIGUOUS_TARGET` before it checks any text; wait for the dialog by title with `--window`, then read it with `snapshot --surface sheet` or `--window-id`.
@@ -62,7 +62,7 @@ agent-desktop wait --text "Save" --app gedit --timeout 10000
 `wait --event` diffs a baseline taken when the wait starts against fresh reads, so a separate `wait` started after your action can miss the change. Put the action and the wait in one [batch](/desktop/guides/batch), which takes the baseline before the action runs:
 
 ```bash
-agent-desktop batch '[
+acdesktop batch '[
   {"command":"launch","args":{"app":"gtk3-demo"}},
   {"command":"wait","args":{"event":"window-opened","app":"gtk3-demo","timeout":10000}}
 ]' --stop-on-error
@@ -75,9 +75,9 @@ On Linux this returned the new window 144 ms after the launch; the [`wait` refer
 Open the menu, wait for it, and read it as a surface:
 
 ```bash
-agent-desktop click @s2qfke45s1966h:e1                                       # the Menu button
-agent-desktop wait --menu --app gtk3-widget-factory --timeout 5000
-agent-desktop snapshot --app gtk3-widget-factory --surface menu -i --compact
+acdesktop click @s2qfke45s1966h:e1                                       # the Menu button
+acdesktop wait --menu --app gtk3-widget-factory --timeout 5000
+acdesktop snapshot --app gtk3-widget-factory --surface menu -i --compact
 ```
 
 After you choose an item or dismiss the menu, `wait --menu-closed --app gtk3-widget-factory` confirms it is gone. Wait for `--menu` before `--menu-closed`: on Linux, `--menu-closed` on a menu that never opened is true at once. See [Surfaces](/desktop/surfaces).

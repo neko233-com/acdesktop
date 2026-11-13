@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    ClipboardContent, ClipboardFormat, Deadline, ErrorCode, InteractionLease,
-};
+use acdesktop_core::{ClipboardContent, ClipboardFormat, Deadline, ErrorCode, InteractionLease};
 
 use super::ClipboardTools;
 use crate::input::clipboard::set_clear::{clear_from, get_from, set_from};

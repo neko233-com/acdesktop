@@ -20,11 +20,11 @@ def main():
     args.out.mkdir(parents=True, exist_ok=True)
     state_directory = tempfile.TemporaryDirectory(prefix="adc-", dir="/tmp")
     state = Path(state_directory.name)
-    env = dict(os.environ, AGENT_DESKTOP_HOME=str(state))
-    env.pop("AGENT_DESKTOP_SESSION", None)
-    env.pop("AGENT_DESKTOP_AGENT_ID", None)
+    env = dict(os.environ, ACDESKTOP_HOME=str(state))
+    env.pop("ACDESKTOP_SESSION", None)
+    env.pop("ACDESKTOP_AGENT_ID", None)
     action_flags = ["--headed"] if args.headed else []
-    lease_fd = env.get("AGENT_DESKTOP_INTERACTION_LEASE_FD")
+    lease_fd = env.get("ACDESKTOP_INTERACTION_LEASE_FD")
     cli_pass_fds = (int(lease_fd),) if lease_fd is not None else ()
 
     def cli(*command):
@@ -43,7 +43,7 @@ def main():
     try:
         time.sleep(2)
         session_id = cli("session", "start", "--cursor", "--multi-agent")["session_id"]
-        env["AGENT_DESKTOP_SESSION"] = session_id
+        env["ACDESKTOP_SESSION"] = session_id
         assert not list(state.glob("*.sock")), "setup created an unwanted default cursor"
         snapshot = cli("snapshot", "--app", "AgentDeskFixture", "-i", "--include-bounds")
         (args.out / "snapshot.json").write_text(json.dumps(snapshot, indent=2))

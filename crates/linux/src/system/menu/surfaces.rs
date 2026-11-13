@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    AdapterError, Deadline, ErrorCode, ProcessIdentity, SurfaceInfo, WindowInfo,
-};
+use acdesktop_core::{AdapterError, Deadline, ErrorCode, ProcessIdentity, SurfaceInfo, WindowInfo};
 
 use super::inventory::scan_windows;
 use super::inventory_reader::Inventory;

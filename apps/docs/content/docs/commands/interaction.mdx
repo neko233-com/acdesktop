@@ -111,7 +111,7 @@ What each code means and when to retry is in [Errors and recovery](/desktop/erro
 Activates an element with its primary action, such as a press or invoke.
 
 ```bash
-agent-desktop click <REF> [--timeout-ms MS]
+acdesktop click <REF> [--timeout-ms MS]
 ```
 
 The result is the one in [Result shape](#result-shape). A click usually ends `delivered_unverified`, because a delivered activation does not prove the app acted on it: verify by reading the UI, and check `data.surfaces`.
@@ -123,7 +123,7 @@ Platform limits: semantic everywhere headless; `--headed` tries physical input f
 Double-clicks an element. It is a physical gesture, so it needs `--headed` unless the element exposes a semantic open action.
 
 ```bash
-agent-desktop --headed double-click <REF> [--timeout-ms MS]
+acdesktop --headed double-click <REF> [--timeout-ms MS]
 ```
 
 Without `--headed` and a semantic route, it returns `POLICY_DENIED` (see [Wait budget](#wait-budget)). For raw coordinates use `--headed mouse-click --xy X,Y --count 2` ([`mouse-click`](/desktop/commands/mouse#mouse-click)).
@@ -135,7 +135,7 @@ Platform limits: macOS tries `AXOpen` headless; Windows and Linux need `--headed
 Triple-clicks an element, for example to select a line of text. Arguments and errors are the same as [`double-click`](#double-click). For raw coordinates use `--headed mouse-click --xy X,Y --count 3`.
 
 ```bash
-agent-desktop --headed triple-click <REF> [--timeout-ms MS]
+acdesktop --headed triple-click <REF> [--timeout-ms MS]
 ```
 
 ## right-click
@@ -143,7 +143,7 @@ agent-desktop --headed triple-click <REF> [--timeout-ms MS]
 Opens an element's context menu. Afterward, `data.surfaces` lists the open `menu`; read it with `snapshot --surface menu`. For combo boxes and menu buttons, use [`select`](#select) instead.
 
 ```bash
-agent-desktop right-click <REF> [--timeout-ms MS]
+acdesktop right-click <REF> [--timeout-ms MS]
 ```
 
 Headless delivery needs a context-menu action on the element. On a GTK entry without one, it returns `POLICY_DENIED` with `supported_action` failing. On macOS, a right-click can return `APP_UNRESPONSIVE` with an unsafe disposition after a modal menu opened: look before you retry.
@@ -155,8 +155,8 @@ Platform limits: Windows always needs `--headed`. See [Windows](/desktop/platfor
 Inserts text into a text target at its insertion point, then reads the field back.
 
 ```bash
-agent-desktop type <REF> <TEXT> [--timeout-ms MS] [--interval-ms MS]
-agent-desktop type <REF> --stdin [--timeout-ms MS] [--interval-ms MS]
+acdesktop type <REF> <TEXT> [--timeout-ms MS] [--interval-ms MS]
+acdesktop type <REF> --stdin [--timeout-ms MS] [--interval-ms MS]
 ```
 
 <table>
@@ -173,12 +173,12 @@ agent-desktop type <REF> --stdin [--timeout-ms MS] [--interval-ms MS]
 Use `--stdin` with `type` or `set-value` to read text from a pipe or redirected file. Terminal input is rejected. Replace the example ref with one from your snapshot:
 
 ```bash
-printf '%s' 'hello' | agent-desktop type @s8f3k2p9:e2 --stdin
+printf '%s' 'hello' | acdesktop type @s8f3k2p9:e2 --stdin
 ```
 
 The action timeout starts after the input ends; it doesn't limit this wait. Empty input and all line breaks are kept, including a final newline. Use `printf '%s'` to avoid adding one. Input must be valid UTF-8 without NUL bytes (`\0`). The limits are 10,000 bytes for `type` and 128 KiB for `set-value`.
 
-Provide either `--stdin` or a command-line value. To enter the text `--stdin`, put it after `--`: `agent-desktop type @s8f3k2p9:e2 -- --stdin`. Batch uses the JSON `text` or `value` field, which puts the text in process arguments. Run secret steps as separate `--stdin` commands.
+Provide either `--stdin` or a command-line value. To enter the text `--stdin`, put it after `--`: `acdesktop type @s8f3k2p9:e2 -- --stdin`. Batch uses the JSON `text` or `value` field, which puts the text in process arguments. Run secret steps as separate `--stdin` commands.
 
 `--stdin` keeps text out of process arguments and omits observed `value` fields from JSON results, including `post_state.value`. Other app text and screenshot artifacts aren't redacted.
 
@@ -197,7 +197,7 @@ Provide either `--stdin` or a command-line value. To enter the text `--stdin`, p
 `--interval-ms` types at a steady pace inside one command. A keystroke is one character together with the combining marks, emoji modifiers, and joined characters drawn with it, and CR LF counts as one. The first keystroke runs as a full ref action, and a headed one also focuses the target's window. The rest go to the same element, each taking the interaction lease only while it is delivered, so other agents can act between keystrokes. A headed keystroke is posted only while the target's process and focused element are unchanged, so a burst that loses focus stops with an error. The result adds `keystrokes` and `interval_ms`, and its `post_state` reads the field after the last keystroke. It stays `delivered_verified` only when that read shows the whole text; otherwise it is `delivered_unverified` with `verification_reason` set to `postcondition_mismatch`, `insufficient_evidence` (the text went in part way through the field), or `final_read_failed` (with no `post_state`). A `--wait-for` condition is waited on once, after the last keystroke. A failure after the first keystroke carries `details.typed_keystrokes` and `details.keystrokes` with a `delivered_unverified` disposition, because part of the text landed.
 
 ```bash
-agent-desktop type @s8f3k2p9:e2 "hello world" --interval-ms 60
+acdesktop type @s8f3k2p9:e2 "hello world" --interval-ms 60
 ```
 
 To set a field's whole content, use [`set-value`](#set-value). Keystroke delivery that settles on other text returns `delivered_unverified` with `verification_reason: "postcondition_mismatch"`; read the field with `get` before you write again.
@@ -209,8 +209,8 @@ Platform limits: Windows needs `--headed` and returns `POLICY_DENIED` headless; 
 Writes a value directly through the accessibility value path: text fields, text areas, and sliders.
 
 ```bash
-agent-desktop set-value <REF> <VALUE> [--timeout-ms MS]
-agent-desktop set-value <REF> --stdin [--timeout-ms MS]
+acdesktop set-value <REF> <VALUE> [--timeout-ms MS]
+acdesktop set-value <REF> --stdin [--timeout-ms MS]
 ```
 
 For piped text, use `--stdin` with the [input rules above](#type).
@@ -232,7 +232,7 @@ On a slider, the step is `Value.CurrentValue` and `post_state.value` is the new 
 Empties a text target and expects an empty value on readback. The result looks like `set-value` with `post_state.value: ""`.
 
 ```bash
-agent-desktop clear <REF> [--timeout-ms MS]
+acdesktop clear <REF> [--timeout-ms MS]
 ```
 
 ## focus
@@ -240,7 +240,7 @@ agent-desktop clear <REF> [--timeout-ms MS]
 Sets keyboard focus on an element without clicking it.
 
 ```bash
-agent-desktop --headed focus <REF> [--timeout-ms MS]
+acdesktop --headed focus <REF> [--timeout-ms MS]
 ```
 
 Moving focus can change the foreground, so headless it returns `POLICY_DENIED` on Windows and Linux:
@@ -261,11 +261,11 @@ On Linux, a GTK4 app rejects the call with cause `grab_focus_rejected`; use [`fo
 Picks an option by display text in a list, dropdown, or combo box.
 
 ```bash
-agent-desktop select <REF> <VALUE> [--timeout-ms MS]
+acdesktop select <REF> <VALUE> [--timeout-ms MS]
 ```
 
 ```bash
-agent-desktop select @s30sxlstqzdq8x:e21 Middle
+acdesktop select @s30sxlstqzdq8x:e21 Middle
 ```
 
 ```json
@@ -287,7 +287,7 @@ Platform limits: on macOS, dismiss any open menu first. On Linux, a Qt combo ref
 Flips a checkbox or switch. Prefer [`check`](#check) and [`uncheck`](#uncheck), which are idempotent; use `toggle` only when you want the opposite of whatever the state is.
 
 ```bash
-agent-desktop toggle <REF> [--timeout-ms MS]
+acdesktop toggle <REF> [--timeout-ms MS]
 ```
 
 The readback requires the checked state to have changed, and `post_state.states` shows the result. An unreadable or indeterminate state returns `ACTION_FAILED`, and a role that cannot be checked returns `ACTION_NOT_SUPPORTED`.
@@ -297,7 +297,7 @@ The readback requires the checked state to have changed, and `post_state.states`
 Sets a checkbox or switch to checked. An element that is already checked delivers nothing.
 
 ```bash
-agent-desktop check <REF> [--timeout-ms MS]
+acdesktop check <REF> [--timeout-ms MS]
 ```
 
 ```json
@@ -329,7 +329,7 @@ Errors are the same as [`toggle`](#toggle). On Linux, two clicks less than about
 Sets a checkbox or switch to unchecked, idempotently. The result matches `check`, with `checked` absent from `post_state.states`.
 
 ```bash
-agent-desktop uncheck <REF> [--timeout-ms MS]
+acdesktop uncheck <REF> [--timeout-ms MS]
 ```
 
 ## expand
@@ -337,7 +337,7 @@ agent-desktop uncheck <REF> [--timeout-ms MS]
 Expands a disclosure triangle, tree item, or accordion, and verifies that the element reads as expanded (`post_state.states` contains `expanded`). `data.surfaces` can list a menu or popover the expansion opened. A non-expandable element returns `ACTION_NOT_SUPPORTED`.
 
 ```bash
-agent-desktop expand <REF> [--timeout-ms MS]
+acdesktop expand <REF> [--timeout-ms MS]
 ```
 
 ## collapse
@@ -345,5 +345,5 @@ agent-desktop expand <REF> [--timeout-ms MS]
 Collapses a disclosure triangle, tree item, or accordion, and verifies that `expanded` is gone. Errors are the same as [`expand`](#expand).
 
 ```bash
-agent-desktop collapse <REF> [--timeout-ms MS]
+acdesktop collapse <REF> [--timeout-ms MS]
 ```

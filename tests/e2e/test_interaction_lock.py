@@ -50,7 +50,7 @@ class InteractionLockTests(unittest.TestCase):
             environment[interaction_lock.LEASE_FD_ENV] = str(fd)
             forwarder = """
 import os, subprocess, sys
-fd = int(os.environ['AGENT_DESKTOP_INTERACTION_LEASE_FD'])
+fd = int(os.environ['ACDESKTOP_INTERACTION_LEASE_FD'])
 subprocess.run(
     [sys.executable, '-c', 'import os,sys; os.fstat(int(sys.argv[1]))', str(fd)],
     pass_fds=(fd,),

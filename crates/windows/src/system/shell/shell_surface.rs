@@ -30,7 +30,7 @@ pub(in crate::system) fn resolve_row(
     if !row.exists_on_build {
         return Err(refusal_error(row));
     }
-    resolve_present_row(row)
+    resolve_present_row(row, deadline)
 }
 
 pub(crate) fn unknown_surface_error(kind: SnapshotSurface) -> AdapterError {
@@ -132,7 +132,10 @@ pub(crate) fn build_number() -> u32 {
 /// signal alone reads a dismissed surface as open, and the two are read
 /// together.
 #[cfg(target_os = "windows")]
-fn resolve_present_row(row: &SurfaceKindRow) -> Result<Option<WindowInfo>, AdapterError> {
+fn resolve_present_row(
+    row: &SurfaceKindRow,
+    deadline: Deadline,
+) -> Result<Option<WindowInfo>, AdapterError> {
     match &row.family {
         SurfaceFamily::Win32Class(chain) => {
             Ok(resolve_class_chain(chain).and_then(window_info_from_chain_window))
@@ -145,12 +148,16 @@ fn resolve_present_row(row: &SurfaceKindRow) -> Result<Option<WindowInfo>, Adapt
             expected_class,
             host_images,
             landmarks,
+            deadline,
         ),
     }
 }
 
 #[cfg(not(target_os = "windows"))]
-fn resolve_present_row(_row: &SurfaceKindRow) -> Result<Option<WindowInfo>, AdapterError> {
+fn resolve_present_row(
+    _row: &SurfaceKindRow,
+    _deadline: Deadline,
+) -> Result<Option<WindowInfo>, AdapterError> {
     Err(AdapterError::not_supported("resolve shell surface"))
 }
 

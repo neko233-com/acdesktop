@@ -4,9 +4,7 @@ use std::time::Instant;
 use crate::system::window::cg_window;
 
 #[cfg(test)]
-fn apps_from_window_records(
-    records: &[cg_window::WindowRecord],
-) -> Vec<acdesktop_core::AppInfo> {
+fn apps_from_window_records(records: &[cg_window::WindowRecord]) -> Vec<acdesktop_core::AppInfo> {
     let mut seen_pids = rustc_hash::FxHashSet::default();
     let mut apps = Vec::new();
 

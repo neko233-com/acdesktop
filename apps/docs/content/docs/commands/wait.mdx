@@ -9,14 +9,14 @@ description: Reference for the wait command, with every mode, the element predic
 ## wait
 
 ```bash
-agent-desktop wait MS
-agent-desktop wait --element REF [--predicate NAME] [--value TEXT] [--action NAME]
-agent-desktop wait --window TITLE [--app NAME]
-agent-desktop wait --text TEXT [--count N] [--app NAME]
-agent-desktop wait --menu [--app NAME]
-agent-desktop wait --menu-closed [--app NAME]
-agent-desktop wait --notification [--text TEXT] [--app NAME]
-agent-desktop wait --event KIND [--app NAME] [--window TITLE] [--window-id ID]
+acdesktop wait MS
+acdesktop wait --element REF [--predicate NAME] [--value TEXT] [--action NAME]
+acdesktop wait --window TITLE [--app NAME]
+acdesktop wait --text TEXT [--count N] [--app NAME]
+acdesktop wait --menu [--app NAME]
+acdesktop wait --menu-closed [--app NAME]
+acdesktop wait --notification [--text TEXT] [--app NAME]
+acdesktop wait --event KIND [--app NAME] [--window TITLE] [--window-id ID]
 ```
 
 <table>
@@ -52,7 +52,7 @@ Flags from two modes, or no mode at all, return `INVALID_ARGS`. The wait polls a
 `--element REF` polls the live element behind a ref until the predicate holds. The ref names its snapshot, so no `--app` is needed. This waits for the calculator display to read `7`:
 
 ```bash
-agent-desktop wait --element @s2txcl95uvubmn:e6 --predicate value --value 7 --timeout 5000
+acdesktop wait --element @s2txcl95uvubmn:e6 --predicate value --value 7 --timeout 5000
 ```
 
 ```json
@@ -77,7 +77,7 @@ agent-desktop wait --element @s2txcl95uvubmn:e6 --predicate value --value 7 --ti
 `--window TITLE` waits for any window whose title contains `TITLE`, focused or not.
 
 ```bash
-agent-desktop wait --window Calculator --app gnome-calculator --timeout 3000
+acdesktop wait --window Calculator --app gnome-calculator --timeout 3000
 ```
 
 The result is `{ "elapsed_ms", "found": true, "window": WINDOW }`, where `WINDOW` has the fields `list-windows` returns.
@@ -87,7 +87,7 @@ The result is `{ "elapsed_ms", "found": true, "window": WINDOW }`, where `WINDOW
 `--text TEXT` snapshots the app's window each poll and looks for the text in node names, values, and descriptions, as a case-insensitive substring.
 
 ```bash
-agent-desktop wait --text Calculator --app gnome-calculator --timeout 3000
+acdesktop wait --text Calculator --app gnome-calculator --timeout 3000
 ```
 
 ```json

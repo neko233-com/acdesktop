@@ -6,8 +6,7 @@ pub(crate) const PROTOCOL_VERSION: &str = "1";
 pub(crate) const BUILD_IDENTITY: &str = env!("ACDESKTOP_MACOS_HELPER_BUILD_ID");
 pub(crate) const OUTPUT_FD: &str = "1";
 pub(crate) const MAX_HEADER_BYTES: usize = 16 * 1024;
-pub(crate) const MAX_RESPONSE_BYTES: usize =
-    acdesktop_core::MAX_PNG_INPUT_BYTES + MAX_HEADER_BYTES;
+pub(crate) const MAX_RESPONSE_BYTES: usize = acdesktop_core::MAX_PNG_INPUT_BYTES + MAX_HEADER_BYTES;
 
 pub(crate) fn is_mutating(operation: &str) -> bool {
     operation == "clear" || operation.starts_with("write:")

@@ -45,7 +45,7 @@ class GateTests(unittest.TestCase):
             blocked.write_text("a file cannot contain the session base")
             for override in ("", str(blocked / "sessions")):
                 with self.subTest(override=override), \
-                     patch.dict(gate.os.environ, AGENT_DESKTOP_SESSION_BASE=override,
+                     patch.dict(gate.os.environ, ACDESKTOP_SESSION_BASE=override,
                                 XDG_RUNTIME_DIR=str(blocked)), \
                      patch.object(gate.sys, "argv", ["linux-live-gate.py", "--merge",
                                                     "--output", str(directory)]), \

@@ -1,8 +1,6 @@
 //! 侧边栏组件 —— 图标 + 文字导航项 + 底部用户信息。
 
-use gpui::{
-    div, prelude::*, px, rgb, Context, FontWeight, IntoElement, Window,
-};
+use gpui::{div, prelude::*, px, rgb, Context, FontWeight, IntoElement, Window};
 
 use crate::data::NavItem;
 use crate::theme::{
@@ -88,12 +86,7 @@ impl Sidebar {
                             .text_color(TEXT_PRIMARY)
                             .child("MyGo"),
                     )
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(TEXT_MUTED)
-                            .child("版本 1.0"),
-                    ),
+                    .child(div().text_xs().text_color(TEXT_MUTED).child("版本 1.0")),
             )
     }
 
@@ -125,13 +118,7 @@ impl Sidebar {
             .py_2p5()
             .rounded(px(6.0))
             .bg(if is_active { BRAND } else { TRANSPARENT })
-            .hover(move |s| {
-                if !is_active {
-                    s.bg(rgb(0x2d2e32))
-                } else {
-                    s
-                }
-            })
+            .hover(move |s| if !is_active { s.bg(rgb(0x2d2e32)) } else { s })
             .child(
                 div()
                     .w(px(16.0))
@@ -199,7 +186,7 @@ impl Sidebar {
                         div()
                             .text_xs()
                             .text_color(TEXT_MUTED)
-                            .child("gaojian@mygo.dev"),
+                            .child("mygo.dev"),
                     ),
             )
     }

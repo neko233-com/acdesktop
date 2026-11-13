@@ -19,10 +19,7 @@ fn a_wayland_cursor_refusal_is_explicit_without_x11_fallback() {
             Default::default(),
         ))
         .expect_err("unsupported");
-        assert_eq!(
-            error.code,
-            acdesktop_core::ErrorCode::PlatformNotSupported
-        );
+        assert_eq!(error.code, acdesktop_core::ErrorCode::PlatformNotSupported);
         let details = error.details.expect("explicit overlay state");
         assert_eq!(details["rendered"], false);
         assert_eq!(details["cause"], "wayland_session");
@@ -186,10 +183,7 @@ fn live_wayland_cursor_refusal_reports_unrendered_without_an_x11_window() {
         Default::default(),
     ))
     .expect_err("Wayland overlay is unsupported");
-    assert_eq!(
-        error.code,
-        acdesktop_core::ErrorCode::PlatformNotSupported
-    );
+    assert_eq!(error.code, acdesktop_core::ErrorCode::PlatformNotSupported);
     let details = error.details.expect("explicit overlay outcome");
     assert_eq!(details["rendered"], false);
     assert_eq!(details["cause"], "wayland_session");

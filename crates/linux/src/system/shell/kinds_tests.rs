@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    Deadline, ErrorCode, InteractionLease, InteractionPolicy, SnapshotSurface,
-};
+use acdesktop_core::{Deadline, ErrorCode, InteractionLease, InteractionPolicy, SnapshotSurface};
 
 use crate::system::SharedBus;
 use crate::system::shell::kinds::advertised;

@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 #
-# One check over the three Linux channels that must carry the clipboard owner
-# helper: the CLI archive, the FFI archive and the npm package table. A channel
+# Check that the CLI and FFI archives carry the Linux clipboard owner helper. A channel
 # that omits the helper installs a program whose clipboard-set has no owner, and
 # nothing else in the pipeline notices.
 #
 # Usage:
 #   check-linux-archive-contents.sh cli <cli.tar.gz>
 #   check-linux-archive-contents.sh ffi <ffi.tar.gz>
-#   check-linux-archive-contents.sh npm <platform-key>             (linux-x64 or linux-arm64)
-#   check-linux-archive-contents.sh all <cli.tar.gz> <ffi.tar.gz> <platform-key>
+#   check-linux-archive-contents.sh all <cli.tar.gz> <ffi.tar.gz>
 # Exit: 0 every named channel carries the helper, 1 a channel does not, 2 bad arguments
 
 set -euo pipefail
@@ -18,12 +16,11 @@ set -euo pipefail
 # before printf has written everything; printf then dies of SIGPIPE and pipefail
 # reports a failure for a check that passed. Every reader below drains its input.
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HELPER=acdesktop-linux-clipboard-owner
 LIBRARY=libacdesktop_ffi.so
 
 usage() {
-  sed -n '12,16p' "$0" | sed 's/^# \{0,1\}//' >&2
+  echo "Usage: $0 cli <archive> | ffi <archive> | all <cli-archive> <ffi-archive>" >&2
   exit 2
 }
 
@@ -86,37 +83,16 @@ check_ffi() {
   return 0
 }
 
-check_npm() {
-  local key=$1 entries expected
-  case "$key" in
-    linux-x64|linux-arm64) ;;
-    *) echo "check-linux-archive-contents: '$key' is not linux-x64 or linux-arm64" >&2; exit 2 ;;
-  esac
-  entries=$(node -e "
-    const entry = require(process.argv[1]).PLATFORMS[process.argv[2]];
-    if (!entry) process.exit(3);
-    process.stdout.write(entry.entries.join('\n'));
-  " "$ROOT/npm/lib/platform.js" "$key" | sort) || { fail "npm/lib/platform.js has no $key entry"; return; }
-  expected=$(printf 'acdesktop\n%s\n' "$HELPER" | sort)
-  if [ "$entries" != "$expected" ]; then
-    fail "npm table entries for $key are '$(printf '%s' "$entries" | tr '\n' ' ')', expected exactly '$(printf '%s' "$expected" | tr '\n' ' ')'"
-    return
-  fi
-  echo "OK: npm table for $key lists acdesktop and $HELPER"
-}
-
 [ "$#" -ge 1 ] || usage
 channel=$1
 shift
 case "$channel" in
   cli) [ "$#" -eq 1 ] || usage; check_cli "$1" ;;
   ffi) [ "$#" -eq 1 ] || usage; check_ffi "$1" ;;
-  npm) [ "$#" -eq 1 ] || usage; check_npm "$1" ;;
   all)
-    [ "$#" -eq 3 ] || usage
+    [ "$#" -eq 2 ] || usage
     check_cli "$1"
     check_ffi "$2"
-    check_npm "$3"
     ;;
   *) usage ;;
 esac

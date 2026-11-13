@@ -71,7 +71,7 @@ def main():
     if len(sys.argv) != 2 or sys.argv[1] not in {"default", "zero"}:
         raise RuntimeError("usage: ffi_live.py default|zero")
     mode = sys.argv[1]
-    dylib = os.environ.get("AGENT_DESKTOP_E2E_FFI_DYLIB", "")
+    dylib = os.environ.get("ACDESKTOP_E2E_FFI_DYLIB", "")
     if not dylib or not os.path.isfile(dylib):
         raise RuntimeError("immutable release FFI dylib is unavailable")
     lib = ctypes.CDLL(dylib)

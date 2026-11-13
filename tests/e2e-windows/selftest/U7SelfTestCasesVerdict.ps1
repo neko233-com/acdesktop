@@ -158,7 +158,10 @@ Invoke-SelfTest 'Enter-Stage refuses MenuStage before DesktopLease and accepts t
 <#
     13. The stub's deeply-nested-tree capability actually round-trips
         through ConvertFrom-AgentJson via the real Find-Target path, so it
-        is not shipped dead for the units that will reuse it.
+        is not shipped dead for the units that will reuse it. The 60s budget
+        tolerates a powershell.exe cold-start of the stub under CI load; the
+        stub returns instantly once started, so the case resolves in well
+        under a second on a warm runner.
 #>
 Invoke-SelfTest 'a deeply-nested tree in a stubbed find response round-trips through Find-Target' {
     $depth = 200
@@ -166,7 +169,7 @@ Invoke-SelfTest 'a deeply-nested tree in a stubbed find response round-trips thr
     for ($i = 0; $i -lt $depth; $i++) { $tree = '{"role":"group","children":[' + $tree + ']}' }
     $deep = '{"version":"2.3","ok":true,"command":"find","data":{"snapshot_id":"deep-snap","match":{"ref_id":"@deep-snap:e9","role":"button","name":"Deep"},"tree":' + $tree + '}}'
     New-StubConfig -Rules @(@{ Match = '*find*'; Responses = @($deep) }) | Out-Null
-    $result = Find-Target -App 'Stub' -NativeId 'deep' -TimeoutSeconds 1
+    $result = Find-Target -App 'Stub' -NativeId 'deep' -TimeoutSeconds 60
     Assert-True ($null -ne $result) 'Find-Target must resolve a match even when the envelope carries a deeply nested tree alongside it'
     Assert-True ($result.RefId -eq '@deep-snap:e9') 'the resolved ref must be the one from data.match, unaffected by the nested tree payload'
 }

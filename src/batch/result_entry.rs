@@ -7,7 +7,7 @@ use serde_json::{Value, json};
 use super::bounded_json::serialized_fits;
 
 pub(super) const MAX_BATCH_OUTPUT_BYTES: usize = 4 * 1024 * 1024;
-pub(super) const OUTPUT_METADATA_RESERVE: usize = 8 * 1024;
+pub(super) const OUTPUT_METADATA_RESERVE: usize = 128 * 1024;
 
 #[cfg(test)]
 pub(super) fn bounded_entry(

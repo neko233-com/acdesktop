@@ -127,6 +127,8 @@ fn stop_on_error_halts_after_first_failure() {
         ])
         .to_string(),
         stop_on_error: true,
+        parallel: false,
+        max_workers: 1,
         timeout_ms: 60_000,
     };
 

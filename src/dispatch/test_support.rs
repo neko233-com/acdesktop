@@ -61,14 +61,13 @@ impl Drop for HomeGuard {
 /// the fixed setup every overlay-lifecycle test builds on before it varies
 /// the one thing the test actually checks.
 pub(crate) fn started_overlay_session() -> acdesktop_core::session::SessionManifest {
-    let manifest = acdesktop_core::session::start_session(
-        acdesktop_core::session::StartSessionOptions {
+    let manifest =
+        acdesktop_core::session::start_session(acdesktop_core::session::StartSessionOptions {
             trace: acdesktop_core::session::SessionTraceMode::Off,
             artifacts: acdesktop_core::session::ArtifactsMode::Events,
             name: None,
-        },
-    )
-    .unwrap();
+        })
+        .unwrap();
     acdesktop_core::session::set_cursor_overlay(
         &manifest.id,
         acdesktop_core::CursorOverlayConfig::enabled(None, 6).unwrap(),

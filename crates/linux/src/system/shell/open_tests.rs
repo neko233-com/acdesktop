@@ -69,9 +69,11 @@ impl Surface for World {
             self.showing.set(true);
         }
         if self.press_cleanup_fails {
-            return Err(AdapterError::new(ErrorCode::ActionNotSupported, "Stop refused")
-                .with_details(serde_json::json!({ "physical_delivery_started": true }))
-                .with_disposition(acdesktop_core::DeliverySemantics::delivered_unverified()));
+            return Err(
+                AdapterError::new(ErrorCode::ActionNotSupported, "Stop refused")
+                    .with_details(serde_json::json!({ "physical_delivery_started": true }))
+                    .with_disposition(acdesktop_core::DeliverySemantics::delivered_unverified()),
+            );
         }
         Ok(())
     }

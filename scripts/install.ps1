@@ -6,7 +6,7 @@
 #   powershell -File scripts/install.ps1 -InstallDir C:\Tools\acdesktop
 #
 # 设计原则：
-#   - 零 Node 依赖，直接下载原生二进制
+#   - 直接下载原生二进制
 #   - 单次下载、单次校验、原子替换
 #   - 响应快：curl.exe + tar.exe 是 Windows 10+ 自带
 #   - PATH 自动写入用户环境变量并刷新当前会话
@@ -70,8 +70,10 @@ try {
   New-Item -ItemType Directory -Force -Path $Staging | Out-Null
 
   Write-Host "→ 下载 $Tarball …" -ForegroundColor Cyan
-  curl.exe -fsSL --retry 3 --retry-delay 1 -o "$Staging\$Tarball"       "$TarballUrl"
-  curl.exe -fsSL --retry 3 --retry-delay 1 -o "$Staging\checksums.txt"   "$ChecksumsUrl"
+  curl.exe -fsSL --retry 3 --retry-delay 1 -o "$Staging\$Tarball" "$TarballUrl"
+  if ($LASTEXITCODE -ne 0) { throw "下载归档失败: $LASTEXITCODE" }
+  curl.exe -fsSL --retry 3 --retry-delay 1 -o "$Staging\checksums.txt" "$ChecksumsUrl"
+  if ($LASTEXITCODE -ne 0) { throw "下载校验和失败: $LASTEXITCODE" }
 
   Write-Host '→ SHA256 校验 …' -ForegroundColor Cyan
   $expected = (Select-String -Path "$Staging\checksums.txt" -Pattern "\s+$Tarball$" |
@@ -85,6 +87,7 @@ try {
   Write-Host '→ 解压 …' -ForegroundColor Cyan
   New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
   tar.exe -xzf "$Staging\$Tarball" -C $Staging
+  if ($LASTEXITCODE -ne 0) { throw "解压失败: $LASTEXITCODE" }
 
   $SrcExe = Join-Path $Staging $BinaryName
   if (-not (Test-Path $SrcExe)) { throw "解压后找不到 $BinaryName" }

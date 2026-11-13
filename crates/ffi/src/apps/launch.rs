@@ -3,9 +3,7 @@ use crate::convert::window::{exact_window_info_to_c, validate_exact_window_info}
 use crate::error::{AdResult, set_last_error};
 use crate::ffi_try::trap_panic;
 use crate::types::AdExactWindowInfo;
-use acdesktop_core::{
-    AdapterError, ErrorCode, WindowInfo, system::launch_result::LaunchResult,
-};
+use acdesktop_core::{AdapterError, ErrorCode, WindowInfo, system::launch_result::LaunchResult};
 use std::os::raw::c_char;
 
 /// The C entry points hand back one window, so a launch that produced none is

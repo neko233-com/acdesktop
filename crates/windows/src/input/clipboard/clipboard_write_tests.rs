@@ -2,9 +2,7 @@ use super::{clear_clipboard, force_ownership_loss_for_test, set_clipboard_conten
 use crate::system::fixture::test_time::deadline;
 use crate::tree::fixture::bootstrap;
 use crate::tree::fixture::fixture_clipboard::clipboard_test_lock;
-use acdesktop_core::{
-    ClipboardContent, DeliverySemantics, ErrorCode, ImageBuffer, ImageFormat,
-};
+use acdesktop_core::{ClipboardContent, DeliverySemantics, ErrorCode, ImageBuffer, ImageFormat};
 
 #[test]
 fn image_metadata_mismatch_is_rejected_before_native_open() {

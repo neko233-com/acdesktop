@@ -13,21 +13,15 @@
 
 use super::list_surfaces_for_process;
 use crate::adapter::WindowsAdapter;
-use crate::system::app_ops::process_snapshot;
 use crate::system::fixture::test_support::{FIXTURE_APP_NAME_LOCK, settles_to, stage_foreground};
 use crate::system::process_identity::token_for_pid;
-use crate::system::window::window_enum::enumerate_top_level;
-use crate::system::window::window_identity::live_window_owner;
-use crate::system::window::window_ops::passes_filter;
 use crate::tree::automation::root_from_hwnd;
 use crate::tree::fixture::fixture_menu::{CONTEXT_MENU_ITEM_COUNT, MenuFixture};
 use crate::tree::fixture::fixture_modal::ModalFixture;
 use crate::tree::fixture::{HostedFixture, bootstrap};
 use crate::tree::test_support::rooted_child_count as rooted_child_count_of;
 use crate::tree::walk::walker_fake::deadline;
-use acdesktop_core::{
-    ObservationOps, ProcessId, ProcessIdentity, SnapshotSurface, SurfaceInfo,
-};
+use acdesktop_core::{ObservationOps, ProcessId, ProcessIdentity, SnapshotSurface, SurfaceInfo};
 
 const STATE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
 
@@ -241,57 +235,45 @@ fn an_open_menu_presents_a_menu_surface_with_the_staged_item_count() {
     );
 }
 
-/// A process that presents no agent-facing window answers an empty list and
-/// `ok` - a statement about that process, never `PLATFORM_NOT_SUPPORTED` and
-/// never an error. The process is found live, by name, and its windowless
-/// premise is verified against the desktop's own enumeration before the
-/// assertion is made.
 #[test]
-fn a_process_with_no_windows_returns_an_empty_inventory() {
-    let pid = windowless_process_pid().expect("a live windowless process exists on this desktop");
-
-    let surfaces = list_surfaces_for_process(identity_for(pid), deadline())
-        .expect("a windowless process inventories successfully");
-
-    assert!(
-        surfaces.is_empty(),
-        "a process with no agent-facing windows presents no surfaces: {surfaces:?}"
-    );
+fn windowless_process_fixture() {
+    if std::env::var_os("ACDESKTOP_WINDOWLESS_FIXTURE").is_some() {
+        use std::io::Read;
+        let mut byte = [0_u8; 1];
+        let _ = std::io::stdin().read(&mut byte);
+    }
 }
 
-/// Finds a live process that owns no agent-facing top-level window: a
-/// background-system image name from the live process table whose pid owns
-/// nothing the census filter would admit, and whose generation token is
-/// readable so the inventory's identity check can be satisfied.
-fn windowless_process_pid() -> Option<u32> {
-    const WINDOWLESS_NAMES: [&str; 5] = [
-        "svchost.exe",
-        "conhost.exe",
-        "fontdrvhost.exe",
-        "spoolsv.exe",
-        "services.exe",
-    ];
-    let mut window_owners = std::collections::HashSet::new();
-    enumerate_top_level(|window| {
-        if let Some(owner) = live_window_owner(window.handle) {
-            if passes_filter(&window) {
-                window_owners.insert(u32::from(owner));
-            }
-        }
-        true
-    })
-    .expect("the desktop's top-level windows enumerate");
-    process_snapshot()
-        .ok()?
-        .into_iter()
-        .find(|row| {
-            WINDOWLESS_NAMES.contains(&row.name.to_ascii_lowercase().as_str())
-                && !window_owners.contains(&u32::from(row.pid))
-        })
-        .and_then(|row| {
-            token_for_pid(row.pid)
-                .ok()
-                .flatten()
-                .map(|_| u32::from(row.pid))
-        })
+struct WindowlessChild(std::process::Child);
+
+impl Drop for WindowlessChild {
+    fn drop(&mut self) {
+        let _ = self.0.kill();
+        let _ = self.0.wait();
+    }
+}
+
+#[test]
+fn a_process_with_no_windows_returns_an_empty_inventory() {
+    use std::os::windows::process::CommandExt;
+    use std::process::{Command, Stdio};
+    let child = Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "tree::surface_inventory::tests::windowless_process_fixture",
+        ])
+        .env("ACDESKTOP_WINDOWLESS_FIXTURE", "1")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .creation_flags(0x08000000)
+        .spawn()
+        .expect("windowless fixture starts");
+    let child = WindowlessChild(child);
+    let surfaces = list_surfaces_for_process(identity_for(child.0.id()), deadline())
+        .expect("a windowless process inventories successfully");
+    assert!(
+        surfaces.is_empty(),
+        "windowless process returned surfaces: {surfaces:?}"
+    );
 }

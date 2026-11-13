@@ -280,6 +280,10 @@ pub(crate) struct MenuFixture {
 impl MenuFixture {
     pub(crate) fn spawn() -> Result<Self, String> {
         let executable = std::env::current_exe().map_err(|error| error.to_string())?;
+        Self::spawn_from(&executable)
+    }
+
+    pub(crate) fn spawn_from(executable: &std::path::Path) -> Result<Self, String> {
         let mut command = Command::new(executable);
         command
             .args(["--exact", MENU_HOST_TEST_NAME, "--ignored", "--nocapture"])

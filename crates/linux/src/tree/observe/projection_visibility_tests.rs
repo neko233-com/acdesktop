@@ -151,18 +151,14 @@ fn snapshot_uses_retained_window_geometry_and_the_walked_scroll_container() {
         .node
         .element
         .set_ancestry(ancestry::of_root(&frame.node.element.clone()));
-    frame.evidence_bounds = Some((
-        rect(0, 0, 200, 200),
-        acdesktop_core::BoundsSpace::Window,
-    ));
+    frame.evidence_bounds = Some((rect(0, 0, 200, 200), acdesktop_core::BoundsSpace::Window));
     let mut container = read_of(SCROLL_PANE, "scroll", &[]);
     container.node.element = AtspiElement::new(":1.1", "/scroll", 1);
     container
         .node
         .element
         .set_ancestry(ancestry::child(&frame.node.element, Some(FRAME)));
-    container.evidence_bounds =
-        Some((rect(0, 0, 200, 80), acdesktop_core::BoundsSpace::Window));
+    container.evidence_bounds = Some((rect(0, 0, 200, 80), acdesktop_core::BoundsSpace::Window));
     let mut button = read_of(PUSH_BUTTON, "row", &["click"]);
     button.node.element = AtspiElement::new(":1.1", "/button", 1);
     button
@@ -170,10 +166,7 @@ fn snapshot_uses_retained_window_geometry_and_the_walked_scroll_container() {
         .element
         .set_ancestry(ancestry::child(&container.node.element, Some(SCROLL_PANE)));
     button.node.traits.states = Field::Present(words(&[VISIBLE, SHOWING]));
-    button.evidence_bounds = Some((
-        rect(40, 120, 20, 20),
-        acdesktop_core::BoundsSpace::Window,
-    ));
+    button.evidence_bounds = Some((rect(40, 120, 20, 20), acdesktop_core::BoundsSpace::Window));
     let root = walked(frame, vec![walked(container, vec![walked(button, vec![])])]);
     let walk = Walk {
         root,

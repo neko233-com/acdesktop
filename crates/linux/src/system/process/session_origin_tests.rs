@@ -30,9 +30,7 @@ fn the_launch_marker_is_read_from_a_process_environment() {
     assert!(has_launch_marker(
         b"HOME=/h\0ACDESKTOP_LAUNCHED=1\0PATH=/bin\0"
     ));
-    assert!(!has_launch_marker(
-        b"HOME=/h\0NOT_ACDESKTOP_LAUNCHED=1\0"
-    ));
+    assert!(!has_launch_marker(b"HOME=/h\0NOT_ACDESKTOP_LAUNCHED=1\0"));
     assert!(!has_launch_marker(b""));
 }
 

@@ -77,7 +77,7 @@ def table_rows(text):
 
 def identity_problems(text):
     patterns = list(IDENTITY)
-    for token in filter(None, (t.strip() for t in os.environ.get("AGENT_DESKTOP_BOX_IDENTITY", "").split(","))):
+    for token in filter(None, (t.strip() for t in os.environ.get("ACDESKTOP_BOX_IDENTITY", "").split(","))):
         patterns.append((re.compile(re.escape(token), re.I), "configured box identity token"))
     return [f"box identity ({label}) present" for pattern, label in patterns if pattern.search(text)]
 

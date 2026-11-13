@@ -14,7 +14,7 @@
 
     Lease-handle inheritance is opt-in and explicit (InheritLeaseHandle),
     never implicit: the default spawn strips
-    AGENT_DESKTOP_INTERACTION_LEASE_HANDLE from the child's environment even
+    ACDESKTOP_INTERACTION_LEASE_HANDLE from the child's environment even
     when the parent process happens to have it set, mirroring
     bounded_process.py's INTERACTION_LEASE_FD_ENV handling.
 #>
@@ -25,7 +25,7 @@ Import-Module (Join-Path $PSScriptRoot 'Native.psm1') -Force -Global
 
 $script:DefaultTimeoutSeconds = 20
 $script:DefaultMaxCaptureBytes = 2097152
-$script:LeaseHandleEnvName = 'AGENT_DESKTOP_INTERACTION_LEASE_HANDLE'
+$script:LeaseHandleEnvName = 'ACDESKTOP_INTERACTION_LEASE_HANDLE'
 
 function Get-InteractionLeaseHandleEnvironmentVariableName {
     <#

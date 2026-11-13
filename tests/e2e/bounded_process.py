@@ -9,8 +9,8 @@ import time
 
 DEFAULT_TIMEOUT_SECONDS = 20.0
 DEFAULT_MAX_CAPTURE_BYTES = 2 * 1024 * 1024
-INTERACTION_LEASE_FD_ENV = "AGENT_DESKTOP_INTERACTION_LEASE_FD"
-INHERIT_INTERACTION_LEASE_ENV = "AGENT_DESKTOP_E2E_INHERIT_LEASE"
+INTERACTION_LEASE_FD_ENV = "ACDESKTOP_INTERACTION_LEASE_FD"
+INHERIT_INTERACTION_LEASE_ENV = "ACDESKTOP_E2E_INHERIT_LEASE"
 
 
 @dataclasses.dataclass
@@ -103,12 +103,12 @@ def run_bounded(
     timeout_seconds = float(
         timeout_seconds
         if timeout_seconds is not None
-        else os.environ.get("AGENT_DESKTOP_E2E_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS)
+        else os.environ.get("ACDESKTOP_E2E_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS)
     )
     max_capture_bytes = int(
         max_capture_bytes
         if max_capture_bytes is not None
-        else os.environ.get("AGENT_DESKTOP_E2E_MAX_CAPTURE_BYTES", DEFAULT_MAX_CAPTURE_BYTES)
+        else os.environ.get("ACDESKTOP_E2E_MAX_CAPTURE_BYTES", DEFAULT_MAX_CAPTURE_BYTES)
     )
     if timeout_seconds <= 0 or max_capture_bytes <= 0:
         raise ValueError("timeout and capture limits must be positive")

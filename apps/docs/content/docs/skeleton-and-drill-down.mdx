@@ -24,7 +24,7 @@ Two shortcuts skip the loop: a small app needs only `snapshot -i`, and a known t
 ## Take a skeleton
 
 ```bash
-agent-desktop snapshot --app gnome-calculator --skeleton -i --compact
+acdesktop snapshot --app gnome-calculator --skeleton -i --compact
 ```
 
 ```json
@@ -71,7 +71,7 @@ The tree above omits the unnamed wrapper groups between the window and the two d
 - **Depth is clamped to 3.** The effective depth is the smaller of `--max-depth` and 3, so a bare `--skeleton` reads three levels. Depth counts semantic levels: GTK and web wrappers can make the output nest deeper than three JSON levels.
 - **Cut containers carry `children_count`.** A container at the depth boundary lists no children. It reports how many direct children it did not expand.
 
-Interactive elements inside the first three levels get ordinary refs. `children_count` appears on any node a depth limit cuts, not only under `--skeleton`, and with `-i` agent-desktop keeps a cut container in the output even when it has no ref.
+Interactive elements inside the first three levels get ordinary refs. `children_count` appears on any node a depth limit cuts, not only under `--skeleton`, and with `-i` acdesktop keeps a cut container in the output even when it has no ref.
 
 ## Find the drill target
 
@@ -87,7 +87,7 @@ In practice, drill a node that has both `children_count` and `ref_id`. A cut con
 ## Drill into a region
 
 ```bash
-agent-desktop snapshot --root @s2txcl95uvubmn:e1 -i --compact
+acdesktop snapshot --root @s2txcl95uvubmn:e1 -i --compact
 ```
 
 ```json
@@ -157,8 +157,8 @@ Run the same `--root` again to re-read the region after an action. The re-drill 
 A re-drill removes refs created by earlier drills of that root, refs from a full snapshot that sit under the root in the same window, and refs from drills nested inside the region. Refs for other regions, other windows, and the drilled root itself survive.
 
 ```bash
-agent-desktop get @s2txcl95uvubmn:e2 --property role   # outside the region: still resolves
-agent-desktop get @s2txcl95uvubmn:e11                  # inside the region: replaced
+acdesktop get @s2txcl95uvubmn:e2 --property role   # outside the region: still resolves
+acdesktop get @s2txcl95uvubmn:e11                  # inside the region: replaced
 ```
 
 ```json
@@ -237,8 +237,8 @@ That is `snapshot --root @s2txcl95uvubmn:e1 --timeout-ms 1`. The completeness ru
 `find` takes the same two scopes, so you can search a region without reading it:
 
 ```bash
-agent-desktop find --root @s2txcl95uvubmn:e1 --role button --name C --exact --first
-agent-desktop find --app gtk3-widget-factory --surface menu --name "Dark Theme" --exact --first
+acdesktop find --root @s2txcl95uvubmn:e1 --role button --name C --exact --first
+acdesktop find --app gtk3-widget-factory --surface menu --name "Dark Theme" --exact --first
 ```
 
 - `find --root <ref>` resolves the ref strictly, then searches only that element's subtree. It needs no `--app`.
@@ -295,7 +295,7 @@ Depth counts meaningful levels. Under `--skeleton` the depth is the smaller of `
 A full snapshot that runs out of budget still succeeds, and returns what it saw:
 
 ```bash
-agent-desktop snapshot --app gtk3-widget-factory -i --compact --timeout-ms 50
+acdesktop snapshot --app gtk3-widget-factory -i --compact --timeout-ms 50
 ```
 
 ```json

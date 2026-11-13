@@ -18,8 +18,7 @@ use super::transport::{self, ReachOutcome};
 
 /// Matches the arrival ceiling core already imposes on a travel, and is what
 /// a fresh renderer has to get its window up inside.
-const ENABLE_BUDGET: Duration =
-    Duration::from_millis(acdesktop_core::CURSOR_ARRIVAL_TIMEOUT_MS);
+const ENABLE_BUDGET: Duration = Duration::from_millis(acdesktop_core::CURSOR_ARRIVAL_TIMEOUT_MS);
 
 /// Teardown is allowed longer, because a caller of `disable` is waiting for
 /// the window to be gone rather than for a frame to land.

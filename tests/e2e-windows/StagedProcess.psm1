@@ -55,7 +55,7 @@ function Get-HandleReportExePath {
     if ($script:HandleReportExePath -and (Test-Path -LiteralPath $script:HandleReportExePath)) {
         return $script:HandleReportExePath
     }
-    $work = Join-Path $env:TEMP ('agent-desktop-e2e-handle-report-' + [guid]::NewGuid().ToString('N'))
+    $work = Join-Path $env:TEMP ('acdesktop-e2e-handle-report-' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $work -Force | Out-Null
     $csPath = Join-Path $work 'HandleReport.cs'
     $exePath = Join-Path $work 'HandleReport.exe'
@@ -123,7 +123,7 @@ function New-StagedEnvironmentBlock {
         `CreateProcessAsUser` + `CREATE_UNICODE_ENVIRONMENT` requires):
         every variable this process currently has, so the staged child
         resolves the same isolated HOME/TEMP the harness set up, plus
-        `AGENT_DESKTOP_INTERACTION_LEASE_HANDLE` when LeaseHandleValue is
+        `ACDESKTOP_INTERACTION_LEASE_HANDLE` when LeaseHandleValue is
         given - the one variable `crate::system::interaction_lease::
         adopt_inherited` reads to choose adoption over self-acquire.
     .OUTPUTS

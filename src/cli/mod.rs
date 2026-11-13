@@ -1,5 +1,6 @@
 use clap::Subcommand;
 
+pub(crate) mod config;
 mod identity;
 mod post_action_wait;
 mod root;

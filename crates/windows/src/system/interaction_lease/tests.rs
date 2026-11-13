@@ -18,6 +18,7 @@ pub(super) fn scratch_root(label: &str) -> PathBuf {
     );
     let root = std::env::temp_dir().join(unique);
     std::fs::create_dir_all(&root).unwrap();
+    crate::system::private_file::tests::protect_test_directory(&root);
     directory::strip_extended_prefix(&std::fs::canonicalize(&root).unwrap())
 }
 

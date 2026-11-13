@@ -69,14 +69,8 @@ fn cursor_overlay_disable_is_a_dedicated_command() {
 
 #[test]
 fn action_commands_reject_the_removed_cursor_flag() {
-    let error = Cli::try_parse_from([
-        "acdesktop",
-        "--agent-cursor",
-        "on",
-        "click",
-        "@s8f3k2p9:e1",
-    ])
-    .expect_err("cursor configuration is not an action flag");
+    let error = Cli::try_parse_from(["acdesktop", "--agent-cursor", "on", "click", "@s8f3k2p9:e1"])
+        .expect_err("cursor configuration is not an action flag");
 
     assert_eq!(error.kind(), ErrorKind::UnknownArgument);
 }
@@ -278,6 +272,28 @@ fn open_system_surface_parses_the_shared_surface_vocabulary() {
 
 /// Every surface token `status` can report must be accepted back by
 /// `--surface` unchanged.
+#[test]
+fn open_system_surface_parses_an_explicit_timeout() {
+    let cli = Cli::try_parse_from([
+        "acdesktop",
+        "open-system-surface",
+        "--surface",
+        "action-center",
+        "--timeout-ms",
+        "15000",
+    ])
+    .unwrap();
+    let Commands::OpenSystemSurface(args) = cli.command.unwrap() else {
+        panic!("expected open-system-surface");
+    };
+    assert_eq!(args.timeout_ms, Some(15_000));
+    let batch: crate::cli_args::system::OpenSystemSurfaceArgs = serde_json::from_value(
+        serde_json::json!({ "surface": "action-center", "timeout_ms": 15000 }),
+    )
+    .unwrap();
+    assert_eq!(batch.timeout_ms, Some(15_000));
+}
+
 #[test]
 fn every_status_surface_token_parses_as_a_surface_argument() {
     use clap::ValueEnum;

@@ -14,9 +14,7 @@ impl From<acdesktop_core::DeliveryDisposition> for AdDeliveryDisposition {
             acdesktop_core::DeliveryDisposition::Unknown => Self::Unknown,
             acdesktop_core::DeliveryDisposition::NotDelivered => Self::NotDelivered,
             acdesktop_core::DeliveryDisposition::DeliveryUncertain => Self::DeliveryUncertain,
-            acdesktop_core::DeliveryDisposition::DeliveredUnverified => {
-                Self::DeliveredUnverified
-            }
+            acdesktop_core::DeliveryDisposition::DeliveredUnverified => Self::DeliveredUnverified,
             acdesktop_core::DeliveryDisposition::DeliveredVerified => Self::DeliveredVerified,
         }
     }

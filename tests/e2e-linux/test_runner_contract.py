@@ -30,10 +30,10 @@ def contract_violations(registry, implementations):
 
 
 def make_binary(root: Path, body: str) -> Path:
-    path = Path(root) / "fake-agent-desktop"
+    path = Path(root) / "fake-acdesktop"
     path.write_text(f"#!/bin/sh\n{body}\n")
     path.chmod(0o700)
-    helper = root / "agent-desktop-linux-clipboard-owner"
+    helper = root / "acdesktop-linux-clipboard-owner"
     helper.write_text("#!/bin/sh\necho clipboard-owner\n")
     helper.chmod(0o700)
     return path
@@ -94,12 +94,12 @@ class GateTests(unittest.TestCase):
     def test_missing_tool_is_named(self):
         with tempfile.TemporaryDirectory() as root:
             env = {
-                "AGENT_DESKTOP_SESSION_BASE": str(Path(root) / "sessions"),
-                "AGENT_DESKTOP_E2E_BIN": str(make_binary(Path(root), "exit 0")),
-                "AGENT_DESKTOP_WM_ROOT": str(Path(root) / "wm"),
+                "ACDESKTOP_SESSION_BASE": str(Path(root) / "sessions"),
+                "ACDESKTOP_E2E_BIN": str(make_binary(Path(root), "exit 0")),
+                "ACDESKTOP_WM_ROOT": str(Path(root) / "wm"),
             }
-            (Path(env["AGENT_DESKTOP_WM_ROOT"]) / "usr" / "bin").mkdir(parents=True)
-            (Path(env["AGENT_DESKTOP_WM_ROOT"]) / "usr" / "bin" / "openbox").write_text("x")
+            (Path(env["ACDESKTOP_WM_ROOT"]) / "usr" / "bin").mkdir(parents=True)
+            (Path(env["ACDESKTOP_WM_ROOT"]) / "usr" / "bin" / "openbox").write_text("x")
             missing = gate.check_prerequisites(
                 ("x11-openbox",),
                 which=lambda tool: None,
@@ -117,15 +117,15 @@ class GateTests(unittest.TestCase):
             wm.mkdir(parents=True)
             (wm / "openbox").write_text("x")
             env = {
-                "AGENT_DESKTOP_SESSION_BASE": str(Path(root) / "sessions"),
-                "AGENT_DESKTOP_E2E_BIN": str(make_binary(Path(root), "exit 0")),
-                "AGENT_DESKTOP_WM_ROOT": str(Path(root) / "wm"),
+                "ACDESKTOP_SESSION_BASE": str(Path(root) / "sessions"),
+                "ACDESKTOP_E2E_BIN": str(make_binary(Path(root), "exit 0")),
+                "ACDESKTOP_WM_ROOT": str(Path(root) / "wm"),
             }
-            for key in ("AGENT_DESKTOP_E2E_BIN", "AGENT_DESKTOP_E2E_BIN_SRC"):
+            for key in ("ACDESKTOP_E2E_BIN", "ACDESKTOP_E2E_BIN_SRC"):
                 with self.subTest(key=key):
                     selected = {name: value for name, value in env.items()
-                                if name != "AGENT_DESKTOP_E2E_BIN"}
-                    selected[key] = env["AGENT_DESKTOP_E2E_BIN"]
+                                if name != "ACDESKTOP_E2E_BIN"}
+                    selected[key] = env["ACDESKTOP_E2E_BIN"]
                     missing = gate.check_prerequisites(
                         ("x11-openbox",),
                         which=lambda tool: f"/usr/bin/{tool}",
@@ -138,15 +138,15 @@ class GateTests(unittest.TestCase):
 
     def test_session_base_defaults_and_overrides(self):
         cases = (
-            ({}, Path("/tmp/agent-desktop-sessions-1234")),
-            ({"XDG_RUNTIME_DIR": ""}, Path("/tmp/agent-desktop-sessions-1234")),
-            ({"AGENT_DESKTOP_SESSION_BASE": ""}, Path("/tmp/agent-desktop-sessions-1234")),
-            ({"XDG_RUNTIME_DIR": "/runtime"}, Path("/runtime/agent-desktop-sessions")),
-            ({"AGENT_DESKTOP_SESSION_BASE": "", "XDG_RUNTIME_DIR": "/runtime"},
-             Path("/runtime/agent-desktop-sessions")),
-            ({"AGENT_DESKTOP_SESSION_BASE": "/custom", "XDG_RUNTIME_DIR": "/runtime"},
+            ({}, Path("/tmp/acdesktop-sessions-1234")),
+            ({"XDG_RUNTIME_DIR": ""}, Path("/tmp/acdesktop-sessions-1234")),
+            ({"ACDESKTOP_SESSION_BASE": ""}, Path("/tmp/acdesktop-sessions-1234")),
+            ({"XDG_RUNTIME_DIR": "/runtime"}, Path("/runtime/acdesktop-sessions")),
+            ({"ACDESKTOP_SESSION_BASE": "", "XDG_RUNTIME_DIR": "/runtime"},
+             Path("/runtime/acdesktop-sessions")),
+            ({"ACDESKTOP_SESSION_BASE": "/custom", "XDG_RUNTIME_DIR": "/runtime"},
              Path("/custom")),
-            ({"AGENT_DESKTOP_SESSION_BASE": "/custom"}, Path("/custom")),
+            ({"ACDESKTOP_SESSION_BASE": "/custom"}, Path("/custom")),
         )
         for env, expected in cases:
             with self.subTest(env=env), mock.patch.object(Path, "mkdir", autospec=True) as mkdir, \

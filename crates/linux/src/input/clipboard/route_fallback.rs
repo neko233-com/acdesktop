@@ -1,8 +1,6 @@
 use std::ffi::OsString;
 
-use acdesktop_core::{
-    AdapterError, ClipboardContent, ClipboardFormat, Deadline, InteractionLease,
-};
+use acdesktop_core::{AdapterError, ClipboardContent, ClipboardFormat, Deadline, InteractionLease};
 
 use super::command_runner::ProcessRunner;
 use super::wayland::Wayland;

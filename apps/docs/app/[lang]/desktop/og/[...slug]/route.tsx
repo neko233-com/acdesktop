@@ -16,7 +16,7 @@ export const GET = async (
 
   return renderOgImage(
     page.slugs.length
-      ? (page.data.title ?? "agent-desktop")
+      ? (page.data.title ?? "acdesktop")
       : "Desktop\nAutomation for AI"
   );
 };

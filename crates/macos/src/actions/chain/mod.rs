@@ -67,12 +67,9 @@ mod imp {
     pub(crate) fn exhaustion_disposition(
         steps: &[ActionStep],
     ) -> acdesktop_core::DeliverySemantics {
-        let delivered = steps.iter().any(|step| {
-            matches!(
-                step.outcome,
-                acdesktop_core::ActionStepOutcome::Succeeded
-            )
-        });
+        let delivered = steps
+            .iter()
+            .any(|step| matches!(step.outcome, acdesktop_core::ActionStepOutcome::Succeeded));
         if delivered {
             acdesktop_core::DeliverySemantics::delivered_unverified()
         } else {

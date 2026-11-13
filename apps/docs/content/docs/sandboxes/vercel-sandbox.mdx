@@ -1,26 +1,27 @@
 ---
-title: Run agent-desktop in Vercel Sandbox
+title: Run acdesktop in Vercel Sandbox
 navTitle: Vercel Sandbox
-description: Boot a Linux microVM from a prepared desktop image and run agent-desktop commands against the apps inside it.
+description: Boot a Linux microVM from a prepared desktop image and run acdesktop commands against the apps inside it.
 ---
 
-Vercel Sandbox runs a Linux microVM, and agent-desktop runs inside it against the sandbox's own desktop instead of yours. The [`agent-desktop sandbox` commands](/desktop/sandboxes) do not manage Vercel Sandbox; the Vercel SDK creates and drives it.
+Vercel Sandbox runs a Linux microVM, and acdesktop runs inside it against the sandbox's own desktop instead of yours. The [`acdesktop sandbox` commands](/desktop/sandboxes) do not manage Vercel Sandbox; the Vercel SDK creates and drives it.
 
 ## Setup
 
+Install the Vercel Sandbox SDK following its official documentation.
+
 ```bash
-npm install @vercel/sandbox                                    # the SDK that creates and drives sandboxes
 vercel link                                                    # connect this directory to a Vercel project
 vercel env pull                                                # writes VERCEL_OIDC_TOKEN to .env.local
 ```
 
 The SDK reads that token to create sandboxes. On Vercel, the runtime provides the token, so a deployment skips both `vercel` commands.
 
-## Run agent-desktop
+## Run acdesktop
 
-`ad-desktop` is an image you build once with a desktop session (Xvfb, D-Bus, AT-SPI, an app such as GNOME Calculator), the agent-desktop Linux binary, and the `agent-desktop-run` wrapper from the [Docker container guide](/desktop/guides/docker-container).
+`ad-desktop` is an image you build once with a desktop session (Xvfb, D-Bus, AT-SPI, an app such as GNOME Calculator), the acdesktop Linux binary, and the `acdesktop-run` wrapper from the [Docker container guide](/desktop/guides/docker-container).
 
-That wrapper is essential. Vercel Sandbox starts a bare microVM from the image: nothing in the image starts a desktop, and a new or resumed sandbox has no session — no X server, no D-Bus session bus, and no accessibility bus. `agent-desktop` on its own has nothing to talk to; it fails with `PERM_DENIED` and tells you `No D-Bus session bus is reachable`. `agent-desktop-run` starts the session if it is missing, waits for it, and runs the command inside it, so every command that reads or acts on the desktop goes through it. The first command after `create` or a resume pays about a second of startup; later commands reuse the session.
+That wrapper is essential. Vercel Sandbox starts a bare microVM from the image: nothing in the image starts a desktop, and a new or resumed sandbox has no session — no X server, no D-Bus session bus, and no accessibility bus. `acdesktop` on its own has nothing to talk to; it fails with `PERM_DENIED` and tells you `No D-Bus session bus is reachable`. `acdesktop-run` starts the session if it is missing, waits for it, and runs the command inside it, so every command that reads or acts on the desktop goes through it. The first command after `create` or a resume pays about a second of startup; later commands reuse the session.
 
 ```typescript
 import { Sandbox } from "@vercel/sandbox";
@@ -29,11 +30,11 @@ import { Sandbox } from "@vercel/sandbox";
 const sandbox = await Sandbox.create({ name: "ad-demo", image: "ad-desktop" });
 
 // 2. Open the app through the wrapper, which starts the desktop session
-await sandbox.runCommand({ cmd: "agent-desktop-run", args: ["launch", "gnome-calculator"] });
+await sandbox.runCommand({ cmd: "acdesktop-run", args: ["launch", "gnome-calculator"] });
 
 // 3. Read the tree inside that same session
 const result = await sandbox.runCommand({
-  cmd: "agent-desktop-run",
+  cmd: "acdesktop-run",
   args: ["snapshot", "--app", "gnome-calculator", "-i", "--compact"],
 });
 
@@ -43,7 +44,7 @@ console.log(JSON.parse(await result.stdout()).data.ref_count); // 27
 
 // 5. Later, resume the same sandbox by name; the wrapper starts a fresh session if the old one is gone
 const same = await Sandbox.get({ name: "ad-demo" });
-await same.runCommand({ cmd: "agent-desktop-run", args: ["snapshot", "--app", "gnome-calculator", "-i"] });
+await same.runCommand({ cmd: "acdesktop-run", args: ["snapshot", "--app", "gnome-calculator", "-i"] });
 ```
 
 Every command returns one JSON envelope, the same as on your own machine; [JSON output](/desktop/json-output) describes the fields.

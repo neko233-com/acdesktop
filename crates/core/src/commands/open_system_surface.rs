@@ -7,6 +7,7 @@ use serde_json::{Value, json};
 
 pub struct OpenSystemSurfaceArgs {
     pub surface: SnapshotSurface,
+    pub timeout_ms: Option<u64>,
 }
 
 /// Opens a shell surface and answers with the identity of the window the
@@ -30,7 +31,10 @@ pub fn execute(
     adapter: &dyn PlatformAdapter,
     context: &CommandContext,
 ) -> Result<Value, AppError> {
-    let deadline = crate::Deadline::standard()?;
+    let deadline = match args.timeout_ms {
+        Some(timeout_ms) => crate::Deadline::after(timeout_ms)?,
+        None => crate::Deadline::standard()?,
+    };
     let policy = context.physical_input_policy();
     let lease = adapter.acquire_interaction_lease(deadline)?;
     let window = adapter.open_system_surface(args.surface, policy, &lease)?;

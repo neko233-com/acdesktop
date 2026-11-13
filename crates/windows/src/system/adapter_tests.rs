@@ -209,10 +209,7 @@ fn key_event_rejects_a_standalone_edge_through_the_trait() {
     let error = InputOps::key_event(&adapter, &combo, true, &lease)
         .expect_err("a standalone key edge must reject");
 
-    assert_eq!(
-        error.code,
-        acdesktop_core::ErrorCode::ActionNotSupported
-    );
+    assert_eq!(error.code, acdesktop_core::ErrorCode::ActionNotSupported);
     let details = error.details.expect("standalone error carries details");
     assert_eq!(details["raw_input_emitted"], false);
     assert_eq!(details["requires_daemon_owned_transaction"], true);

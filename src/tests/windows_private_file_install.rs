@@ -40,6 +40,7 @@ fn run_session_start(home: &Path) -> Output {
         .args(["session", "start"])
         .env("HOME", home)
         .env("USERPROFILE", home)
+        .env_remove("ACDESKTOP_HOME")
         .env_remove("ACDESKTOP_SESSION")
         .output()
         .expect("binary starts")
@@ -95,4 +96,22 @@ fn session_start_in_a_real_home_succeeds_as_the_junction_control() {
         manifest.is_file(),
         "the control session manifest must exist under the real home"
     );
+}
+
+#[test]
+fn config_set_refuses_a_junction_without_writing_to_its_target() {
+    let scratch = Scratch::create("config-junction");
+    let home = scratch.dir("home");
+    let target = scratch.dir("target");
+    plant_junction(&home.join(".acdesktop"), &target);
+    let output = Command::new(env!("CARGO_BIN_EXE_acdesktop"))
+        .args(["config", "set", "auto_update", "false"])
+        .env("HOME", &home)
+        .env("USERPROFILE", &home)
+        .env_remove("ACDESKTOP_CONFIG_DIR")
+        .output()
+        .expect("binary starts");
+    assert_eq!(output.status.code(), Some(1));
+    assert_eq!(parse_envelope(&output)["ok"], false);
+    assert!(entries_under(&target).is_empty());
 }

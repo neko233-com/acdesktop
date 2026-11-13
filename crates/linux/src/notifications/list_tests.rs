@@ -96,10 +96,7 @@ fn an_absent_notification_service_blocks_listing_before_the_shell_tree_is_read()
     let mut world = FakeWorld::new(&log, vec![reading(&[spec("Mail", "a")])]);
     world.faults.daemon = Some(DaemonFailure::Absent);
     let error = list_in(&world, &NotificationFilter::default(), deadline()).expect_err("error");
-    assert_eq!(
-        error.code,
-        acdesktop_core::ErrorCode::PlatformNotSupported
-    );
+    assert_eq!(error.code, acdesktop_core::ErrorCode::PlatformNotSupported);
     assert_eq!(error.details.expect("details")["daemon"], "absent");
     assert!(log.borrow().is_empty());
 }
@@ -110,10 +107,7 @@ fn an_unproven_notification_service_blocks_listing_with_its_own_error() {
     let mut world = FakeWorld::new(&log, vec![reading(&[spec("Mail", "a")])]);
     world.faults.daemon = Some(DaemonFailure::Unsupported);
     let error = list_in(&world, &NotificationFilter::default(), deadline()).expect_err("error");
-    assert_eq!(
-        error.code,
-        acdesktop_core::ErrorCode::PlatformNotSupported
-    );
+    assert_eq!(error.code, acdesktop_core::ErrorCode::PlatformNotSupported);
     assert_eq!(error.details.expect("details")["daemon"], "unsupported");
     assert!(log.borrow().is_empty());
 }

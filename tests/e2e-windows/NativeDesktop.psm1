@@ -4,7 +4,7 @@
     NativeDesktop.psm1 - raw window/cursor/GUI-thread reads via
     NativeTypes.psm1's P/Invoke surface: the oracle R14 requires
     preconditions to be staged and read through, never through
-    agent-desktop.exe itself. Split out of Native.psm1 purely to keep both
+    acdesktop.exe itself. Split out of Native.psm1 purely to keep both
     modules under the 400-line cap.
 #>
 
@@ -294,7 +294,7 @@ function Get-NativeScreenPixel {
 function ConvertTo-NativeWindowHandle {
     <#
     .SYNOPSIS
-        Parses agent-desktop's own "w-<handle>" window-id shape into an
+        Parses acdesktop's own "w-<handle>" window-id shape into an
         IntPtr purely as a handle carrier for a subsequent raw OS call
         (GetWindowThreadProcessId, GetWindowRect, ...) - never itself the
         assertion. Mirrors the numeric-handle-from-string cast
@@ -307,7 +307,7 @@ function ConvertTo-NativeWindowHandle {
     }
     <#
         Reinterpret the bits rather than casting through a signed integer. A
-        HWND is unsigned, and agent-desktop prints it unsigned, so a window
+        HWND is unsigned, and acdesktop prints it unsigned, so a window
         whose handle has the high bit set renders as a decimal above
         Int64.MaxValue and `[int64]` throws - aborting the whole suite rather
         than the one leg. Which windows land there varies per run, so the

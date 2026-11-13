@@ -316,6 +316,13 @@ pub(crate) struct OpenSystemSurfaceArgs {
         help = "Shell surface to open: start-menu, taskbar, system-tray, system-tray-overflow, action-center, dock, menu-bar-extras"
     )]
     pub surface: Surface,
+    #[arg(
+        long,
+        value_name = "MS",
+        help = "Maximum time in milliseconds for the operation"
+    )]
+    #[serde(default)]
+    pub timeout_ms: Option<u64>,
 }
 
 #[derive(Parser, Debug, Deserialize)]

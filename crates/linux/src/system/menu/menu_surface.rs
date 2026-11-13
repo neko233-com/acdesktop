@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    AdapterError, Deadline, ErrorCode, SnapshotSurface, SurfaceInfo, WindowInfo,
-};
+use acdesktop_core::{AdapterError, Deadline, ErrorCode, SnapshotSurface, SurfaceInfo, WindowInfo};
 
 use super::inventory_reader::Inventory;
 pub(crate) use super::menu_popup::MenuFamily;

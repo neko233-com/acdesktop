@@ -5,7 +5,7 @@
 //! search's failure classification lives beside it, because "search failed"
 //! must never read as "surface closed".
 
-use acdesktop_core::{AdapterError, ProcessId, WindowInfo};
+use acdesktop_core::{AdapterError, Deadline, ProcessId, WindowInfo};
 
 use crate::system::window::window_enum::WindowHandle;
 
@@ -27,24 +27,76 @@ use crate::system::window::window_enum::WindowHandle;
 /// The open path needs one more distinction the read cannot make - whether a
 /// raise presented a surface whose tree matches no landmark at all - and it
 /// carries its own pre-raise witness to attribute the child to its raise
-/// ([`super::shell_surface_open::poll_until_observed`] and
+/// ([`super::shell_surface_poll::poll_until_observed`] and
 /// [`foreign_shape_error`]).
 pub(in crate::system) fn resolve_immersive(
+    expected_class: &'static str,
+    host_images: &'static [&'static str],
+    landmarks: &'static [&'static str],
+    deadline: Deadline,
+) -> Result<Option<WindowInfo>, AdapterError> {
+    super::bounded_read::read(deadline, move || {
+        resolve_immersive_inner(expected_class, host_images, landmarks, None, deadline)
+            .map(|result| result.0)
+    })
+}
+
+pub(in crate::system) fn resolve_after_raise(
+    expected_class: &'static str,
+    host_images: &'static [&'static str],
+    landmarks: &'static [&'static str],
+    previous: Vec<isize>,
+    deadline: Deadline,
+) -> Result<(Option<WindowInfo>, bool), AdapterError> {
+    super::bounded_read::read(deadline, move || {
+        resolve_immersive_inner(
+            expected_class,
+            host_images,
+            landmarks,
+            Some(&previous),
+            deadline,
+        )
+    })
+}
+
+fn resolve_immersive_inner(
     expected_class: &str,
     host_images: &[&str],
     landmarks: &[&str],
-) -> Result<Option<WindowInfo>, AdapterError> {
+    previous: Option<&[isize]>,
+    deadline: Deadline,
+) -> Result<(Option<WindowInfo>, bool), AdapterError> {
     let narrow = crate::system::window::listing_retry::narrow_to_permitted_codes;
     let client = crate::tree::automation::automation_client().map_err(narrow)?;
-    let children = desktop_root_children(&client)?;
-    for child in children {
+    let children = crate::system::window::listing_retry::retry_transient_window_race(
+        deadline,
+        AdapterError::is_transient_incomplete_read,
+        || desktop_root_children(&client),
+    )?;
+    for child in &children {
+        deadline.ensure_remaining()?;
         if let Some(info) =
-            immersive_candidate(&client, &child, expected_class, host_images, landmarks)?
+            immersive_candidate(&client, child, expected_class, host_images, landmarks)?
         {
-            return Ok(Some(info));
+            return Ok((Some(info), false));
         }
     }
-    Ok(None)
+    if let Some(previous) = previous {
+        for child in &children {
+            deadline.ensure_remaining()?;
+            if let Some((handle, _, _)) = shell_host_child(
+                child,
+                super::shell_surface_kinds::CORE_WINDOW_CLASS,
+                SHELL_DIAGNOSTIC_HOST_IMAGES,
+                false,
+            ) && !previous.contains(&handle)
+                && !carries_landmark(&client, child, landmarks)?
+            {
+                return Ok((None, true));
+            }
+        }
+    }
+    Ok((None, false))
 }
 
 /// The UIA desktop root's immediate children - the population every
@@ -167,61 +219,45 @@ fn immersive_candidate(
     Ok(Some(window_info_from_surface(child, handle, pid, image)))
 }
 
-/// Whether a presented surface of this kind's class and host, raised by the
-/// caller and absent from the pre-raise witness, matches none of the kind's
-/// landmarks - the raise presented a shape this build's measurements do not
-/// cover, and the caller resolves that as a named refusal rather than as
-/// absence, so a caller is told the shape did not match instead of that no
-/// surface exists. A child already in the witness is a sibling kind's live
-/// surface or a dismissed one's lingering window: it belongs to no raise and
-/// never answers this question.
-pub(in crate::system) fn raise_presented_foreign_shape(
-    client: &uiautomation::UIAutomation,
-    pre_raise_children: &[isize],
-    landmarks: &[&str],
-) -> Result<bool, AdapterError> {
-    let children = desktop_root_children(client)?;
-    for child in children {
-        let Some((handle, _pid, _image)) = shell_host_child(
-            &child,
-            super::shell_surface_kinds::CORE_WINDOW_CLASS,
-            SHELL_DIAGNOSTIC_HOST_IMAGES,
-            false,
-        ) else {
-            continue;
-        };
-        if pre_raise_children.contains(&handle) {
-            continue;
-        }
-        if !carries_landmark(client, &child, landmarks)? {
-            return Ok(true);
-        }
-    }
-    Ok(false)
-}
-
 /// The handles of the root children a raise could present through - the
 /// CoreWindow class owned by any shell host image and not cloaked - captured
 /// before the raise so the poll can attribute a new foreign-shape child to
 /// it rather than to a sibling kind's live surface. The host set is the
 /// broad diagnostic one: newer shells route these surfaces through host
 /// images this build's rows never named.
-pub(in crate::system) fn witness_immersive_children() -> Result<Vec<isize>, AdapterError> {
-    let narrow = crate::system::window::listing_retry::narrow_to_permitted_codes;
-    let client = crate::tree::automation::automation_client().map_err(narrow)?;
-    let children = desktop_root_children(&client)?;
-    let mut handles = Vec::new();
-    for child in children {
-        if let Some((handle, _pid, _image)) = shell_host_child(
-            &child,
-            super::shell_surface_kinds::CORE_WINDOW_CLASS,
-            SHELL_DIAGNOSTIC_HOST_IMAGES,
-            false,
-        ) {
-            handles.push(handle);
+pub(in crate::system) fn resolve_with_witness(
+    expected_class: &'static str,
+    host_images: &'static [&'static str],
+    landmarks: &'static [&'static str],
+    deadline: Deadline,
+) -> Result<(Option<WindowInfo>, Vec<isize>), AdapterError> {
+    super::bounded_read::read(deadline, move || {
+        let narrow = crate::system::window::listing_retry::narrow_to_permitted_codes;
+        let client = crate::tree::automation::automation_client().map_err(narrow)?;
+        let children = crate::system::window::listing_retry::retry_transient_window_race(
+            deadline,
+            AdapterError::is_transient_incomplete_read,
+            || desktop_root_children(&client),
+        )?;
+        let mut handles = Vec::new();
+        let mut observed = None;
+        for child in children {
+            deadline.ensure_remaining()?;
+            if observed.is_none() {
+                observed =
+                    immersive_candidate(&client, &child, expected_class, host_images, landmarks)?;
+            }
+            if let Some((handle, _, _)) = shell_host_child(
+                &child,
+                super::shell_surface_kinds::CORE_WINDOW_CLASS,
+                SHELL_DIAGNOSTIC_HOST_IMAGES,
+                false,
+            ) {
+                handles.push(handle);
+            }
         }
-    }
-    Ok(handles)
+        Ok((observed, handles))
+    })
 }
 
 /// The shell host images the corpus measured presenting CoreWindow surfaces,

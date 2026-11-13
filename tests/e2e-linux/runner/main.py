@@ -16,9 +16,9 @@ sys.path.insert(0, str(HARNESS_ROOT))
 
 TIER_CHOICES = ("x11-openbox", "x11-mutter", "wayland")
 TIER_DEADLINE_S = 90.0
-LEASE_FD_ENV = "AGENT_DESKTOP_INTERACTION_LEASE_FD"
-SUITE_ENV = "AGENT_DESKTOP_E2E_SUITE"
-LOCK_ROOT_ENV = "AGENT_DESKTOP_E2E_LOCK_ROOT"
+LEASE_FD_ENV = "ACDESKTOP_INTERACTION_LEASE_FD"
+SUITE_ENV = "ACDESKTOP_E2E_SUITE"
+LOCK_ROOT_ENV = "ACDESKTOP_E2E_LOCK_ROOT"
 
 _LEASE_FD: int | None = None
 
@@ -65,7 +65,7 @@ def _sigterm(_signum, _frame):
 
 
 def _write_lying_binary(suite_dir: Path) -> Path:
-    path = Path(suite_dir) / "bin" / "agent-desktop"
+    path = Path(suite_dir) / "bin" / "acdesktop"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text('#!/bin/sh\nprintf \'{"ok":true,"data":{"headless":true}}\\n\'\n')
     path.chmod(0o500)
@@ -214,7 +214,7 @@ def _run_tier(tier_name: str, legs_for_tier, impls, suite_dir: Path, verify_bina
                     verify_binary
                     and impl is not None
                     and not stage.verify_staged(
-                        Path(os.environ["AGENT_DESKTOP_E2E_BIN"]), suite_dir
+                        Path(os.environ["ACDESKTOP_E2E_BIN"]), suite_dir
                     )
                 ):
                     outcomes.append(
@@ -294,21 +294,21 @@ def main(argv: list[str]) -> int:
         binary = _write_lying_binary(suite_dir)
     else:
         source = Path(
-            env.get("AGENT_DESKTOP_E2E_BIN_SRC")
-            or env.get("AGENT_DESKTOP_E2E_BIN")
-            or session.HARNESS_ROOT.parent.parent / "target" / "release" / "agent-desktop"
+            env.get("ACDESKTOP_E2E_BIN_SRC")
+            or env.get("ACDESKTOP_E2E_BIN")
+            or session.HARNESS_ROOT.parent.parent / "target" / "release" / "acdesktop"
         )
         try:
             binary = stage.stage_binary(source, suite_dir)
         except (OSError, RuntimeError, stage.StagedBinaryModified) as error:
             print(f"gate: {error}", file=sys.stderr)
             return report.exit_code(0, True)
-    os.environ["AGENT_DESKTOP_E2E_BIN"] = str(binary)
+    os.environ["ACDESKTOP_E2E_BIN"] = str(binary)
 
     session_base = Path(
-        env.get("AGENT_DESKTOP_SESSION_BASE")
-        or (Path(env["XDG_RUNTIME_DIR"]) / "agent-desktop-sessions"
-            if env.get("XDG_RUNTIME_DIR") else Path(f"/tmp/agent-desktop-sessions-{os.getuid()}"))
+        env.get("ACDESKTOP_SESSION_BASE")
+        or (Path(env["XDG_RUNTIME_DIR"]) / "acdesktop-sessions"
+            if env.get("XDG_RUNTIME_DIR") else Path(f"/tmp/acdesktop-sessions-{os.getuid()}"))
     )
     session.sweep_strays(session_base)
 

@@ -4,7 +4,7 @@ navTitle: Headed mode
 description: What headless ref actions do by default, what the --headed flag permits, which commands need it, and how to handle POLICY_DENIED without switching modes by reflex.
 ---
 
-agent-desktop runs ref actions headless by default. The global `--headed` flag is a permission to use physical input: take focus, move the real cursor, and synthesize keys and pointer events.
+acdesktop runs ref actions headless by default. The global `--headed` flag is a permission to use physical input: take focus, move the real cursor, and synthesize keys and pointer events.
 
 ## What headless actions do
 
@@ -23,7 +23,7 @@ A result shows which mechanism ran: in `data.steps`, `semantic_api` is an access
 - It does not lift other guards. A blocked key combo still needs `--force`, and a platform that cannot deliver physical input, such as pointer input on Wayland, still refuses.
 
 ```bash
-agent-desktop --headed double-click @s8f3k2p9:e3    # a physical gesture
+acdesktop --headed double-click @s8f3k2p9:e3    # a physical gesture
 ```
 
 Physical input gets no confirmation from the OS, so a physical result is usually `delivered_unverified`. Confirm the effect with a read, as in [the observe, act, verify loop](/desktop/guides/observe-act-verify).

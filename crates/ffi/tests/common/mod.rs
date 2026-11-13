@@ -39,10 +39,8 @@ impl IsolatedHome {
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner());
         let id = HOME_ID.fetch_add(1, Ordering::Relaxed);
-        let path = std::env::temp_dir().join(format!(
-            "acdesktop-ffi-test-{}-{id}",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("acdesktop-ffi-test-{}-{id}", std::process::id()));
         std::fs::create_dir_all(&path).expect("create isolated FFI test HOME");
         let previous = std::env::var_os("HOME");
         let previous_state_root = std::env::var_os("ACDESKTOP_HOME");

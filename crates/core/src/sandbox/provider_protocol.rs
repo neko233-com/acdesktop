@@ -101,9 +101,7 @@ fn missing_status(provider: &str, output: &ProviderScriptOutput) -> AdapterError
     with_stderr(
         AdapterError::new(
             ErrorCode::ActionFailed,
-            format!(
-                "The {provider} provider stopped before acdesktop could read its exit status."
-            ),
+            format!("The {provider} provider stopped before acdesktop could read its exit status."),
         )
         .with_suggestion(LIST_SUGGESTION)
         .with_disposition(DeliverySemantics::unknown()),
@@ -133,9 +131,7 @@ pub(crate) fn next_step(name: Option<&str>) -> String {
         Some(name) => {
             format!("Run `acdesktop sandbox status {name}` to see its current state.")
         }
-        None => {
-            "Run `acdesktop sandbox install` to see each provider's current state.".to_string()
-        }
+        None => "Run `acdesktop sandbox install` to see each provider's current state.".to_string(),
     }
 }
 

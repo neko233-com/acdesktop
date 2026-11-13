@@ -13,7 +13,7 @@ Concepts behind the flags are explained in [Skeleton and drill-down](/desktop/sk
 Captures an application's accessibility tree as JSON. Window-owned surfaces are read from a window; on macOS, `menu` and `menubar` are application-owned and need no document window. Interactive elements get qualified refs that later commands accept.
 
 ```bash
-agent-desktop snapshot [--app NAME] [--window-id ID] [-i] [--compact] [--skeleton] \
+acdesktop snapshot [--app NAME] [--window-id ID] [-i] [--compact] [--skeleton] \
                        [--root REF] [--surface KIND] [--max-depth N] [--include-bounds] \
                        [--timeout-ms MS] [--force-electron-a11y]
 ```
@@ -47,7 +47,7 @@ Platform limits: supported surfaces and Chromium settle time differ by OS. See [
 Searches by role, name, value, text, description, native id, or state, and returns refs you can act on. Use it when you know the target.
 
 ```bash
-agent-desktop find [--app NAME] [--window-id ID] [--role ROLE] [--name TEXT] [--value TEXT] \
+acdesktop find [--app NAME] [--window-id ID] [--role ROLE] [--name TEXT] [--value TEXT] \
                    [--text TEXT] [--description TEXT] [--native-id ID] [--exact] \
                    [--state TOKEN[=BOOL]]... [--root REF] [--surface KIND] [--timeout-ms MS] \
                    [--count | --first | --last | --nth N | --limit N]
@@ -79,7 +79,7 @@ agent-desktop find [--app NAME] [--window-id ID] [--role ROLE] [--name TEXT] [--
 `--count`, `--first`, `--last`, `--nth`, and `--limit` are mutually exclusive. The result shapes and match fields are in [JSON output](/desktop/json-output#find-results).
 
 ```bash
-agent-desktop find --app gnome-calculator --role button --name 7 --exact --first
+acdesktop find --app gnome-calculator --role button --name 7 --exact --first
 ```
 
 ```json
@@ -109,7 +109,7 @@ When a `--role` filter matches nothing, `roles_present` lists the roles in the s
 Reads one property of a ref.
 
 ```bash
-agent-desktop get <REF> [--property text|value|title|bounds|role|states]
+acdesktop get <REF> [--property text|value|title|bounds|role|states]
 ```
 
 <table>
@@ -140,7 +140,7 @@ Errors specific to `get`: `INVALID_ARGS` for a bare ref or an unknown property, 
 Checks one boolean state of a ref.
 
 ```bash
-agent-desktop is <REF> [--property visible|enabled|checked|focused|expanded|selected]
+acdesktop is <REF> [--property visible|enabled|checked|focused|expanded|selected]
 ```
 
 <table>
@@ -154,7 +154,7 @@ agent-desktop is <REF> [--property visible|enabled|checked|focused|expanded|sele
 </table>
 
 ```bash
-agent-desktop is @s30sxlstqzdq8x:e45 --property enabled
+acdesktop is @s30sxlstqzdq8x:e45 --property enabled
 ```
 
 ```json
@@ -173,7 +173,7 @@ agent-desktop is @s30sxlstqzdq8x:e45 --property enabled
 Captures an app window or a display as a PNG. A screenshot is evidence for you, not proof that an action worked.
 
 ```bash
-agent-desktop screenshot [PATH] [--app NAME] [--window-id ID] [--screen N]
+acdesktop screenshot [PATH] [--app NAME] [--window-id ID] [--screen N]
 ```
 
 <table>
@@ -189,7 +189,7 @@ agent-desktop screenshot [PATH] [--app NAME] [--window-id ID] [--screen N]
 </table>
 
 ```bash
-agent-desktop screenshot --screen 0 screen.png
+acdesktop screenshot --screen 0 screen.png
 ```
 
 ```json
@@ -210,7 +210,7 @@ Platform limits: macOS needs Screen Recording permission, and Wayland asks for p
 Lists connected displays, primary first. It takes no flags.
 
 ```bash
-agent-desktop list-displays
+acdesktop list-displays
 ```
 
 ```json
@@ -231,7 +231,7 @@ Use the array index, not `id`, with `screenshot --screen`.
 Lists the overlays an app presents now: the values `snapshot --surface` and `find --surface` accept for it.
 
 ```bash
-agent-desktop list-surfaces [--app NAME]
+acdesktop list-surfaces [--app NAME]
 ```
 
 <table>
@@ -250,7 +250,7 @@ agent-desktop list-surfaces [--app NAME]
 Raises an OS shell surface, such as the Start menu or Action Center, and returns the window it presents. A surface that is already present returns without being raised again.
 
 ```bash
-agent-desktop --headed open-system-surface --surface KIND
+acdesktop --headed open-system-surface --surface KIND
 ```
 
 <table>
@@ -259,6 +259,7 @@ agent-desktop --headed open-system-surface --surface KIND
   </thead>
   <tbody>
     <tr><td><code>--surface KIND</code></td><td>required</td><td>The shell surface: <code>start-menu</code>, <code>taskbar</code>, <code>system-tray</code>, <code>system-tray-overflow</code>, <code>action-center</code>, <code>dock</code>, or <code>menu-bar-extras</code>. <code>dock</code> and <code>menu-bar-extras</code> are the macOS kinds.</td></tr>
+    <tr><td><code>--timeout-ms MS</code></td><td>5000</td><td>Maximum time for the interaction lease and surface observation.</td></tr>
   </tbody>
 </table>
 

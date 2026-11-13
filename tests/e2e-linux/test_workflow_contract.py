@@ -18,7 +18,7 @@ class WorkflowTests(unittest.TestCase):
         ci = (REPO / ".github" / "workflows" / "ci.yml").read_text()
         discover = [line for line in ci.splitlines() if "discover -s tests/e2e-linux" in line]
         self.assertEqual(len(discover), 1, discover)
-        self.assertIn("AGENT_DESKTOP_E2E_SKIP_LIVE=1", discover[0])
+        self.assertIn("ACDESKTOP_E2E_SKIP_LIVE=1", discover[0])
 
 
 

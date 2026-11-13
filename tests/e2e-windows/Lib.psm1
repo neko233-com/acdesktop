@@ -32,7 +32,7 @@ function Get-TargetBinary {
     param()
     if (-not $script:TargetExe) {
         $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-        $default = Join-Path $repoRoot 'target\release\agent-desktop.exe'
+        $default = Join-Path $repoRoot 'target\release\acdesktop.exe'
         $script:TargetExe = [pscustomobject]@{ FilePath = $default; PrefixArgs = @() }
     }
     return $script:TargetExe
@@ -76,7 +76,7 @@ function Find-Target {
 
     $deadline = [System.Diagnostics.Stopwatch]::StartNew()
     do {
-        $envelope = Invoke-AgentDesktop -Arguments $findArgs
+        try { $envelope = Invoke-AgentDesktop -Arguments $findArgs -TimeoutSeconds $TimeoutSeconds } catch { continue }
         if ($envelope['ok'] -eq $true) {
             $match = $envelope['data']['match']
             $snapshotId = $envelope['data']['snapshot_id']
@@ -109,7 +109,7 @@ function Find-TargetMatches {
 
     $deadline = [System.Diagnostics.Stopwatch]::StartNew()
     do {
-        $envelope = Invoke-AgentDesktop -Arguments $findArgs
+        try { $envelope = Invoke-AgentDesktop -Arguments $findArgs -TimeoutSeconds $TimeoutSeconds } catch { continue }
         if ($envelope['ok'] -eq $true) {
             $matchList = $envelope['data']['matches']
             $snapshotId = $envelope['data']['snapshot_id']

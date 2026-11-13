@@ -27,7 +27,7 @@ def verify(lib, empty_path, reader=read_foreign_text):
         function = getattr(lib, name)
         function.restype, function.argtypes = result, args
     original_path = os.environ.get("PATH")
-    payload = b"agent-desktop-library-adjacent-owner"
+    payload = b"acdesktop-library-adjacent-owner"
     adapter = None
     written = False
     try:
@@ -67,7 +67,7 @@ def verify(lib, empty_path, reader=read_foreign_text):
 
 
 def verify_cli(entry, empty_path, reader=read_foreign_text, run=subprocess.run):
-    payload = "agent-desktop-installed-owner"
+    payload = "acdesktop-installed-owner"
     env = dict(os.environ, PATH=empty_path)
     def command(*args):
         result = run([entry, *args], env=env, capture_output=True,

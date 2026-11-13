@@ -90,17 +90,17 @@ class HarnessContractTests(unittest.TestCase):
     def test_native_runner_builds_locked_canonical_artifacts_before_desktop_lock(self):
         source = (E2E_ROOT / "run.sh").read_text()
 
-        cli_build = source.index("cargo build --locked --release -p agent-desktop")
+        cli_build = source.index("cargo build --locked --release -p acdesktop")
         ffi_build = source.index("cargo build --locked --profile release-ffi")
         desktop_lock = source.index('exec python3 "$here/interaction_lock.py"')
         self.assertLess(cli_build, desktop_lock)
         self.assertLess(ffi_build, desktop_lock)
         self.assertIn(
-            'AGENT_DESKTOP_E2E_RELEASE_BIN="$repo/target/release/agent-desktop"',
+            'ACDESKTOP_E2E_RELEASE_BIN="$repo/target/release/acdesktop"',
             source,
         )
         self.assertIn(
-            'AGENT_DESKTOP_E2E_RELEASE_FFI="$repo/target/release-ffi/libagent_desktop_ffi.dylib"',
+            'ACDESKTOP_E2E_RELEASE_FFI="$repo/target/release-ffi/libacdesktop_ffi.dylib"',
             source,
         )
 
@@ -114,7 +114,7 @@ class HarnessContractTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             log = Path(directory) / "calls"
-            mock_bin = Path(directory) / "agent-desktop"
+            mock_bin = Path(directory) / "acdesktop"
             mock_bin.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "$MOCK_CALLS"\n')
             mock_bin.chmod(0o700)
             script = r'''
@@ -277,7 +277,7 @@ class ErrorContractLegTests(unittest.TestCase):
 
     def run_helpers(self, body: str):
         with tempfile.TemporaryDirectory() as directory:
-            mock_bin = Path(directory) / "agent-desktop"
+            mock_bin = Path(directory) / "acdesktop"
             mock_bin.write_text(
                 "#!/bin/sh\n"
                 'printf \'%s\' \'{"ok":false,"error":{"code":"INVALID_ARGS",'

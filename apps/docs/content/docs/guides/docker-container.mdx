@@ -1,10 +1,10 @@
 ---
-title: Run agent-desktop in a Docker container
+title: Run acdesktop in a Docker container
 navTitle: Docker container
-description: Build an image from the released Linux binary, start a headless Linux desktop inside a container you manage, and run agent-desktop commands against it.
+description: Build an image from the released Linux binary, start a headless Linux desktop inside a container you manage, and run acdesktop commands against it.
 ---
 
-A container gives agent-desktop its own Linux desktop, so your commands act on apps inside the container instead of the desktop you are using. This guide builds that image from the released Linux binary and drives a text editor inside it. You run the container with Docker; the `sandbox` commands do not manage it, because the shipped provider is the [macOS VM](/desktop/sandboxes/macos).
+A container gives acdesktop its own Linux desktop, so your commands act on apps inside the container instead of the desktop you are using. This guide builds that image from the released Linux binary and drives a text editor inside it. You run the container with Docker; the `sandbox` commands do not manage it, because the shipped provider is the [macOS VM](/desktop/sandboxes/macos).
 
 ## Requirements
 
@@ -16,13 +16,13 @@ A container gives agent-desktop its own Linux desktop, so your commands act on a
 Run these commands in the directory that becomes the build context. The archive must match the architecture of the Docker daemon: `uname -m` gives the host's, and `docker info --format '{{.Architecture}}'` confirms what the daemon runs. Docker Desktop on Apple Silicon reports `aarch64`.
 
 ```bash
-VERSION=1.0.2                                              # the agent-desktop release to run
+VERSION=1.3.0                                              # the acdesktop release to run
 case $(uname -m) in                                        # arm64 on macOS, aarch64 on Linux
   arm64 | aarch64) ARCH=aarch64 ;;
   *) ARCH=x86_64 ;;
 esac
-RELEASE="https://github.com/<owner>/agent-desktop/releases/download/v$VERSION"
-TARBALL="agent-desktop-v$VERSION-$ARCH-unknown-linux-gnu.tar.gz"
+RELEASE="https://github.com/neko233-com/acdesktop/releases/download/v$VERSION"
+TARBALL="acdesktop-v$VERSION-$ARCH-unknown-linux-gnu.tar.gz"
 
 curl -fsSLO "$RELEASE/$TARBALL"
 curl -fsSLO "$RELEASE/checksums.txt"
@@ -30,17 +30,17 @@ grep " $TARBALL\$" checksums.txt | shasum -a 256 -c -      # sha256sum -c - wher
 tar -xzf "$TARBALL"
 ```
 
-The checksum line confirms the download, and the archive adds `agent-desktop` and `agent-desktop-linux-clipboard-owner` to the directory. The binary looks for the clipboard helper beside itself.
+The checksum line confirms the download, and the archive adds `acdesktop` and `acdesktop-linux-clipboard-owner` to the directory. The binary looks for the clipboard helper beside itself.
 
 ```text
-agent-desktop-v1.0.2-aarch64-unknown-linux-gnu.tar.gz: OK
+acdesktop-v1.3.0-aarch64-unknown-linux-gnu.tar.gz: OK
 ```
 
 ## 2. Write the wrapper and the Dockerfile
 
-The wrapper is not optional. A container has no logged-in desktop: no X server, no D-Bus session bus, and no accessibility bus. `agent-desktop` on its own has nothing to talk to; it fails with `PERM_DENIED` and tells you `No D-Bus session bus is reachable`. The wrapper starts the desktop on the first command and runs every desktop command inside that session.
+The wrapper is not optional. A container has no logged-in desktop: no X server, no D-Bus session bus, and no accessibility bus. `acdesktop` on its own has nothing to talk to; it fails with `PERM_DENIED` and tells you `No D-Bus session bus is reachable`. The wrapper starts the desktop on the first command and runs every desktop command inside that session.
 
-Put both files in the same directory as the two binaries, and name the second one `agent-desktop-run`.
+Put both files in the same directory as the two binaries, and name the second one `acdesktop-run`.
 
 ```dockerfile
 FROM debian:bookworm-slim
@@ -54,8 +54,8 @@ RUN useradd --create-home --shell /bin/bash agent \
  && mkdir -p /tmp/.X11-unix \
  && chmod 1777 /tmp/.X11-unix
 
-COPY agent-desktop agent-desktop-linux-clipboard-owner agent-desktop-run /usr/local/bin/
-RUN chmod 0755 /usr/local/bin/agent-desktop-run
+COPY acdesktop acdesktop-linux-clipboard-owner acdesktop-run /usr/local/bin/
+RUN chmod 0755 /usr/local/bin/acdesktop-run
 
 USER agent
 CMD ["sleep", "infinity"]
@@ -65,7 +65,7 @@ CMD ["sleep", "infinity"]
 #!/bin/sh
 set -eu
 
-state_dir="${AGENT_DESKTOP_SESSION_DIR:-$HOME/.agent-desktop-session}"
+state_dir="${ACDESKTOP_SESSION_DIR:-$HOME/.acdesktop-session}"
 env_file="$state_dir/env"
 lock_dir="$state_dir/starting"
 
@@ -97,7 +97,7 @@ start_desktop() {
     i=0
     until xdpyinfo >/dev/null 2>&1; do
       i=$((i + 1))
-      [ "$i" -le 50 ] || { echo "agent-desktop-run: Xvfb did not start" >&2; exit 1; }
+      [ "$i" -le 50 ] || { echo "acdesktop-run: Xvfb did not start" >&2; exit 1; }
       sleep 0.2
     done
     openbox >/dev/null 2>&1 &
@@ -121,7 +121,7 @@ if ! desktop_ready; then
     until desktop_ready; do
       i=$((i + 1))
       [ "$i" -le 150 ] || {
-        echo "agent-desktop-run: the desktop session did not start; remove $lock_dir and run again" >&2
+        echo "acdesktop-run: the desktop session did not start; remove $lock_dir and run again" >&2
         exit 1
       }
       sleep 0.2
@@ -130,25 +130,25 @@ if ! desktop_ready; then
 fi
 
 . "$env_file"
-exec agent-desktop "$@"
+exec acdesktop "$@"
 ```
 
-The image installs Xvfb, openbox, D-Bus, `x11-utils` for `xdpyinfo`, and `at-spi2-core`, which provides the accessibility bus agent-desktop reads. On the first command, `agent-desktop-run` starts a 1280x800 display on `:99`, a session bus, and the window manager, then records both addresses in `~/.agent-desktop-session/env`. Later commands reuse them. When the container restarts or the session dies, the next command starts a fresh one. Plain `agent-desktop` never does any of this, so every command that reads or acts on the desktop must go through `agent-desktop-run`.
+The image installs Xvfb, openbox, D-Bus, `x11-utils` for `xdpyinfo`, and `at-spi2-core`, which provides the accessibility bus acdesktop reads. On the first command, `acdesktop-run` starts a 1280x800 display on `:99`, a session bus, and the window manager, then records both addresses in `~/.acdesktop-session/env`. Later commands reuse them. When the container restarts or the session dies, the next command starts a fresh one. Plain `acdesktop` never does any of this, so every command that reads or acts on the desktop must go through `acdesktop-run`.
 
 ## 3. Build and start the container
 
 ```bash
-docker build -t agent-desktop-container:1.0.2 .
-docker run -d --name agent-desktop-container agent-desktop-container:1.0.2
+docker build -t acdesktop-container:1.3.0 .
+docker run -d --name acdesktop-container acdesktop-container:1.3.0
 ```
 
-## 4. Run agent-desktop inside the container
+## 4. Run acdesktop inside the container
 
 There is no separate startup step and no environment sourcing. The first command starts the desktop, and every later command reuses it.
 
 ```bash
-docker exec agent-desktop-container agent-desktop-run launch mousepad
-docker exec agent-desktop-container agent-desktop-run snapshot --app mousepad -i
+docker exec acdesktop-container acdesktop-run launch mousepad
+docker exec acdesktop-container acdesktop-run snapshot --app mousepad -i
 ```
 
 `snapshot` answers with the accessibility tree it read:
@@ -180,15 +180,15 @@ The tree and the window are trimmed here. `ref_count` counts every element that 
 ## 5. Remove the container
 
 ```bash
-docker rm -f agent-desktop-container
-docker image rm agent-desktop-container:1.0.2
+docker rm -f acdesktop-container
+docker image rm acdesktop-container:1.3.0
 ```
 
 ## Limits
 
 - The desktop is headless: 1280x800 on display `:99`, and nothing appears on your screen.
-- The image runs as the user `agent`, and everything agent-desktop stores lives in that user's `~/.agent-desktop`. Removing the container removes that state.
-- The desktop session's addresses live in `~/.agent-desktop-session` inside the container. A command run as plain `agent-desktop` has no session and fails; use `agent-desktop-run`.
+- The image runs as the user `agent`, and everything acdesktop stores lives in that user's `~/.acdesktop`. Removing the container removes that state.
+- The desktop session's addresses live in `~/.acdesktop-session` inside the container. A command run as plain `acdesktop` has no session and fails; use `acdesktop-run`.
 - The binary must match the container's architecture. Build on the machine that runs the container, or pass `--platform` to `docker run` and download the matching archive.
 - `sandbox` commands are not available in the container, because the `macos` provider needs macOS. Use the container's desktop directly, as above.
 - Running the container on a remote host is a manual setup today. A remote option is coming.

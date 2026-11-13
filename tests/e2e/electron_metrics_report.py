@@ -160,7 +160,7 @@ def paired_summary(pairs):
 def build_report(args, runs, pairs, state_reference):
     baseline = "baseline" in runs
     report = {
-        "schema": "agent-desktop-electron-live-v3",
+        "schema": "acdesktop-electron-live-v3",
         "ok": True,
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "app": args.app,

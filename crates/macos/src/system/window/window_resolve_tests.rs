@@ -207,10 +207,7 @@ fn verify_skips_title_when_request_title_empty() {
 fn a_window_without_an_accessibility_element_is_not_reported_as_missing() {
     let error = super::window_not_accessible("w-82");
 
-    assert_eq!(
-        error.code,
-        acdesktop_core::ErrorCode::ActionNotSupported
-    );
+    assert_eq!(error.code, acdesktop_core::ErrorCode::ActionNotSupported);
     assert!(error.message.contains("exists"));
     assert_ne!(error.code, acdesktop_core::ErrorCode::WindowNotFound);
 }

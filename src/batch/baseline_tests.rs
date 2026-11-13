@@ -92,6 +92,8 @@ fn action_then_event_wait_uses_a_pre_action_baseline() {
         ])
         .to_string(),
         stop_on_error: true,
+        parallel: false,
+        max_workers: 1,
         timeout_ms: 60_000,
     };
     let adapter = AtomicEventAdapter {
@@ -123,6 +125,8 @@ fn wait_as_first_entry_runs_with_event_baseline_none() {
         ])
         .to_string(),
         stop_on_error: false,
+        parallel: false,
+        max_workers: 1,
         timeout_ms: 60_000,
     };
     let adapter = AtomicEventAdapter {

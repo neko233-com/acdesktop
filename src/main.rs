@@ -4,11 +4,9 @@ mod batch;
 mod cli;
 mod cli_args;
 mod command_policy;
-mod config;
 mod diagnostic;
 mod dispatch;
 mod mcp;
-mod updater;
 mod visual_debug;
 
 /// Shared blanket-default `PlatformAdapter` test double, sourced once from
@@ -29,6 +27,11 @@ use clap::{CommandFactory, FromArgMatches};
 use cli::{Cli, Commands};
 use cli_args::sandbox::SandboxActionCli;
 use cli_args::skills::SkillsAction;
+use dispatch::{
+    adapter_factory::build_adapter,
+    updater,
+    user_config::{handle_config, handle_update},
+};
 use std::io::{BufWriter, Write};
 use std::process::ExitCode;
 
@@ -79,9 +82,8 @@ fn run_permission_prompt_helper() -> Option<ExitCode> {
 
 fn run() -> ExitCode {
     #[cfg(target_os = "windows")]
-    let _ = acdesktop_core::install_private_file_ops(Box::new(
-        acdesktop_windows::WindowsPrivateFile,
-    ));
+    let _ =
+        acdesktop_core::install_private_file_ops(Box::new(acdesktop_windows::WindowsPrivateFile));
 
     let matches = match root_command().try_get_matches() {
         Ok(matches) => matches,
@@ -97,7 +99,6 @@ fn run() -> ExitCode {
 
     init_tracing(cli.visual_debug.verbose);
 
-    // 极快模式：跳过所有 post_action_wait（--wait-for / --wait-for-gone / --wait-timeout）
     if cli.fast_mode() {
         cli.post_action_wait.wait_for = None;
         cli.post_action_wait.wait_for_gone = None;
@@ -116,15 +117,17 @@ fn run() -> ExitCode {
 
     let cmd_name = cmd.name();
 
-    // ---------- 不需要 PlatformAdapter / stdin 的命令，提前处理 ----------
     match &cmd {
         Commands::Update(args) => return finish(cmd_name, handle_update(args)),
         Commands::Config(args) => return finish(cmd_name, handle_config(args)),
         _ => {}
     }
-    // 每次调用时静默跑一次自动更新检查（可通过 config / env 关闭）
-    updater::maybe_silent_check()
-        .map(|n| eprintln!("acdesktop: 有新版本 {} → 当前 {}，运行 `acdesktop update apply` 升级", n.latest, n.current));
+    if let Some(n) = updater::maybe_silent_check() {
+        eprintln!(
+            "acdesktop: 有新版本 {} → 当前 {}，运行 `acdesktop update apply` 升级",
+            n.latest, n.current
+        );
+    }
 
     if let Commands::Sandbox(args) = &cmd
         && let SandboxActionCli::Exec(exec) = &args.action
@@ -343,86 +346,6 @@ fn pre_dispatch_error(error: AppError) -> AppError {
     }
 }
 
-fn handle_update(args: &cli_args::update::UpdateArgs) -> Result<serde_json::Value, AppError> {
-    use cli_args::update::{AutoAction, UpdateAction};
-    use config::UserConfig;
-    use serde_json::json;
-    match &args.action {
-        UpdateAction::Check => {
-            let r = updater::check_update(false);
-            Ok(serde_json::to_value(&r).map_err(|e| AppError::invalid_input(e.to_string()))?)
-        }
-        UpdateAction::Apply => {
-            let r = updater::apply_update();
-            Ok(serde_json::to_value(&r).map_err(|e| AppError::invalid_input(e.to_string()))?)
-        }
-        UpdateAction::Auto(a) => match a {
-            AutoAction::Status => {
-                let cfg = UserConfig::load();
-                Ok(json!({
-                    "auto_update": cfg.auto_update,
-                    "effective": cfg.auto_update_enabled(),
-                    "last_check": cfg.last_version_check,
-                    "check_interval_secs": cfg.check_interval_secs,
-                }))
-            }
-            AutoAction::On => {
-                let mut cfg = UserConfig::load();
-                cfg.auto_update = true;
-                cfg.save().map_err(|e| AppError::invalid_input(e.to_string()))?;
-                Ok(json!({ "ok": true, "auto_update": true }))
-            }
-            AutoAction::Off => {
-                let mut cfg = UserConfig::load();
-                cfg.auto_update = false;
-                cfg.save().map_err(|e| AppError::invalid_input(e.to_string()))?;
-                Ok(json!({ "ok": true, "auto_update": false }))
-            }
-        },
-    }
-}
-
-fn handle_config(args: &cli_args::config::ConfigArgs) -> Result<serde_json::Value, AppError> {
-    use cli_args::config::ConfigAction;
-    use config::UserConfig;
-    use serde_json::{Value, json};
-    match &args.action {
-        ConfigAction::Show => {
-            let cfg = UserConfig::load();
-            serde_json::to_value(&cfg).map_err(|e| AppError::invalid_input(e.to_string()))
-        }
-        ConfigAction::Path => Ok(json!({ "path": config::config_path().to_string_lossy() })),
-        ConfigAction::Set { key, value } => {
-            let mut cfg = UserConfig::load();
-            let v: Value = serde_json::from_str(value)
-                .unwrap_or_else(|_| Value::String(value.clone()));
-            set_field(&mut cfg, key, v)?;
-            cfg.save().map_err(|e| AppError::invalid_input(e.to_string()))?;
-            serde_json::to_value(&cfg).map_err(|e| AppError::invalid_input(e.to_string()))
-        }
-    }
-}
-
-fn set_field(cfg: &mut config::UserConfig, key: &str, value: serde_json::Value) -> Result<(), AppError> {
-    let err = |msg: &str| AppError::invalid_input(msg.to_string());
-    match key {
-        "auto_update" | "auto-update" => {
-            cfg.auto_update = value.as_bool().ok_or_else(|| err("auto_update 需要布尔值 true/false"))?;
-        }
-        "fast_mode" | "fast-mode" => {
-            cfg.fast_mode = value.as_bool().ok_or_else(|| err("fast_mode 需要布尔值 true/false"))?;
-        }
-        "check_interval_secs" | "check-interval-secs" => {
-            cfg.check_interval_secs = value.as_u64().ok_or_else(|| err("check_interval_secs 需要正整数"))?;
-        }
-        "last_version_check" | "last-version-check" => {
-            cfg.last_version_check = value.as_u64().ok_or_else(|| err("last_version_check 需要正整数"))?;
-        }
-        other => return Err(err(&format!("未知配置字段: {other}（支持 auto_update / fast_mode / check_interval_secs / last_version_check）"))),
-    }
-    Ok(())
-}
-
 fn finish(cmd_name: &str, result: Result<serde_json::Value, AppError>) -> ExitCode {
     let response = response(cmd_name, result);
     if let Err(write_err) = emit_response(&response) {
@@ -453,27 +376,6 @@ fn emit_response(response: &impl serde::Serialize) -> std::io::Result<()> {
     serde_json::to_writer(&mut writer, response).map_err(std::io::Error::other)?;
     writer.write_all(b"\n")?;
     writer.flush()
-}
-
-fn build_adapter() -> impl acdesktop_core::PlatformAdapter {
-    #[cfg(target_os = "macos")]
-    {
-        acdesktop_macos::MacOSAdapter::new()
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        acdesktop_windows::WindowsAdapter::new()
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        acdesktop_linux::release_input_on_signals();
-        acdesktop_linux::LinuxAdapter::new()
-    }
-
-    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-    compile_error!("Unsupported platform")
 }
 
 fn init_tracing(verbose: bool) {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-commit hook for agent-desktop.
+# Pre-commit hook for acdesktop.
 # Mirrors the CI quality gates so a failing commit never reaches origin.
 #
 # Setup (once per clone):
@@ -70,29 +70,29 @@ fi
 HOST_KERNEL="$(uname -s)"
 case "$HOST_KERNEL" in
     Darwin*)
-        HOST_PACKAGES=(-p agent-desktop-core -p agent-desktop-macos -p agent-desktop -p agent-desktop-ffi)
+        HOST_PACKAGES=(-p acdesktop-core -p acdesktop-macos -p acdesktop -p acdesktop-ffi)
         ;;
     MINGW* | MSYS* | CYGWIN* | Windows_NT)
-        HOST_PACKAGES=(-p agent-desktop-core -p agent-desktop-windows -p agent-desktop -p agent-desktop-ffi)
+        HOST_PACKAGES=(-p acdesktop-core -p acdesktop-windows -p acdesktop -p acdesktop-ffi)
         ;;
     Linux*)
-        HOST_PACKAGES=(-p agent-desktop-core -p agent-desktop-linux -p agent-desktop -p agent-desktop-ffi)
+        HOST_PACKAGES=(-p acdesktop-core -p acdesktop-linux -p acdesktop -p acdesktop-ffi)
         ;;
     *)
-        HOST_PACKAGES=(-p agent-desktop-core -p agent-desktop -p agent-desktop-ffi)
+        HOST_PACKAGES=(-p acdesktop-core -p acdesktop -p acdesktop-ffi)
         printf 'pre-commit: unrecognised host "%s", scoping cargo to the platform-neutral crates\n' "$HOST_KERNEL"
         ;;
 esac
 
 case "$HOST_KERNEL" in
     Darwin*)
-        UNBUILDABLE_HERE=(agent-desktop-windows agent-desktop-linux)
+        UNBUILDABLE_HERE=(acdesktop-windows acdesktop-linux)
         ;;
     MINGW* | MSYS* | CYGWIN* | Windows_NT)
-        UNBUILDABLE_HERE=(agent-desktop-macos)
+        UNBUILDABLE_HERE=(acdesktop-macos)
         ;;
     *)
-        UNBUILDABLE_HERE=(agent-desktop-macos agent-desktop-windows)
+        UNBUILDABLE_HERE=(acdesktop-macos acdesktop-windows)
         ;;
 esac
 for unbuildable in "${UNBUILDABLE_HERE[@]}"; do
@@ -132,7 +132,7 @@ run "cargo test --lib" \
 # FFI-specific gates are skipped when no FFI files are staged. Runtime panic
 # and Python smoke proofs remain CI-only to keep commits fast.
 if [ "$HAS_FFI_CHANGES" -eq 1 ]; then
-    run "FFI stub passthrough" cargo test --locked -p agent-desktop-ffi --features stub-adapter --test c_abi_passthrough
+    run "FFI stub passthrough" cargo test --locked -p acdesktop-ffi --features stub-adapter --test c_abi_passthrough
 
     export PATH="${HOME}/.cargo/bin:${PATH}"
     _cbindgen_cmd=""
@@ -144,7 +144,7 @@ if [ "$HAS_FFI_CHANGES" -eq 1 ]; then
         if [[ "${_cbindgen_ver}" == "cbindgen 0.29.4" ]]; then
             run "FFI header drift (cbindgen --verify)" \
                 "${_cbindgen_cmd}" crates/ffi --config crates/ffi/cbindgen.toml \
-                --output crates/ffi/include/agent_desktop.h --verify
+                --output crates/ffi/include/acdesktop.h --verify
         else
             printf 'pre-commit: cbindgen version mismatch (want 0.29.4, got: %s) — skipping header drift check (CI gate)\n' "${_cbindgen_ver}"
         fi

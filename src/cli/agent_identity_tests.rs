@@ -29,13 +29,6 @@ fn identity_is_global_including_cursor_configuration() {
     }
     assert!(Cli::try_parse_from(["acdesktop", "session", "start", "--multi-agent"]).is_err());
     assert!(
-        Cli::try_parse_from([
-            "acdesktop",
-            "session",
-            "start",
-            "--cursor",
-            "--multi-agent"
-        ])
-        .is_ok()
+        Cli::try_parse_from(["acdesktop", "session", "start", "--cursor", "--multi-agent"]).is_ok()
     );
 }

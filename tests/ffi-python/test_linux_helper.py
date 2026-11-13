@@ -65,7 +65,7 @@ class HelperDiscoveryTests(unittest.TestCase):
     def test_a_selection_surviving_clear_fails(self):
         lib = self.library()
         with self.assertRaisesRegex(AssertionError, "cleared selection"):
-            verify(lib, "/empty-path", lambda: "agent-desktop-library-adjacent-owner")
+            verify(lib, "/empty-path", lambda: "acdesktop-library-adjacent-owner")
         self.assertEqual(lib.ad_clear_clipboard.call_count, 2)
 
 
@@ -77,9 +77,9 @@ class InstalledHelperTests(unittest.TestCase):
             calls.append(argv)
             return subprocess.CompletedProcess(argv, 0, '{"ok":true}', "")
         def read():
-            return "agent-desktop-installed-owner" if len(calls) == 1 else None
+            return "acdesktop-installed-owner" if len(calls) == 1 else None
         verify_cli("/entry", "/empty", read, run)
-        self.assertEqual(calls, [["/entry", "clipboard-set", "agent-desktop-installed-owner"],
+        self.assertEqual(calls, [["/entry", "clipboard-set", "acdesktop-installed-owner"],
                                  ["/entry", "clipboard-clear"]])
 
     def test_installed_success_requires_foreign_payload(self):
@@ -100,5 +100,5 @@ class InstalledHelperTests(unittest.TestCase):
     def test_installed_clear_requires_no_foreign_selection(self):
         run = Mock(return_value=subprocess.CompletedProcess([], 0, '{"ok":true}', ""))
         with self.assertRaisesRegex(AssertionError, "clear left"):
-            verify_cli("/entry", "/empty", lambda: "agent-desktop-installed-owner", run)
+            verify_cli("/entry", "/empty", lambda: "acdesktop-installed-owner", run)
         self.assertEqual(run.call_count, 3)

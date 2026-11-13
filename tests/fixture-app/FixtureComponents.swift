@@ -146,7 +146,7 @@ final class DuplicateWindowController {
 // A single view that tracks a mouse-drag gesture end to end (down, dragged,
 // up). Synthetic mouse events route to whoever received the mouse-down, so a
 // drag is observable when source and target are the same view — which is what
-// `agent-desktop drag` can do. Cross-target native drag-and-drop uses the OS
+// `acdesktop drag` can do. Cross-target native drag-and-drop uses the OS
 // dragging-session/pasteboard protocol that synthetic events cannot start.
 struct DragCanvas: NSViewRepresentable {
     @Binding var result: String

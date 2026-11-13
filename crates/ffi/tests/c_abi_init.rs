@@ -16,10 +16,7 @@ fn abi_version_matches_rust_constant() {
 #[test]
 fn ad_init_succeeds_with_current_major() {
     unsafe {
-        assert_eq!(
-            ad_init(acdesktop_ffi::AD_ABI_VERSION_MAJOR),
-            AdResult::Ok
-        );
+        assert_eq!(ad_init(acdesktop_ffi::AD_ABI_VERSION_MAJOR), AdResult::Ok);
     }
 }
 

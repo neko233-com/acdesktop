@@ -9,9 +9,7 @@ pub(crate) fn from_timeout(started: Instant, timeout: Duration) -> Instant {
     started.checked_add(timeout).unwrap_or(started)
 }
 
-pub(crate) fn from_operation(
-    deadline: acdesktop_core::Deadline,
-) -> Result<Instant, AdapterError> {
+pub(crate) fn from_operation(deadline: acdesktop_core::Deadline) -> Result<Instant, AdapterError> {
     let remaining = deadline.remaining();
     if remaining.is_zero() {
         return Err(deadline.timeout_error());

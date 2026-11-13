@@ -155,12 +155,10 @@ fn a_saved_ref_without_an_element_token_is_refused_not_searched_for() {
     tokenless.process.pid = acdesktop_core::ProcessId::try_from(pid).unwrap();
     tokenless.process.process_instance = Some(instance);
 
-    let error = resolve_element_with_deadline(
-        &tokenless,
-        acdesktop_core::Deadline::after(1_000).unwrap(),
-    )
-    .err()
-    .expect("a tokenless ref must be refused");
+    let error =
+        resolve_element_with_deadline(&tokenless, acdesktop_core::Deadline::after(1_000).unwrap())
+            .err()
+            .expect("a tokenless ref must be refused");
 
     assert_eq!(error.code, ErrorCode::ElementNotFound);
     assert_eq!(error.details.unwrap()["kind"], "element_token_required");

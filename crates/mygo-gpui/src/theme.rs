@@ -3,7 +3,7 @@
 
 use gpui::Rgba;
 
-/// 辅助：将 0xRRGGBB 十六进制颜色转为 Rgba (alpha = 1.0)
+/// 辅助：将 0xRRGGBB 十六进制颜色转为不透明 Rgba
 const fn rgba(hex: u32) -> Rgba {
     let r = ((hex >> 16) & 0xff) as f32 / 255.0;
     let g = ((hex >> 8) & 0xff) as f32 / 255.0;
@@ -13,7 +13,12 @@ const fn rgba(hex: u32) -> Rgba {
 
 /// 完全透明
 const fn transparent() -> Rgba {
-    Rgba { r: 0.0, g: 0.0, b: 0.0, a: 0.0 }
+    Rgba {
+        r: 0.0,
+        g: 0.0,
+        b: 0.0,
+        a: 0.0,
+    }
 }
 
 /// 窗口背景 —— 深灰偏蓝黑

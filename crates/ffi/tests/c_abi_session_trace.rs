@@ -1,11 +1,9 @@
 mod common;
 
-use acdesktop_core::session::{
-    SessionTraceMode, StartSessionOptions, start_session, trace_dir,
-};
+use acdesktop_core::session::{SessionTraceMode, StartSessionOptions, start_session, trace_dir};
 use common::{
-    AdResult, ad_adapter_create_with_session, ad_adapter_destroy, ad_check_permissions,
-    ad_free_string, ad_status, with_isolated_home,
+    AdResult, ad_adapter_create, ad_adapter_create_with_session, ad_adapter_destroy,
+    ad_check_permissions, ad_free_string, ad_status, with_isolated_home,
 };
 use std::ffi::CString;
 use std::fs;
@@ -39,6 +37,9 @@ unsafe fn call_status(session_id: &str) {
 #[test]
 fn traced_ffi_commands_reuse_one_process_segment_and_emit_ordered_boundaries() {
     with_isolated_home(|| {
+        let bootstrap = unsafe { ad_adapter_create() };
+        assert!(!bootstrap.is_null());
+        unsafe { ad_adapter_destroy(bootstrap) };
         let manifest = start_session(StartSessionOptions {
             name: None,
             trace: SessionTraceMode::On,

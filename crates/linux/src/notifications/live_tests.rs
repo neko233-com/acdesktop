@@ -103,10 +103,7 @@ fn an_entry_that_has_gone_is_not_found() {
         policy: InteractionPolicy::headed(),
     };
     let error = super::dismiss(&bus, request, &lease()).expect_err("gone");
-    assert_eq!(
-        error.code,
-        acdesktop_core::ErrorCode::NotificationNotFound
-    );
+    assert_eq!(error.code, acdesktop_core::ErrorCode::NotificationNotFound);
 }
 
 fn monitor() -> (std::path::PathBuf, u32) {

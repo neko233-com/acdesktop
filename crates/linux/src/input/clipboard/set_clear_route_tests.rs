@@ -1,6 +1,4 @@
-use acdesktop_core::{
-    ClipboardContent, ClipboardFormat, Deadline, DeliverySemantics, ErrorCode,
-};
+use acdesktop_core::{ClipboardContent, ClipboardFormat, Deadline, DeliverySemantics, ErrorCode};
 
 use super::*;
 use crate::system::display::display_cause::Cause;

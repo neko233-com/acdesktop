@@ -1,10 +1,10 @@
 ---
 title: JSON output
 navTitle: JSON output
-description: The response envelope every agent-desktop command prints, its omission rules, the OperationReport shape, find results, exit codes, and the contract versions from 2.1 to 2.6.
+description: The response envelope every acdesktop command prints, its omission rules, the OperationReport shape, find results, exit codes, and the contract versions from 2.1 to 2.6.
 ---
 
-Every command prints exactly one JSON envelope on a single line of standard output. Only `--help`, `--version`, and a bare `agent-desktop` print text instead. The contract version is `2.6`. Log output goes to standard error, so a parser can read standard output as one JSON value.
+Every command prints exactly one JSON envelope on a single line of standard output. Only `--help`, `--version`, and a bare `acdesktop` print text instead. The contract version is `2.6`. Log output goes to standard error, so a parser can read standard output as one JSON value.
 
 ## Envelope
 
@@ -218,9 +218,9 @@ Each match carries `ref_id`, `role`, `name`, `value`, `states`, `interactive`, a
 </table>
 
 ```bash
-agent-desktop click @e1   # bare ref: INVALID_ARGS envelope
+acdesktop click @e1   # bare ref: INVALID_ARGS envelope
 echo $?                   # 1
-agent-desktop click       # missing argument: INVALID_ARGS envelope
+acdesktop click       # missing argument: INVALID_ARGS envelope
 echo $?                   # 2
 ```
 

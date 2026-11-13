@@ -36,8 +36,10 @@ jobs:
         with:
           node-version: '26'
 
-      - name: Check npm package and publish policy
-        run: node scripts/check-npm-package.js
+      - name: Check release policy
+        run: |
+          python3 scripts/check-release-policy.py
+          python3 -m unittest discover -s tests/release -p 'test_*.py'
 
       - name: Cargo dependency policy
         run: |

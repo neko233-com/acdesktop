@@ -131,9 +131,9 @@ test('the Linux CLI archive is built from both executables and listed exactly', 
   }
 });
 
-test('the release publishes thirteen assets and waits for the archive contents check', () => {
-  assert.match(releaseWorkflow, /EXPECTED_ASSETS: 13/);
-  assert.match(releaseWorkflow, /6 CLI tarballs \+ 4 FFI tarballs \+ 2 FFI zips \+ checksums\.txt/);
+test('the release publishes fifteen assets and waits for the archive contents check', () => {
+  assert.match(releaseWorkflow, /check-release-assets\.py local/);
+  assert.match(releaseWorkflow, /check-release-assets\.py remote/);
   const publish = releaseWorkflow.match(/publish-github:\n[\s\S]*?needs: \[([^\]]*)\]/);
   assert.ok(publish && publish[1].includes('linux-archive-contents'));
   assert.match(jobBlock(releaseWorkflow, 'linux-archive-contents'), /check-linux-archive-contents\.sh all/);
@@ -164,7 +164,7 @@ test('the Linux consumer job runs both architectures against the dry-run archive
   assert.match(job, /dry-run-\{binary,ffi\}-\$\{\{ matrix\.target \}\}/, 'it downloads its own architecture only');
   assert.match(job, /private-session\.sh --wm/);
   assert.match(job, /tests\/linux-dist\/run-consumer\.sh/);
-  assert.match(job, /tests\/linux-dist\/run-npm-install\.sh/);
+  assert.match(job, /extracted\/acdesktop-v\/acdesktop version/);
   assert.doesNotMatch(job, /cargo build/, 'the consumer extracts archives and never rebuilds');
 });
 

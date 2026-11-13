@@ -243,9 +243,7 @@ fn create_private_dir(dir: &std::path::Path) {
 }
 
 #[cfg(not(unix))]
-fn create_private_dir(dir: &std::path::Path) {
-    std::fs::create_dir_all(dir).expect("create state root");
-}
+fn create_private_dir(_: &std::path::Path) {}
 
 fn unique_temp_dir(prefix: &str) -> std::path::PathBuf {
     let dir = std::env::temp_dir().join(format!(

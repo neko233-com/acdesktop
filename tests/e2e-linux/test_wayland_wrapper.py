@@ -27,7 +27,7 @@ class WaylandWrapperTests(unittest.TestCase):
             root = Path(directory)
             script = root / "wrapper.sh"
             script.write_text(source)
-            env = dict(os.environ, AGENT_DESKTOP_PRIVATE_SESSION=directory,
+            env = dict(os.environ, ACDESKTOP_PRIVATE_SESSION=directory,
                        XDG_RUNTIME_DIR=directory, TEST_KILL_LOG=str(root / "signals"),
                        TEST_PAYLOAD=str(root / "payload"))
             result = subprocess.run(["bash", str(script), "--", "payload"], env=env,
