@@ -1,6 +1,6 @@
 use crate::{
     AdapterError, ClipboardContent, ClipboardFormat, Deadline, DragParams, InteractionLease,
-    KeyCombo, MouseEvent, OperationReport,
+    KeyCombo, MouseEvent, OperationReport, TouchContact,
 };
 
 /// `get_clipboard`/`set_clipboard` were removed pre-1.0 in favor of
@@ -47,6 +47,17 @@ pub trait InputOps: Send + Sync {
         _lease: &InteractionLease,
     ) -> Result<OperationReport, AdapterError> {
         Err(AdapterError::not_supported("drag"))
+    }
+
+    /// Injects one frame of touch contacts (a point or a whole multi-finger
+    /// pose). Adapters that cannot synthesize touch report `not_supported`,
+    /// so a caller can fall back to pointer input.
+    fn touch_frame(
+        &self,
+        _contacts: &[TouchContact],
+        _lease: &InteractionLease,
+    ) -> Result<OperationReport, AdapterError> {
+        Err(AdapterError::not_supported("touch_frame"))
     }
 
     fn clear_clipboard(&self, _lease: &InteractionLease) -> Result<OperationReport, AdapterError> {

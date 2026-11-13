@@ -3,6 +3,7 @@ mod app_window;
 mod clipboard;
 mod cursor_overlay;
 mod disposition;
+mod game;
 mod interaction;
 mod keyboard_mouse;
 mod notifications;
@@ -75,6 +76,7 @@ fn dispatch_command(
         Commands::Snapshot(args) => observation::snapshot(args, adapter, context),
         Commands::Find(args) => observation::find(args, adapter, context),
         Commands::Screenshot(args) => observation::screenshot(args, adapter),
+        Commands::Game(args) => game::run(args, adapter, context),
         Commands::Get(args) => observation::get(args, adapter, context),
         Commands::Is(args) => observation::is(args, adapter, context),
         Commands::Click(args) => interaction::click(args, adapter, context),

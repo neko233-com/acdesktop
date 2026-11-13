@@ -1,10 +1,11 @@
 use crate::{
     AdapterError, AdapterSession, AppInfo, CursorOverlayControl, Deadline, DeliverySemantics,
-    DismissAllNotificationsRequest, DismissNotificationRequest, ErrorCode, ImageBuffer,
-    InteractionLease, InteractionPolicy, KeyCombo, NotificationActionRequest, NotificationFilter,
-    NotificationInfo, OperationReport, PermissionReport, PermissionState, ProcessIdentity,
-    ProviderScriptOutput, ProviderScriptRequest, SessionAffinity, SignalBaseline, SignalFilter,
-    WindowInfo, WindowOp, actions::action_result::ActionResult, system::display_info::DisplayInfo,
+    DismissAllNotificationsRequest, DismissNotificationRequest, ErrorCode, GameSessionLog,
+    GameSessionRequest, ImageBuffer, InteractionLease, InteractionPolicy, KeyCombo,
+    NotificationActionRequest, NotificationFilter, NotificationInfo, OperationReport,
+    PermissionReport, PermissionState, ProcessIdentity, ProviderScriptOutput,
+    ProviderScriptRequest, SessionAffinity, SignalBaseline, SignalFilter, WindowInfo, WindowOp,
+    actions::action_result::ActionResult, system::display_info::DisplayInfo,
     system::screenshot_target::ScreenshotTarget,
 };
 
@@ -75,6 +76,20 @@ pub trait SystemOps: Send + Sync {
         _lease: &InteractionLease,
     ) -> Result<(), AdapterError> {
         Err(AdapterError::not_supported("focus_window"))
+    }
+
+    fn supports_game_session(&self) -> bool {
+        false
+    }
+
+    /// Plays one game session: the input timeline against sampled
+    /// observations of the window, logged for the caller to report on.
+    fn run_game_session(
+        &self,
+        _request: &GameSessionRequest<'_>,
+        _deadline: Deadline,
+    ) -> Result<GameSessionLog, AdapterError> {
+        Err(AdapterError::not_supported("run_game_session"))
     }
 
     fn resolve_ref_focus_window(
@@ -275,23 +290,7 @@ pub trait SystemOps: Send + Sync {
         policy: InteractionPolicy,
         lease: &InteractionLease,
     ) -> Result<ActionResult, AdapterError> {
-        let refusal = || {
-            AdapterError::stale_ref_because(
-                "The named window's exact focus could not be confirmed, so no key was sent",
-            )
-            .with_suggestion(if policy.is_headed() {
-                "Ensure the named window remains active before retrying; a sibling window or another application's menu can hold the keyboard"
-            } else {
-                "Retry with --headed so the named window is brought forward first, or name the active window"
-            })
-            .with_details(serde_json::json!({
-                "check": "window_active",
-                "cause": "exact_window_focus_unconfirmed",
-                "physical_delivery_started": false,
-                "window_id": window.id,
-            }))
-            .with_disposition(crate::DeliverySemantics::not_delivered())
-        };
+        let refusal = || super::system_window_focus::refusal(window, policy);
         let instance = window
             .process_instance
             .as_deref()

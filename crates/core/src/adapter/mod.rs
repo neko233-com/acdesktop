@@ -9,6 +9,7 @@ pub(crate) mod observation;
 #[cfg(test)]
 mod saved_ref_test_support;
 pub(crate) mod system;
+mod system_window_focus;
 #[cfg(test)]
 mod test_support;
 

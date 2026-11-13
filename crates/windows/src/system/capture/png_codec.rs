@@ -27,7 +27,43 @@ pub(crate) fn encode_bgra_to_png(
 ) -> Result<Vec<u8>, AdapterError> {
     deadline.ensure_remaining()?;
     let needed = validate_encode_input(pixels, width, height, stride)?;
-    encode_bgra_to_png_wic(&pixels[..needed], width, height, stride)
+    let factory = imaging_factory()?;
+    encode_with_factory(&factory, &pixels[..needed], width, height, stride)
+}
+
+/// A WIC PNG encoder that keeps its imaging factory between frames.
+///
+/// Activating the factory once per encoder instead of once per frame removes a
+/// COM activation from every saved frame, which is what makes a burst of
+/// session frames affordable to write.
+pub(crate) struct PngEncoder {
+    factory: IWICImagingFactory,
+}
+
+impl PngEncoder {
+    pub(crate) fn new() -> Result<Self, AdapterError> {
+        Ok(Self {
+            factory: imaging_factory()?,
+        })
+    }
+
+    pub(crate) fn encode(
+        &self,
+        pixels: &[u8],
+        width: u32,
+        height: u32,
+        stride: u32,
+    ) -> Result<Vec<u8>, AdapterError> {
+        let needed = validate_encode_input(pixels, width, height, stride)?;
+        encode_with_factory(&self.factory, &pixels[..needed], width, height, stride)
+    }
+}
+
+fn imaging_factory() -> Result<IWICImagingFactory, AdapterError> {
+    unsafe {
+        CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER)
+            .map_err(|error| codec_error(error.code().0, "create the WIC imaging factory"))
+    }
 }
 
 pub(crate) fn decode_png_to_bgra(
@@ -115,16 +151,14 @@ fn validate_output_dimensions(width: u32, height: u32) -> Result<usize, AdapterE
     Ok(bytes as usize)
 }
 
-fn encode_bgra_to_png_wic(
+fn encode_with_factory(
+    factory: &IWICImagingFactory,
     pixels: &[u8],
     width: u32,
     height: u32,
     stride: u32,
 ) -> Result<Vec<u8>, AdapterError> {
     unsafe {
-        let factory: IWICImagingFactory =
-            CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER)
-                .map_err(|error| codec_error(error.code().0, "create the WIC imaging factory"))?;
         let bitmap = factory
             .CreateBitmapFromMemory(width, height, &GUID_WICPixelFormat32bppBGRA, stride, pixels)
             .map_err(|error| codec_error(error.code().0, "wrap BGRA pixels as a WIC bitmap"))?;

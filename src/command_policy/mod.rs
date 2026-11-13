@@ -38,6 +38,7 @@ pub(crate) fn policy_for(cmd: &Commands) -> PermissionNeed {
             AccessibilityAndScreenRecording
         }
         Commands::Screenshot(_) => ScreenRecording,
+        Commands::Game(_) => AccessibilityAndScreenRecording,
 
         Commands::Get(_) | Commands::Is(_) => Accessibility,
 
@@ -118,7 +119,7 @@ fn agent_id_missing(cmd: &Commands, multi_agent: bool, agent_id: Option<&str>) -
     multi_agent
         && agent_id.is_none()
         && cmd.is_mutating()
-        && policy_for(cmd) == PermissionNeed::Accessibility
+        && requires_accessibility(policy_for(cmd))
 }
 
 pub(crate) fn preflight_context(
@@ -216,6 +217,7 @@ fn validate_args(cmd: &Commands) -> Result<(), AppError> {
         }
         Commands::Find(_)
         | Commands::Screenshot(_)
+        | Commands::Game(_)
         | Commands::Press(_)
         | Commands::KeyDown(_)
         | Commands::KeyUp(_)

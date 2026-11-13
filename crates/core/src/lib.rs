@@ -59,6 +59,7 @@ pub use input::direction::Direction;
 pub use input::drag_params::{
     DragParams, MAX_DRAG_DROP_DELAY_MS, MAX_DRAG_DURATION_MS, MAX_DRAG_STEPS,
 };
+pub use input::gesture::{GestureName, GestureSpec, gesture_frames};
 pub use input::key_combo::KeyCombo;
 pub use input::modifier::Modifier;
 pub use input::mouse_button::MouseButton;
@@ -66,6 +67,7 @@ pub use input::mouse_click_count::{MAX_MOUSE_CLICK_COUNT, validate_mouse_click_c
 pub use input::mouse_event::MouseEvent;
 pub use input::mouse_event_kind::MouseEventKind;
 pub use input::pointer_observation::PointerObservation;
+pub use input::touch::{TouchContact, TouchFrame, TouchPhase};
 pub use locator::containment_predicate::ContainmentPredicate;
 pub use locator::identity_predicate::IdentityPredicate;
 pub use locator::live_locator::{
@@ -128,6 +130,20 @@ pub use system::app_info::{AppInfo, AppPresentation, app_name_matches};
 pub use system::app_inventory::AppInventory;
 pub use system::app_inventory_query::AppInventoryQuery;
 pub use system::display_info::DisplayInfo;
+pub use system::game_distribution::Distribution;
+pub use system::game_event::GameEvent;
+pub use system::game_flow_metrics::FlowMetrics;
+pub use system::game_frame_metrics::FrameMetrics;
+pub use system::game_frame_sample::FrameSample;
+pub use system::game_input_metrics::InputMetrics;
+pub use system::game_input_sample::InputSample;
+pub use system::game_plan::GameSessionPlan;
+pub use system::game_probe::GameProbe;
+pub use system::game_probe_result::ProbeResult;
+pub use system::game_report::GameReport;
+pub use system::game_report_summary::GameReportSummary;
+pub use system::game_request::GameSessionRequest;
+pub use system::game_session_log::GameSessionLog;
 pub use system::image_buffer::{ImageBuffer, MAX_PNG_INPUT_BYTES, parse_png_dimensions};
 pub use system::image_format::ImageFormat;
 pub use system::operation_report::OperationReport;

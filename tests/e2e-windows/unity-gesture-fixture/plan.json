@@ -1,0 +1,14 @@
+{
+  "duration_ms": 5000, "fps": 30,
+  "events": [
+    {"at_ms": 300, "action": "gesture", "gesture": "draw-s", "x": 350, "y": 250, "distance": 140, "duration_ms": 400},
+    {"at_ms": 1100, "action": "gesture", "gesture": "circle-cw", "x": 350, "y": 250, "distance": 140, "duration_ms": 400},
+    {"at_ms": 1900, "action": "gesture", "gesture": "two-finger-tap", "x": 350, "y": 250},
+    {"at_ms": 2500, "action": "touch-path", "frames": [
+      {"at_ms": 0, "contacts": [{"id": 0, "x": 150, "y": 350, "phase": "down"}]},
+      {"at_ms": 100, "contacts": [{"id": 0, "x": 200, "y": 350, "phase": "move"}, {"id": 1, "x": 500, "y": 350, "phase": "down"}]},
+      {"at_ms": 200, "contacts": [{"id": 0, "x": 200, "y": 350, "phase": "move"}, {"id": 1, "x": 500, "y": 350, "phase": "up"}]},
+      {"at_ms": 300, "contacts": [{"id": 0, "x": 200, "y": 350, "phase": "up"}]}
+    ]}
+  ]
+}

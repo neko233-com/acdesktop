@@ -1,10 +1,11 @@
 use acdesktop_core::{
     ActionResult, AdapterError, AdapterSession, AppInfo, Deadline, DismissAllNotificationsRequest,
-    DismissNotificationRequest, DisplayInfo, ImageBuffer, InteractionLease, InteractionPolicy,
-    KeyCombo, NotificationActionRequest, NotificationFilter, NotificationInfo, ObservationOps,
-    OperationReport, PermissionReport, ProcessIdentity, ScreenshotTarget, SessionAffinity,
-    SignalBaseline, SignalFilter, SnapshotSurface, SystemOps, WindowFilter, WindowInfo, WindowOp,
-    system::launch_options::LaunchOptions, system::process_state::ProcessState,
+    DismissNotificationRequest, DisplayInfo, GameSessionLog, GameSessionRequest, ImageBuffer,
+    InteractionLease, InteractionPolicy, KeyCombo, NotificationActionRequest, NotificationFilter,
+    NotificationInfo, ObservationOps, OperationReport, PermissionReport, ProcessIdentity,
+    ScreenshotTarget, SessionAffinity, SignalBaseline, SignalFilter, SnapshotSurface, SystemOps,
+    WindowFilter, WindowInfo, WindowOp, system::launch_options::LaunchOptions,
+    system::process_state::ProcessState,
 };
 
 use crate::adapter::WindowsAdapter;
@@ -252,6 +253,18 @@ impl SystemOps for WindowsAdapter {
         deadline: Deadline,
     ) -> Result<ImageBuffer, AdapterError> {
         crate::system::capture::screenshot::capture_window(window, deadline)
+    }
+
+    fn supports_game_session(&self) -> bool {
+        true
+    }
+
+    fn run_game_session(
+        &self,
+        request: &GameSessionRequest<'_>,
+        deadline: Deadline,
+    ) -> Result<GameSessionLog, AdapterError> {
+        crate::system::game::session::run(request, deadline)
     }
 
     /// Verify-only composition over the keyboard primitive. Core's headed

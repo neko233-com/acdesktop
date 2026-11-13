@@ -174,6 +174,24 @@ When a ref action returns `delivery_uncertain` with a post-action wait selector,
 | `timed_out` | The wait budget expired without observing the expected state, including when transient read errors persisted through the last poll. `last_observation_error` may hold the last error. |
 | `identity_unavailable` | The ref has no usable process generation, so observation was skipped. |
 
+## Game result shape
+
+`game` returns `data.report`, `data.plan`, `data.window`, and `data.summary`.
+With `--save-frames`, it also returns `data.frames_saved`. The summary contains
+elapsed and planned milliseconds, truncation status, capture dimensions,
+sample and input counts, capture interval and input scheduling metrics,
+probes, `cursor_in_saved_frames`, and visual-activity measurements under `flow`.
+The cursor flag records whether the separate saved-frame capture was requested;
+the cursor can be hidden or outside the captured window. An input count means
+dispatch was attempted; it does not verify that the target received or acted
+on it. Visual activity is not a measure of a player's psychological flow.
+Unavailable metrics and an empty probe list are omitted. The activity ratio
+requires at least two captured frames, and probes exclude the baseline frame.
+When the plan sets `brief_response`, `data.summary.probe_summary` contains
+`total` and `responded` counts instead of `data.summary.probes`; the report
+file still includes all probe results.
+The command is implemented on Windows and fails closed on other platforms.
+
 ## Find result shape
 
 `find` match objects report the element's actual accessibility `name`. Elements

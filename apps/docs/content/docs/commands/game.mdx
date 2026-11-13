@@ -1,0 +1,218 @@
+---
+title: game
+navTitle: game
+description: Run a timed game session from a JSON plan, inject inputs, and measure visual changes and capture timing.
+---
+
+`game` runs one bounded session against a window and returns a structured report. It does not read the accessibility tree. It observes the window by continuous capture and measures how the picture changes over time, so it works on games and other surfaces that expose no tree.
+
+The command requires Windows 10 version 2004 or newer for cursor-controlled
+window capture. On other platforms it fails with `PLATFORM_NOT_SUPPORTED`.
+
+```bash
+acdesktop game --app MyGame --plan plan.json --out .\session --headed
+```
+
+<table>
+  <thead>
+    <tr><th>Flag</th><th>Default</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>--app</code></td><td></td><td>The app to drive. Resolves its main window the same way <code>screenshot</code> does.</td></tr>
+    <tr><td><code>--window-id</code></td><td></td><td>An explicit window id from <code>list-windows</code>. Use it instead of <code>--app</code> when the app has several windows.</td></tr>
+    <tr><td><code>--plan</code></td><td>required</td><td>Path to the session plan JSON.</td></tr>
+    <tr><td><code>--out</code></td><td>required</td><td>Directory for <code>report.json</code> and, with <code>--save-frames</code>, the captured frames. Choose a directory without an existing report or frames directory.</td></tr>
+    <tr><td><code>--duration-ms</code></td><td>plan value</td><td>Override the plan duration.</td></tr>
+    <tr><td><code>--timeout-ms</code></td><td><code>duration_ms</code> + 20000</td><td>Cap on the whole command, including setup. Raise it when a plan ends with <code>truncated: true</code>.</td></tr>
+    <tr><td><code>--save-frames</code></td><td>off</td><td>Save sampled frames as <code>frames/frame-NNNN.png</code>, subject to encoder capacity. Without it, frames are compared and released.</td></tr>
+  </tbody>
+</table>
+
+Plans with input require `--headed` and focus the target. Input stops if the target loses foreground ownership or moves. Observation-only plans do not focus the window.
+
+Mouse events move the visible system cursor. To include the system cursor in
+saved PNGs, set `capture_cursor` to `true` in the plan and pass `--save-frames`.
+The cursor appears only while the OS displays it over the captured window. A
+second capture session supplies these images; the report's visual metrics use
+the separate cursor-free session and are not synchronized to each saved frame.
+
+## The plan
+
+A plan is one JSON object. Timing is in milliseconds from the start of the session. Event `x` and `y` are pixels inside the window's client area; the session adds the client origin before injection. A window screenshot can include non-client borders.
+
+```json
+{
+  "duration_ms": 4000,
+  "fps": 30,
+  "capture_cursor": false,
+  "events": [
+    { "at_ms": 200, "action": "key", "key": "W", "hold_ms": 400 },
+    { "at_ms": 900, "action": "mouse-move", "x": 640, "y": 360 },
+    { "at_ms": 1100, "action": "mouse-click", "x": 640, "y": 360, "button": "left" },
+    { "at_ms": 1500, "action": "gesture", "gesture": "tap", "x": 640, "y": 360 },
+    { "at_ms": 2000, "action": "gesture", "gesture": "pinch-out", "x": 640, "y": 360, "distance": 200, "duration_ms": 300 },
+    { "at_ms": 3000, "action": "touch", "contacts": [{ "id": 0, "x": 300, "y": 400 }], "hold_ms": 120 }
+  ],
+  "probes": [
+    { "name": "jump", "event": 0, "timeout_ms": 2000, "min_change": 0.002 }
+  ]
+}
+```
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Default</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>duration_ms</code></td><td>5000</td><td>How long to observe, from 1 to 3600000 ms. All input steps must finish before this time.</td></tr>
+    <tr><td><code>fps</code></td><td>30</td><td>Requested sampling rate, from 1 to 240.</td></tr>
+    <tr><td><code>capture_cursor</code></td><td>false</td><td>Include the visible system cursor in saved frames. Requires <code>--save-frames</code> and Windows 10 version 2004 or newer.</td></tr>
+    <tr><td><code>brief_response</code></td><td>false</td><td>Omit per-probe details from the command response and return probe counts. The report file still contains every probe.</td></tr>
+    <tr><td><code>acknowledge_system_gesture_conflict</code></td><td>false</td><td>Required when any touch frame contains three or more contacts. Review the Windows system gesture setting before enabling it.</td></tr>
+    <tr><td><code>events</code></td><td>[]</td><td>Timed input. Events are sorted by <code>at_ms</code>.</td></tr>
+    <tr><td><code>probes</code></td><td>[]</td><td>Latency measurements, each tied to an event index.</td></tr>
+  </tbody>
+</table>
+
+An event's `action` selects its shape:
+
+| `action` | Fields | Effect |
+| --- | --- | --- |
+| `key` | `key`, `hold_ms` | Hold a key for `hold_ms`, then release it. |
+| `key-down` | `key` | Press and hold a key until the session ends or `key-up` releases it. |
+| `key-up` | `key` | Release a key. |
+| `mouse-move` | `x`, `y` | Move the cursor. |
+| `mouse-down` | `x`, `y`, `button` | Press a pointer button. `button` is `left`, `right`, or `middle`. |
+| `mouse-up` | `x`, `y`, `button` | Release a pointer button. |
+| `mouse-click` | `x`, `y`, `button` | Press and release at a point. |
+| `gesture` | `gesture`, `x`, `y`, `duration_ms`, `distance` | Expand a named gesture into touch frames. |
+| `touch` | `contacts`, `hold_ms` | Send one touch frame of contacts, then release them after `hold_ms`. |
+| `touch-path` | `frames` | Play explicit, timed frames of simultaneous contacts. |
+
+A contact is `{ "id": 0, "x": 640, "y": 360, "phase": "move" }`. The phase defaults to `move`; set it to `down` or `up` to control a contact frame directly. The session attempts to release held keys, buttons, and contacts when it returns, including on errors. Forced process termination can prevent cleanup.
+
+### Gestures
+
+`gesture` expands into a sequence of touch frames from `(x, y)`. `distance` stretches swipes, pinches, and rotates; `duration_ms` bounds the motion.
+
+`tap`, `double-tap`, `long-press`, `swipe-left`, `swipe-right`, `swipe-up`, `swipe-down`, `pinch-in`, `pinch-out`, `rotate-cw`, `rotate-ccw`, `two-finger-tap`, `draw-s`, `circle-cw`, `circle-ccw`, `three-finger-swipe-left`, `three-finger-swipe-right`, `three-finger-swipe-up`, `three-finger-swipe-down`.
+
+Pinches and rotations use two contacts; three-finger swipes use three. Windows
+injects synthetic multi-touch, but the target or the system may consume or
+ignore it. Verify touch events or game state independently. A successful
+command reports injection, not game recognition.
+
+On Windows 11, system gestures reserve three- and four-finger touch by default.
+Before a session with three or more contacts, turn off **Three- and four-finger
+touch gestures** in **Settings → Bluetooth & devices → Touch**, then set
+`"acknowledge_system_gesture_conflict": true` in the plan. The command cannot
+verify that setting. If it is enabled, the gesture can switch windows or
+desktops instead of reaching the game. Restore the setting after testing if
+you need Windows gestures. See [Microsoft's touch guidance](https://learn.microsoft.com/en-us/troubleshoot/windows/win32/finger3or4-touch-interaction-no-longer-works).
+
+Use `touch-path` to draw an S, drag around a curve, or hold a virtual joystick while another finger taps. Frame `at_ms` values are offsets from the event's `at_ms`, must increase strictly, and must finish before `duration_ms`. Each frame contains every contact still held; mark each contact `up` once at its last position. For example:
+
+```json
+{"duration_ms": 1500, "events": [{"at_ms": 100, "action": "touch-path", "frames": [
+  {"at_ms": 0, "contacts": [{"id": 0, "x": 100, "y": 300, "phase": "down"}]},
+  {"at_ms": 100, "contacts": [{"id": 0, "x": 140, "y": 300, "phase": "move"}, {"id": 1, "x": 500, "y": 300, "phase": "down"}]},
+  {"at_ms": 200, "contacts": [{"id": 0, "x": 140, "y": 300, "phase": "move"}, {"id": 1, "x": 500, "y": 300, "phase": "up"}]},
+  {"at_ms": 300, "contacts": [{"id": 0, "x": 140, "y": 300, "phase": "up"}]}
+]}]}
+```
+
+### Probes
+
+A probe measures the time from an input dispatch to the first comparable picture change at or above `min_change`, or until `timeout_ms` passes. The first captured frame is a baseline, not a comparison. An unrelated animation can satisfy the probe, and capture sampling limits its precision.
+
+```json
+{ "name": "menu", "event": 2, "timeout_ms": 1500, "min_change": 0.01 }
+```
+
+`min_change` is the fraction of sampled pixels that must differ from the previous frame, from `0` to `1`. The default is `0.002`.
+
+## The report
+
+The command returns the report path, the plan path, the window id, and the report itself under `summary`. With `--save-frames` it adds `frames_saved`, the number of frames written to disk; the writer is best-effort, so this can be lower than `frame_metrics.sampled` when the encoder trails the capture rate. It also writes the report object alone to `<out>/report.json`.
+
+Set `brief_response: true` in the plan to reduce response size for many
+probes. The response replaces `summary.probes` with `summary.probe_summary`
+containing `total` and `responded`; the report file remains complete.
+
+```json
+{
+  "version": "2.6",
+  "ok": true,
+  "command": "game",
+  "data": {
+    "report": "C:\\session\\report.json",
+    "plan": "C:\\session\\plan.json",
+    "window": "w-2104",
+    "frames_saved": 109,
+    "summary": {
+      "duration_ms": 6999,
+      "planned_ms": 7000,
+      "truncated": false,
+      "width": 1280,
+      "height": 720,
+      "frames": 211,
+      "inputs": 28,
+      "cursor_in_saved_frames": false,
+      "frame_metrics": {
+        "sampled": 119,
+        "fps": 29.8,
+        "interval_ms": { "min": 31, "median": 33, "max": 41, "stdev": 2.1 },
+        "dropped": 1
+      },
+      "input_metrics": { "dispatched": 6, "jitter_ms": { "min": 0, "median": 1, "max": 4, "stdev": 1.2 } },
+      "probes": [
+        { "name": "jump", "event": 0, "timeout_ms": 2000, "responded": true, "latency_ms": 66 }
+      ],
+      "flow": {
+        "active_ratio": 0.72,
+        "change_events": 18,
+        "longest_still_ms": 430,
+        "rhythm_regularity": 0.81,
+        "responsiveness": 1.0
+      }
+    }
+  }
+}
+```
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>duration_ms</code></td><td>Elapsed session time, including intervals without captured frames.</td></tr>
+    <tr><td><code>planned_ms</code></td><td>The duration the plan asked for.</td></tr>
+    <tr><td><code>truncated</code></td><td><code>true</code> when the session stopped before <code>planned_ms</code>.</td></tr>
+    <tr><td><code>frame_metrics.interval_ms</code></td><td>Spread of capture intervals. <code>dropped</code> counts intervals longer than twice the median.</td></tr>
+    <tr><td><code>input_metrics.jitter_ms</code></td><td>How late each event was dispatched against its <code>at_ms</code>.</td></tr>
+    <tr><td><code>probes</code></td><td>One entry per probe; absent if none were requested. <code>responded: false</code> means no frame reached <code>min_change</code> inside <code>timeout_ms</code>.</td></tr>
+    <tr><td><code>flow.active_ratio</code></td><td>Share of comparable frames that changed; absent until two frames were captured.</td></tr>
+    <tr><td><code>flow.change_events</code></td><td>Transitions from a still stretch to a moving one.</td></tr>
+    <tr><td><code>flow.longest_still_ms</code></td><td>The longest run of unchanged frames.</td></tr>
+    <tr><td><code>flow.rhythm_regularity</code></td><td>How evenly changes are spaced, from 0 to 1. Absent below two changes.</td></tr>
+    <tr><td><code>flow.responsiveness</code></td><td>Share of probes that responded in time. Absent without probes.</td></tr>
+  </tbody>
+</table>
+
+The `flow` fields describe visual activity, not a player's psychological flow or engagement. A changed frame may come from an animation unrelated to the input. Use game telemetry and player observation to assess experience.
+
+## Reading the result
+
+The report measures the session, so run it twice and compare. A change in `latency_ms` or `interval_ms` between an otherwise identical plan points at the app, the driver, or the machine. A session that never changes is not proof the app is frozen; it may be a window the capture API cannot see, such as a fullscreen exclusive surface. Open the game windowed or borderless, and check `ok` and `probes` before trusting a quiet session.
+
+`--save-frames` writes the sampled frames for offline review. The files are BGRA captured and PNG encoded; the writer thread encodes and writes as the session runs, so a slow disk or encoder drops frames instead of slowing the input timeline. The count is in `frames_saved`.
+
+`frames/frames.jsonl` maps each saved PNG to `at_ms`, measured from the start
+of the session. Frames can be skipped when the capture or writer cannot keep
+up; use these timestamps rather than assuming a fixed interval.
+
+`--timeout-ms` defaults to `duration_ms` plus 20 seconds, enough for the lease, the window focus, and the cold capture setup. A session that reports `truncated: true` stopped early: usually the command's deadline, so raise `--timeout-ms` above the plan's duration.
+
+If a session ends before every scheduled input step is dispatched, it returns an error instead of a completed report. If an input step fails after earlier steps were dispatched, or the report cannot be written after input, the session's delivery is unknown. Inspect the game state before retrying.
+
+The report is created only if its path is still unused at the end of the session. A concurrent report is never replaced. If writing fails after creation, the directory may contain an incomplete report; use a fresh output directory for another run.
