@@ -76,7 +76,7 @@ function Find-Target {
 
     $deadline = [System.Diagnostics.Stopwatch]::StartNew()
     do {
-        $envelope = Invoke-AgentDesktop -Arguments $findArgs
+        try { $envelope = Invoke-AgentDesktop -Arguments $findArgs -TimeoutSeconds $TimeoutSeconds } catch { continue }
         if ($envelope['ok'] -eq $true) {
             $match = $envelope['data']['match']
             $snapshotId = $envelope['data']['snapshot_id']
@@ -109,7 +109,7 @@ function Find-TargetMatches {
 
     $deadline = [System.Diagnostics.Stopwatch]::StartNew()
     do {
-        $envelope = Invoke-AgentDesktop -Arguments $findArgs
+        try { $envelope = Invoke-AgentDesktop -Arguments $findArgs -TimeoutSeconds $TimeoutSeconds } catch { continue }
         if ($envelope['ok'] -eq $true) {
             $matchList = $envelope['data']['matches']
             $snapshotId = $envelope['data']['snapshot_id']

@@ -7,3 +7,7 @@
 # The Docker guide's container user `agent`, not an operator account. The current tree no longer names its home path.
 837673e3572f3cbae0ae1c7974d581a70e0d3a66:apps/docs/content/docs/guides/docker-container.mdx:ad-home-directory-path:61
 837673e3572f3cbae0ae1c7974d581a70e0d3a66:apps/docs/content/docs/guides/docker-container.mdx:ad-home-directory-path:148
+# The forked gpui sidebar renders a personal email that is not a credential; the
+# crate is excluded from the workspace and never built or published. This only
+# acknowledges the one historical occurrence; it does not exempt later commits.
+cae168b72bc472a9f55045ef3a25e752037e6f50:crates/mygo-gpui/src/sidebar.rs:ad-personal-email:202

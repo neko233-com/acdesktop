@@ -186,7 +186,7 @@ impl Sidebar {
                         div()
                             .text_xs()
                             .text_color(TEXT_MUTED)
-                            .child("gaojian@mygo.dev"),
+                            .child("mygo.dev"),
                     ),
             )
     }
