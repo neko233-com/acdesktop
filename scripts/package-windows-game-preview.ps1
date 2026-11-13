@@ -10,6 +10,7 @@ $hostTriple = (rustc -vV | Select-String '^host: ').ToString().Substring(6)
 if ($hostTriple -ne 'x86_64-pc-windows-msvc') {
     throw "Expected the native x64 MSVC Rust toolchain; found $hostTriple."
 }
+Get-Command wix -CommandType Application -ErrorAction Stop | Out-Null
 $output = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory)
 if (Test-Path -LiteralPath $output) {
     throw 'Choose a new output directory so existing files are not overwritten.'
@@ -17,6 +18,7 @@ if (Test-Path -LiteralPath $output) {
 $repo = Split-Path -Parent $PSScriptRoot
 New-Item -ItemType Directory -Path $output | Out-Null
 $state = Join-Path $env:TEMP ('acdesktop-game-tests-' + [guid]::NewGuid().ToString('N'))
+if (Test-Path -LiteralPath $state) { throw 'The temporary test directory already exists.' }
 $oldState = $env:ACDESKTOP_HOME
 $watch = [System.Diagnostics.Stopwatch]::StartNew()
 Push-Location $repo
@@ -32,6 +34,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Touch injection tests failed.' }
     & cargo test --locked -p acdesktop-windows --lib system::capture::persistent::tests
     if ($LASTEXITCODE -ne 0) { throw 'Persistent capture tests failed.' }
+    & cargo test --locked -p acdesktop-windows --lib system::cursor_overlay::notice_language::tests
+    if ($LASTEXITCODE -ne 0) { throw 'Control notice language tests failed.' }
     & cargo test --locked -p acdesktop --bin acdesktop
     if ($LASTEXITCODE -ne 0) { throw 'CLI contract tests failed.' }
     $testsSeconds = [math]::Round($watch.Elapsed.TotalSeconds, 2)
@@ -59,8 +63,19 @@ try {
     Remove-Item -LiteralPath $verify
     $sha = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
     [System.IO.File]::WriteAllText("$archive.sha256", "$sha  $([System.IO.Path]::GetFileName($archive))`n")
-    [pscustomobject]@{ archive = $archive; sha256 = $sha; tests_seconds = $testsSeconds; total_seconds = [math]::Round($watch.Elapsed.TotalSeconds, 2) } | ConvertTo-Json -Compress
+    $msi = & (Join-Path $PSScriptRoot 'package-windows-msi.ps1') -Binary $binary -OutputFile (Join-Path $output 'acdesktop-game-preview-x64.msi') | ConvertFrom-Json
+    [pscustomobject]@{ archive = $archive; sha256 = $sha; msi = $msi.msi; msi_sha256 = $msi.sha256; msi_seconds = $msi.seconds; tests_seconds = $testsSeconds; total_seconds = [math]::Round($watch.Elapsed.TotalSeconds, 2) } | ConvertTo-Json -Compress
 } finally {
     $env:ACDESKTOP_HOME = $oldState
     Pop-Location
+    $stateInfo = Get-Item -LiteralPath $state -Force -ErrorAction SilentlyContinue
+    if ($stateInfo) {
+        $tempRoot = [System.IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
+        $resolvedState = [System.IO.Path]::GetFullPath($stateInfo.FullName)
+        if (-not $resolvedState.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -or
+            ($stateInfo.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+            throw 'Temporary test directory failed the cleanup safety check.'
+        }
+        Remove-Item -LiteralPath $resolvedState -Recurse -Force
+    }
 }

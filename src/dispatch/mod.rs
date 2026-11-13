@@ -1,6 +1,8 @@
 pub(crate) mod adapter_factory;
 mod app_window;
 mod clipboard;
+#[cfg(target_os = "windows")]
+mod control_notice;
 mod cursor_overlay;
 mod disposition;
 mod game;
@@ -69,6 +71,8 @@ fn dispatch_command(
     } else {
         context.command_scope(cmd.name())?
     };
+    #[cfg(all(target_os = "windows", not(test)))]
+    let _notice = control_notice::begin(&cmd)?;
     if let Some(session_id) = overlay_session.as_ref() {
         let _ = adapter.update_cursor_overlay(&CursorOverlayControl::hide(session_id.clone()));
     }

@@ -274,6 +274,27 @@ jobs:
           $hash = (Get-FileHash $tarball -Algorithm SHA256).Hash.ToLower()
           "$hash  $tarball" | Out-File -Encoding ascii "$tarball.sha256"
 
+      - name: Install WiX (Windows x64)
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        shell: pwsh
+        run: |
+          $toolDir = Join-Path $env:RUNNER_TEMP 'acdesktop-wix'
+          dotnet tool install wix --tool-path $toolDir --version 5.0.2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Add-Content -Path $env:GITHUB_PATH -Value $toolDir
+
+      - name: Build and verify MSI (Windows x64)
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.check-release.outputs.version }}
+        run: |
+          $binary = "target/${{ matrix.target }}/release/acdesktop.exe"
+          $msi = "acdesktop-v${env:VERSION}-${{ matrix.target }}.msi"
+          ./scripts/package-windows-msi.ps1 -Binary $binary -OutputFile $msi -Release
+          ./scripts/fixtures/windows-msi-selftest.ps1 -Msi $msi -ExpectedBinary $binary -Release
+          ./scripts/fixtures/windows-msi-upgrade-selftest.ps1 -Msi $msi -Binary $binary
+
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -281,6 +302,8 @@ jobs:
           path: |
             acdesktop-v*.tar.gz
             acdesktop-v*.tar.gz.sha256
+            acdesktop-v*.msi
+            acdesktop-v*.msi.sha256
           retention-days: 1
 
   # FFI library archives ship alongside CLI archives.
@@ -753,7 +776,7 @@ jobs:
             exit 1
           fi
           gh release upload "$TAG_NAME" \
-            ./*.tar.gz ./*.zip checksums.txt install.sh install.ps1 \
+            ./*.tar.gz ./*.zip ./*.msi checksums.txt install.sh install.ps1 \
             --clobber
 
       - name: Assert the release's exact asset set
@@ -773,6 +796,7 @@ jobs:
           subject-path: |
             *.tar.gz
             *.zip
+            *.msi
             checksums.txt
             install.sh
             install.ps1

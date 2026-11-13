@@ -71,7 +71,7 @@ acdesktop snapshot --app Finder -i
 
 ---
 
-The CLI exposes 64 command names, 60 operational commands on macOS. The C ABI major is 7.
+The CLI exposes 64 command names, 59 operational commands on macOS. The C ABI major is 7.
 
 ## 命令总览
 

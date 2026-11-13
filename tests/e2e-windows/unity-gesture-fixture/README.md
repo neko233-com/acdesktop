@@ -6,12 +6,19 @@ The fixture resets `%TEMP%\acdesktop-unity-gesture-input.csv` on launch
 and writes a development player to `%TEMP%\acdesktop-gesture-build`.
 
 To run the focused game, gesture, touch, capture and CLI tests and build a
-local x64 preview archive, use a new output directory with 64-bit PowerShell 7:
+local x64 preview archive and MSI, install WiX 5 and use a new output directory
+with 64-bit PowerShell 7:
 
 ```powershell
 $out = Join-Path $env:TEMP ('acdesktop-preview-' + [guid]::NewGuid().ToString('N'))
 ./scripts/package-windows-game-preview.ps1 -OutputDirectory $out
 ```
+
+To create only the MSI from an existing Windows x64 binary without rebuilding,
+run `./scripts/package-windows-msi.ps1 -Binary <path-to-exe> -OutputFile <new-msi-path>`.
+The preview MSI installs per user in `%LOCALAPPDATA%\acdesktop-game-preview`;
+it does not change `PATH` or overwrite the normal installation. Both packages
+have SHA-256 sidecars. A same-version preview replaces the previous preview.
 
 This is a local preview, not a release or a substitute for the full platform
 test suite and target-game acceptance.

@@ -1,0 +1,29 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="acdesktop" Manufacturer="acdesktop" Version="$(var.Version)"
+           UpgradeCode="ecb0f2f5-25f6-41ee-8ef4-b158a30ade94" Scope="perUser">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of acdesktop is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="low" />
+    <Property Id="INSTALLFOLDER">
+      <RegistrySearch Id="PreviousInstallFolder" Root="HKCU" Key="Software\acdesktop\Installation"
+                      Name="InstallDir" Type="raw" />
+    </Property>
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="acdesktop">
+          <Component Id="AcdesktopExecutable" Guid="89c7c39e-d51c-4efc-8a75-37965ff3b89f">
+            <File Id="AcdesktopFile" Source="$(var.Binary)" />
+            <RegistryValue Root="HKCU" Key="Software\acdesktop\Installation" Name="Installed"
+                           Type="integer" Value="1" KeyPath="yes" />
+            <RegistryValue Root="HKCU" Key="Software\acdesktop\Installation" Name="InstallDir"
+                           Type="string" Value="[INSTALLFOLDER]" />
+            <Environment Id="UserPath" Name="PATH" Action="set" Part="last"
+                         Permanent="no" System="no" Value="[INSTALLFOLDER]" />
+          </Component>
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+    <Feature Id="Acdesktop">
+      <ComponentRef Id="AcdesktopExecutable" />
+    </Feature>
+  </Package>
+</Wix>

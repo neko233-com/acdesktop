@@ -8,6 +8,10 @@ description: Run a timed game session from a JSON plan, inject inputs, and measu
 
 The command requires Windows 10 version 2004 or newer for cursor-controlled
 window capture. On other platforms it fails with `PLATFORM_NOT_SUPPORTED`.
+On Windows, a click-through control notice appears for the duration of a session
+with input. It follows the Windows display language and falls back to English.
+Observation-only sessions do not show it. If the notice cannot be displayed,
+the session fails before sending input.
 
 ```bash
 acdesktop game --app MyGame --plan plan.json --out .\session --headed

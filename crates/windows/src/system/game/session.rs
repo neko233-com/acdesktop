@@ -69,6 +69,15 @@ pub(crate) fn run(
             "Every input step must finish before the session duration",
         ));
     }
+    let _notice = if steps.is_empty() {
+        None
+    } else {
+        Some(
+            crate::system::cursor_overlay::notice::ControlNotice::start().map_err(|error| {
+                error.with_disposition(acdesktop_core::DeliverySemantics::not_delivered())
+            })?,
+        )
+    };
     let fps = request.plan.fps.clamp(1, MAX_FPS);
     let frame_span_us = 1_000_000u64 / u64::from(fps);
 

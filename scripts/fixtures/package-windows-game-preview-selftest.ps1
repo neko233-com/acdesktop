@@ -31,6 +31,12 @@ try {
     if (-not $checksum.StartsWith((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant())) {
         throw 'Archive checksum does not match.'
     }
+    $msi = Join-Path $right 'preview/acdesktop-game-preview-x64.msi'
+    if (-not (Test-Path -LiteralPath $msi)) { throw 'MSI output is missing.' }
+    $msiChecksum = Get-Content -LiteralPath "$msi.sha256" -Raw
+    if (-not $msiChecksum.StartsWith((Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash.ToLowerInvariant())) {
+        throw 'MSI checksum does not match.'
+    }
     $marker = Join-Path $right 'preview/sentinel'
     Set-Content -LiteralPath $marker -Value 'preserved'
     try {
@@ -40,8 +46,18 @@ try {
         if ($_.Exception.Message -notlike 'Choose a new output directory*') { throw }
     }
     if ((Get-Content -LiteralPath $marker) -ne 'preserved') { throw 'Existing output was changed.' }
-    [pscustomobject]@{ ok = $true; relative_output = $archive; existing_output_preserved = $true } | ConvertTo-Json -Compress
+    [pscustomobject]@{ ok = $true; relative_output_verified = $true; msi_verified = $true; existing_output_preserved = $true } | ConvertTo-Json -Compress
 } finally {
     [Environment]::CurrentDirectory = $originalProcessDirectory
     Pop-Location
+    $scratchInfo = Get-Item -LiteralPath $scratch -Force -ErrorAction SilentlyContinue
+    if ($scratchInfo) {
+        $tempRoot = [System.IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
+        $resolvedScratch = [System.IO.Path]::GetFullPath($scratchInfo.FullName)
+        if (-not $resolvedScratch.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -or
+            ($scratchInfo.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) {
+            throw 'Temporary self-test directory failed the cleanup safety check.'
+        }
+        Remove-Item -LiteralPath $resolvedScratch -Recurse -Force
+    }
 }

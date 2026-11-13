@@ -272,8 +272,8 @@ Every command prints one envelope. `docs/json-output.md` holds the full contract
 
 64 commands spanning App/Window, Observation, Interaction, Scroll, Keyboard, Mouse, Notifications, Clipboard, Wait,
 System (including `session`, `trace`, `skills`), Sandboxes (`sandbox`) and Batch.
-60 of the 64 command names are operational on macOS; the four held-input names (`key-down`, `key-up`, `mouse-down`,
-`mouse-up`) fail closed. Windows and Linux expose the same command names. Each platform's limits are in its skill
+59 of the 64 command names are operational on macOS; the four held-input names (`key-down`, `key-up`, `mouse-down`,
+`mouse-up`) fail closed, and `game` is Windows-only. Windows and Linux expose the same command names. Each platform's limits are in its skill
 (`skills/acdesktop-macos/`, `skills/acdesktop-windows/`, `skills/acdesktop-linux/`).
 
 ## Definition of done
