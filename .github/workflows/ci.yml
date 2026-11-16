@@ -130,6 +130,17 @@ jobs:
       - name: Build stripped release binary
         run: cargo build --locked --release -p acdesktop
 
+      - name: Verify shipped binary version flag
+        run: |
+          PACKAGE_ID=$(cargo pkgid -p acdesktop)
+          EXPECTED_VERSION=${PACKAGE_ID##*@}
+          EXPECTED_OUTPUT="acdesktop $EXPECTED_VERSION"
+          ACTUAL_OUTPUT=$(target/release/acdesktop --version)
+          if [ "$ACTUAL_OUTPUT" != "$EXPECTED_OUTPUT" ]; then
+            echo "FAIL: expected '$EXPECTED_OUTPUT', got '$ACTUAL_OUTPUT'"
+            exit 1
+          fi
+
       - name: Check shipped binary size
         run: |
           SIZE=$(stat -c%s target/release/acdesktop)
