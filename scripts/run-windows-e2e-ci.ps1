@@ -95,6 +95,18 @@ try {
     if ($overlayExitCode -ne 0) { throw "the cursor-overlay teardown tests failed with exit code $overlayExitCode" }
     Write-Host 'run-windows-e2e-ci.ps1: cursor-overlay teardown tests passed'
 
+    Write-Host 'run-windows-e2e-ci.ps1: testing the hosted FFI control indicator under the lease'
+    & cargo build --locked --profile release-ffi -p acdesktop-ffi
+    if ($LASTEXITCODE -ne 0) { throw "the FFI build failed with exit code $LASTEXITCODE" }
+    Copy-Item -LiteralPath $releaseBinary -Destination 'target/release-ffi/acdesktop.exe' -Force
+    $ffiResult = Invoke-GuardedAgent -FilePath 'python' `
+        -ArgumentList @('tests/e2e-windows/test_ffi_indicator.py', 'target/release-ffi/acdesktop_ffi.dll') `
+        -TimeoutSeconds 120 -MaxCaptureBytes 5242880
+    if ($ffiResult.StdOut) { Write-Host $ffiResult.StdOut }
+    if ($ffiResult.StdErr) { Write-Host $ffiResult.StdErr }
+    if ($ffiResult.TimedOut -or $ffiResult.ExitCode -ne 0) { throw "the FFI indicator desktop test failed with exit code $($ffiResult.ExitCode)" }
+    Write-Host 'run-windows-e2e-ci.ps1: hosted FFI control indicator tests passed'
+
     Write-Host 'run-windows-e2e-ci.ps1: releasing the desktop lease so the U6 self-test tier can manage its own lease lifecycle'
     Exit-DesktopLease
     $leaseHeld = $false

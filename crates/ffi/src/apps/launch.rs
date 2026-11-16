@@ -52,6 +52,7 @@ pub unsafe extern "C" fn ad_launch_app_exact(
             }
         };
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let _indicator = crate::indicator::begin_control!(adapter, "launch-app", None);
         let options = acdesktop_core::system::launch_options::LaunchOptions {
             timeout_ms,
             ..Default::default()

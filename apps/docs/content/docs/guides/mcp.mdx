@@ -45,7 +45,7 @@ acdesktop mcp --session s1 --headed
 
 `ACDESKTOP_SESSION`, `ACDESKTOP_AGENT_ID` and `ACDESKTOP_HOME` in the server's environment apply the same way.
 
-A tool cannot pass a global flag. Commands that need a session, such as `trace` and `cursor-overlay`, work only when the server has one, headed-only commands need `mcp --headed`, and `--wait-for` is not available per call.
+An ordinary tool can pass `desc` to describe its operation in the Windows control indicator. Other global flags are fixed at server startup. Commands that need a session, such as `trace` and `cursor-overlay`, work only when the server has one, headed-only commands need `mcp --headed`, and `--wait-for` is not available per call. `desktop_sandbox_exec` does not accept `desc`.
 
 ## Read results
 

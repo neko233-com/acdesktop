@@ -15,6 +15,30 @@ use crate::system::close_outcome::CloseOutcome;
 pub(crate) mod tcp_listener;
 
 impl SystemOps for WindowsAdapter {
+    fn requires_control_indicator(&self) -> bool {
+        true
+    }
+
+    fn show_control_indicator(
+        &self,
+        owner: &str,
+        session: bool,
+        description: &str,
+    ) -> Result<(), AdapterError> {
+        crate::system::cursor_overlay::indicator::show(owner, session, description)
+    }
+
+    fn hide_control_indicator(&self, owner: &str) -> Result<(), AdapterError> {
+        crate::system::cursor_overlay::indicator::hide(owner)
+    }
+
+    fn present_control_indicator(
+        &self,
+        event: &acdesktop_core::ControlIndicatorEvent<'_>,
+    ) -> Result<(), AdapterError> {
+        crate::system::cursor_overlay::indicator::present(event)
+    }
+
     fn update_cursor_overlay(
         &self,
         control: &acdesktop_core::CursorOverlayControl,
@@ -32,8 +56,7 @@ impl SystemOps for WindowsAdapter {
     /// both the handle's identity and its exclusivity before trusting it,
     /// because a handle's share mode cannot be read back on Windows and
     /// identity alone proves naming rather than exclusion - when it is set.
-    /// Mirrors `MacOSAdapter`'s two-branch override over
-    /// `acquire_unix_interaction_lease` / `adopt_inherited_unix_interaction_lease`.
+    /// Mirrors the macOS acquire-or-adopt lease contract.
     #[cfg(target_os = "windows")]
     fn acquire_interaction_lease(
         &self,

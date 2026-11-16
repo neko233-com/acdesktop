@@ -15,7 +15,7 @@ Every GitHub release ships `acdesktop-ffi-v<version>-<target>.tar.gz` (`.zip` on
     <tr><th>Path</th><th>Contents</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>lib/</code></td><td>The library and the helper that must stay beside it: <code>acdesktop-macos-helper</code> on macOS, <code>acdesktop-linux-clipboard-owner</code> on Linux. On Windows, also <code>acdesktop_ffi.dll.lib</code>, the import library for MSVC.</td></tr>
+    <tr><td><code>lib/</code></td><td>The library and the helper that must stay beside it: <code>acdesktop-macos-helper</code> on macOS, <code>acdesktop-linux-clipboard-owner</code> on Linux, and <code>acdesktop.exe</code> on Windows. Windows also includes <code>acdesktop_ffi.dll.lib</code>, the import library for MSVC.</td></tr>
     <tr><td><code>include/acdesktop.h</code></td><td>The generated C header</td></tr>
   </tbody>
 </table>
@@ -30,7 +30,7 @@ cargo build --profile release-ffi -p acdesktop-ffi    # writes target/release-ff
 
 The output is `libacdesktop_ffi.dylib` on macOS, `libacdesktop_ffi.so` on Linux, and `acdesktop_ffi.dll` on Windows, in `target/release-ffi/`. The `release-ffi` profile keeps `panic = "unwind"`, so every entrypoint can catch a panic and report it as `AD_RESULT_ERR_INTERNAL`. The workspace `release` profile uses `panic = "abort"`, so `cargo build --release` produces a library whose panics abort the host process. Do not ship it.
 
-A source build also needs the platform helper beside the library; see [Installation](/desktop/installation#build-from-source).
+A source build also needs the platform helper beside the library; see [Installation](/desktop/installation#build-from-source). On Windows, build the CLI with `cargo build --release -p acdesktop` and copy `target/release/acdesktop.exe` beside `acdesktop_ffi.dll`. The library uses it to render the control indicator.
 
 ## The header
 
@@ -106,3 +106,10 @@ python3 tests/ffi-python/smoke.py target/release-ffi/libacdesktop_ffi.so crates/
 ```
 
 On the Linux test desktop it ended with `All legs passed.`
+
+On Windows, after building both artifacts, run the same test in PowerShell 5.1 or 7:
+
+```powershell
+Copy-Item target/release/acdesktop.exe target/release-ffi/acdesktop.exe
+python tests/ffi-python/smoke.py target/release-ffi/acdesktop_ffi.dll crates/ffi/include/acdesktop.h
+```

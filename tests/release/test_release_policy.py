@@ -16,6 +16,7 @@ class ReleasePolicyTest(unittest.TestCase):
                          ("ffi-release-panic-guard, linux-archive-contents]", "linux-archive-contents]"),
                          ("check-release-assets.py local", "missing-asset-check.py local"),
                          ("actions/attest-build-provenance@", "invalid-attestation@"),
+                         ("Build Windows control indicator helper for FFI consumers", "missing helper build"),
                          ("--draft=false", "--draft=true"),
                          ("scripts/checkout-release-source.sh", "scripts/missing.sh")):
             with self.subTest(rule=old):

@@ -19,7 +19,7 @@ description: >
 This file covers only what differs on Windows. The observe-act loop, refs, JSON
 envelope, sessions and tracing are the same on every platform.
 
-Requires Windows 10 1809+ / Windows Server 2019+ (x64 or ARM64). Run it in the
+Requires Windows 10 1809+ (x86, x64 or ARM64) or Windows Server 2019+ (x64 or ARM64). The x86 CLI has been tested under WoW64, not on a native 32-bit Windows installation. Run it in the
 interactive desktop session of the signed-in user. Session 0 (services and
 SYSTEM tasks), Server Core, the secure desktop (UAC prompts, the sign-in
 screen), a locked desktop and another user's session are not supported:
@@ -42,6 +42,7 @@ observation, actions and capture there fail or return nothing.
 | Wait | `wait` | Works for ms, `--element`, `--window`, `--text`, `--menu`, `--menu-closed`, `--event` and `--notification` |
 | Notifications | `list-notifications`, `dismiss-notification`, `dismiss-all-notifications`, `notification-action` | Works over the Action Center. Pass `--headed` when the center is closed |
 | Cursor overlay | `cursor-overlay` | Works. `enable` returns `data.rendered: true` only after the renderer acknowledges over its pipe. See `references/shell-and-overlay.md` |
+| Control indicator | `session`, desktop actions | Works. A screen-edge glow and description appear automatically. The indicator stays visible during keyboard input and does not take focus. See `references/shell-and-overlay.md` |
 | System | `status`, `permissions`, `version`, `batch`, `skills`, `session`, `trace` | Works |
 
 ## First Contact

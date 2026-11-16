@@ -486,6 +486,14 @@ jobs:
       - name: Binary command tests
         run: cargo test --locked -p acdesktop
 
+      - name: Windows installer tests (PowerShell 5.1 and 7)
+        shell: pwsh
+        run: |
+          powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File .\tests\release\test_windows_installer.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pwsh -NoProfile -NonInteractive -File .\tests\release\test_windows_installer.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: FFI integration tests
         run: cargo test --locked -p acdesktop-ffi --tests
 

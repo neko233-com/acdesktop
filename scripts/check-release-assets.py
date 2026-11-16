@@ -10,7 +10,7 @@ TARGETS = (
 
 
 def expected_assets(version):
-    cli = {f"acdesktop-v{version}-{target}.tar.gz" for target in TARGETS}
+    cli = {f"acdesktop-v{version}-{target}.tar.gz" for target in (*TARGETS, "i686-pc-windows-msvc")}
     ffi = {f"acdesktop-ffi-v{version}-{target}.{'zip' if 'windows' in target else 'tar.gz'}" for target in TARGETS}
     return cli | ffi | {"checksums.txt", "install.sh", "install.ps1"}
 

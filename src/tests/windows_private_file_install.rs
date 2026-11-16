@@ -99,6 +99,40 @@ fn session_start_in_a_real_home_succeeds_as_the_junction_control() {
 }
 
 #[test]
+fn indicator_exits_when_its_home_directory_is_removed() {
+    use windows_sys::Win32::Foundation::{CloseHandle, WAIT_OBJECT_0};
+    use windows_sys::Win32::System::Threading::{
+        OpenProcess, PROCESS_SYNCHRONIZE, WaitForSingleObject,
+    };
+
+    let scratch = Scratch::create("indicator-home-removal");
+    let home = scratch.dir("home");
+    let envelope = parse_envelope(&run_session_start(&home));
+    assert_eq!(envelope["ok"], true, "{envelope}");
+    let id = envelope["data"]["session_id"].as_str().unwrap();
+    let query = format!(
+        "Get-CimInstance Win32_Process -Filter \"Name='acdesktop.exe'\" | Where-Object {{ $_.CommandLine -like '*--control-indicator-child {id}*' }} | ForEach-Object {{ $_.ProcessId }}"
+    );
+    let output = Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &query])
+        .output()
+        .unwrap();
+    let pid: u32 = String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .parse()
+        .expect("indicator process");
+    let handle = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, 0, pid) };
+    assert!(!handle.is_null());
+    drop(scratch);
+    let result = unsafe { WaitForSingleObject(handle, 6000) };
+    unsafe { CloseHandle(handle) };
+    assert_eq!(
+        result, WAIT_OBJECT_0,
+        "indicator must exit after its home is removed"
+    );
+}
+
+#[test]
 fn config_set_refuses_a_junction_without_writing_to_its_target() {
     let scratch = Scratch::create("config-junction");
     let home = scratch.dir("home");

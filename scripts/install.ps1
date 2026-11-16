@@ -1,141 +1,122 @@
-# acdesktop 一键安装脚本 —— Windows arm64
-#
-# 用法：
-#   irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.ps1 | iex
-#   irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.ps1 | iex -ArgumentList '--version','v1.2.0'
-#   powershell -File scripts/install.ps1 -InstallDir C:\Tools\acdesktop
-#
-# 设计原则：
-#   - 直接下载原生二进制
-#   - 单次下载、单次校验、原子替换
-#   - 响应快：curl.exe + tar.exe 是 Windows 10+ 自带
-#   - PATH 自动写入用户环境变量并刷新当前会话
+# Installs acdesktop on Windows x86, x64 and ARM64 with PowerShell 5.1 or 7.
+# irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.ps1 | iex
+# powershell.exe -File scripts/install.ps1 -Version v1.4.0 -InstallDir C:\Tools\acdesktop
 
 [CmdletBinding()]
 param(
   [string]$Version = '',
-  [string]$InstallDir = ''
+  [string]$InstallDir = '',
+  [switch]$NoPath
 )
 
 $ErrorActionPreference = 'Stop'
-$ProgressPreference    = 'SilentlyContinue'   # 关闭进度条加速 Invoke-WebRequest
-
-$Repo       = 'neko233-com/acdesktop'
+$ProgressPreference = 'SilentlyContinue'
+$Repo = 'neko233-com/acdesktop'
 $GhReleases = "https://github.com/$Repo/releases"
 
-# ---------- 平台检测 ----------
-$IsArm64 = $env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or
-           (Get-CimInstance Win32_OperatingSystem).OSArchitecture -like '*ARM*'
-if (-not $IsArm64) {
-  Write-Host '✗ acdesktop 一键安装脚本当前仅支持 Windows ARM64' -ForegroundColor Red
-  Write-Host "  当前架构: $($env:PROCESSOR_ARCHITECTURE)" -ForegroundColor Red
-  Write-Host "  请下载对应 release archive: $GhReleases" -ForegroundColor Red
-  exit 1
+$NativeArchitecture = if ($env:PROCESSOR_ARCHITEW6432) {
+  $env:PROCESSOR_ARCHITEW6432
+} else {
+  $env:PROCESSOR_ARCHITECTURE
+}
+if (-not $NativeArchitecture) { throw 'Windows processor architecture is unavailable' }
+switch ($NativeArchitecture.ToUpperInvariant()) {
+  'X86' { $Target = 'i686-pc-windows-msvc' }
+  'AMD64' { $Target = 'x86_64-pc-windows-msvc' }
+  'ARM64' { $Target = 'aarch64-pc-windows-msvc' }
+  default { throw "Unsupported Windows architecture '$NativeArchitecture'. See $GhReleases" }
 }
 
-$Target      = 'aarch64-pc-windows-msvc'
-$BinaryName  = 'acdesktop.exe'
-$ShimName    = 'acdesktop.cmd'
-$DefaultDir  = Join-Path $HOME '.local\bin'
-if (-not $InstallDir) { $InstallDir = $DefaultDir }
-
-# ---------- 获取版本号 ----------
-function Get-LatestTag {
-  param([string]$ApiUrl)
-  # 重定向头里就是 /releases/tag/vX.Y.Z —— 比完整 GET JSON 快
-  try {
-    $resp = curl.exe -fsSLI -o NUL -w '%{redirect_url}' "$ApiUrl/latest" 2>$null
-    if ($LASTEXITCODE -eq 0 -and $resp -match '/tag/([v0-9.]+)') { return $Matches[1] }
-  } catch {}
-  # 回退到 API
-  $latest = Invoke-RestMethod -Uri "$ApiUrl/latest" -Headers @{ Accept = 'application/vnd.github+json' }
-  return $latest.tag_name
-}
-
+if (-not $InstallDir -and $env:ACDESKTOP_INSTALL_DIR) { $InstallDir = $env:ACDESKTOP_INSTALL_DIR }
+if (-not $InstallDir) { $InstallDir = Join-Path $HOME '.local\bin' }
+$SkipPath = $NoPath -or ($env:ACDESKTOP_INSTALL_NO_PATH -eq '1')
+$InstallDir = [IO.Path]::GetFullPath($InstallDir)
 if ($Version) {
-  $Tag = $Version
-  if ($Tag -notmatch '^v') { $Tag = "v$Tag" }
+  $Tag = if ($Version -match '^v') { $Version } else { "v$Version" }
 } else {
-  $Tag = Get-LatestTag -ApiUrl "https://api.github.com/repos/$Repo"
+  $releaseUrl = & curl.exe -fsSLI --connect-timeout 15 --max-time 60 `
+    -o NUL -w '%{url_effective}' "$GhReleases/latest"
+  $releasePattern = '^https://github\.com/' + [regex]::Escape($Repo) + '/releases/tag/(v[^/?#]+)$'
+  if ($LASTEXITCODE -eq 0 -and $releaseUrl -match $releasePattern) {
+    $Tag = $Matches[1]
+  } else {
+    $response = & curl.exe -fsSL --connect-timeout 15 --max-time 60 `
+      -H 'Accept: application/vnd.github+json' -H 'User-Agent: acdesktop-installer' `
+      "https://api.github.com/repos/$Repo/releases/latest"
+    if ($LASTEXITCODE -ne 0) { throw "Could not query the latest release: $LASTEXITCODE" }
+    $latest = $response | ConvertFrom-Json
+    $Tag = [string]$latest.tag_name
+  }
 }
-$Ver       = $Tag.TrimStart('v')
-$Tarball   = "acdesktop-v$Ver-$Target.tar.gz"
-$BaseUrl   = "$GhReleases/download/$Tag"
-$TarballUrl    = "$BaseUrl/$Tarball"
-$ChecksumsUrl  = "$BaseUrl/checksums.txt"
+if ($Tag -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$') {
+  throw "Invalid release version '$Tag'"
+}
 
-# ---------- 原子下载 + 校验 + 安装 ----------
-$Staging = Join-Path ([IO.Path]::GetTempPath()) "acdesktop-install-$PID"
+$Ver = $Tag.Substring(1)
+$Tarball = "acdesktop-v$Ver-$Target.tar.gz"
+$BaseUrl = "$GhReleases/download/$Tag"
+$TempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+$Staging = Join-Path $TempRoot ("acdesktop-install-" + [Guid]::NewGuid().ToString('N'))
+$TmpExe = $null
 try {
-  New-Item -ItemType Directory -Force -Path $Staging | Out-Null
+  New-Item -ItemType Directory -Path $Staging | Out-Null
+  $Archive = Join-Path $Staging $Tarball
+  $Checksums = Join-Path $Staging 'checksums.txt'
+  Write-Host "Downloading $Tarball"
+  & curl.exe -fsSL --retry 3 --retry-delay 1 -o $Archive "$BaseUrl/$Tarball"
+  if ($LASTEXITCODE -ne 0) { throw "Archive download failed: $LASTEXITCODE" }
+  & curl.exe -fsSL --retry 3 --retry-delay 1 -o $Checksums "$BaseUrl/checksums.txt"
+  if ($LASTEXITCODE -ne 0) { throw "Checksum download failed: $LASTEXITCODE" }
 
-  Write-Host "→ 下载 $Tarball …" -ForegroundColor Cyan
-  curl.exe -fsSL --retry 3 --retry-delay 1 -o "$Staging\$Tarball" "$TarballUrl"
-  if ($LASTEXITCODE -ne 0) { throw "下载归档失败: $LASTEXITCODE" }
-  curl.exe -fsSL --retry 3 --retry-delay 1 -o "$Staging\checksums.txt" "$ChecksumsUrl"
-  if ($LASTEXITCODE -ne 0) { throw "下载校验和失败: $LASTEXITCODE" }
-
-  Write-Host '→ SHA256 校验 …' -ForegroundColor Cyan
-  $expected = (Select-String -Path "$Staging\checksums.txt" -Pattern "\s+$Tarball$" |
-               Select-Object -First 1).Line.Split(' ')[0].ToLower()
-  if (-not $expected) { throw "checksums.txt 中找不到 $Tarball" }
-  $actual   = (Get-FileHash "$Staging\$Tarball" -Algorithm SHA256).Hash.ToLower()
-  if ($actual -ne $expected) {
-    throw "SHA256 不匹配！期望: $expected  实际: $actual"
+  $pattern = '^([a-fA-F0-9]{64})\s+\*?' + [regex]::Escape($Tarball) + '$'
+  $matchingLines = @(Get-Content -LiteralPath $Checksums | Where-Object { $_ -match $pattern })
+  if ($matchingLines.Count -ne 1 -or $matchingLines[0] -notmatch $pattern) {
+    throw "checksums.txt must contain exactly one SHA256 for $Tarball"
   }
+  $expected = $Matches[1].ToLowerInvariant()
+  $actual = (Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash.ToLowerInvariant()
+  if ($actual -ne $expected) { throw "SHA256 mismatch for $Tarball" }
 
-  Write-Host '→ 解压 …' -ForegroundColor Cyan
+  $entries = @(& tar.exe -tzf $Archive)
+  if ($LASTEXITCODE -ne 0 -or $entries.Count -ne 1 -or $entries[0] -cne 'acdesktop.exe') {
+    throw 'The release archive must contain only acdesktop.exe'
+  }
+  & tar.exe -xzf $Archive -C $Staging
+  if ($LASTEXITCODE -ne 0) { throw "Archive extraction failed: $LASTEXITCODE" }
+  $SrcExe = Join-Path $Staging 'acdesktop.exe'
+  if (-not (Test-Path -LiteralPath $SrcExe -PathType Leaf)) { throw 'acdesktop.exe is missing from the archive' }
+
   New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-  tar.exe -xzf "$Staging\$Tarball" -C $Staging
-  if ($LASTEXITCODE -ne 0) { throw "解压失败: $LASTEXITCODE" }
-
-  $SrcExe = Join-Path $Staging $BinaryName
-  if (-not (Test-Path $SrcExe)) { throw "解压后找不到 $BinaryName" }
-
-  # 原子替换：先写 .install 后缀，再 Move-Item 覆盖
-  $DstExe   = Join-Path $InstallDir $BinaryName
-  $DstShim  = Join-Path $InstallDir $ShimName
-  $TmpExe   = Join-Path $InstallDir "$BinaryName.install.$PID"
-
-  Copy-Item $SrcExe $TmpExe -Force
-  Move-Item $TmpExe $DstExe -Force
-
-  # 写 .cmd shim（直接转发，不走任何包装器）
-  "@echo off`r`n`"$DstExe`" %*`r`nexit /b %errorlevel%" | Set-Content -Encoding Ascii $DstShim
-}
-finally {
-  Remove-Item $Staging -Recurse -Force -ErrorAction SilentlyContinue
-}
-
-# ---------- PATH 处理 ----------
-$UserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-$InstallDirNormalized = $InstallDir.TrimEnd('\')
-$InPath = $false
-if ($UserPath) {
-  $paths = $UserPath -split ';'
-  foreach ($p in $paths) {
-    if (($p.TrimEnd('\') -ieq $InstallDirNormalized) -or
-        ($p -ieq $InstallDir)) { $InPath = $true; break }
+  $DstExe = Join-Path $InstallDir 'acdesktop.exe'
+  $TmpExe = Join-Path $InstallDir ('acdesktop.exe.install.' + [Guid]::NewGuid().ToString('N'))
+  Copy-Item -LiteralPath $SrcExe -Destination $TmpExe
+  Move-Item -LiteralPath $TmpExe -Destination $DstExe -Force
+} finally {
+  if ($TmpExe) { Remove-Item -LiteralPath $TmpExe -Force -ErrorAction SilentlyContinue }
+  if (Test-Path -LiteralPath $Staging) {
+    $ResolvedStaging = [IO.Path]::GetFullPath((Resolve-Path -LiteralPath $Staging).ProviderPath)
+    $StagingItem = Get-Item -LiteralPath $Staging -Force
+    if ($ResolvedStaging.StartsWith($TempRoot, [StringComparison]::OrdinalIgnoreCase) -and
+        $ResolvedStaging -ieq [IO.Path]::GetFullPath($Staging) -and
+        -not ($StagingItem.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+      Remove-Item -LiteralPath $ResolvedStaging -Recurse -Force -ErrorAction SilentlyContinue
+    }
   }
 }
 
-$RefreshNeeded = $false
-if (-not $InPath) {
-  $NewPath = if ([string]::IsNullOrEmpty($UserPath)) { $InstallDir }
-             else { "$UserPath;$InstallDir" }
-  [Environment]::SetEnvironmentVariable('Path', $NewPath, 'User')
-  $env:Path = "$InstallDir;$env:Path"
-  $RefreshNeeded = $true
+if (-not $SkipPath) {
+  $UserPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+  $normalized = $InstallDir.TrimEnd('\')
+  $userPaths = @($UserPath -split ';' | Where-Object { $_ })
+  if (-not @($userPaths | Where-Object { $_.TrimEnd('\') -ieq $normalized }).Count) {
+    $newPath = (@($userPaths) + @($InstallDir)) -join ';'
+    [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+  }
+  $processPaths = @($env:Path -split ';' | Where-Object { $_ })
+  if (-not @($processPaths | Where-Object { $_.TrimEnd('\') -ieq $normalized }).Count) {
+    $env:Path = "$InstallDir;$env:Path"
+  }
 }
-
-# ---------- 结果 ----------
-Write-Host ''
-Write-Host "✓ acdesktop v$Ver 安装成功 → $InstallDir" -ForegroundColor Green
-Write-Host ''
-if ($RefreshNeeded) {
-  Write-Host "✓ 已将 $InstallDir 写入用户 PATH 并刷新当前会话" -ForegroundColor Green
-} else {
-  Write-Host "✓ $InstallDir 已在 PATH 中，可直接运行 acdesktop" -ForegroundColor Green
-}
-Write-Host ''
-Write-Host '运行 acdesktop version 验证安装。'
+Write-Host "Installed acdesktop $Tag to $DstExe"
+if ($SkipPath) { Write-Host 'PATH was not changed.' }
+Write-Host 'Run acdesktop version to verify the installation.'

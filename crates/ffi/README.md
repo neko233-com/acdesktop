@@ -1,6 +1,6 @@
 # acdesktop-ffi
 
-A C-ABI library over the [`PlatformAdapter`](../../crates/core/src/adapter/mod.rs) trait. It builds a shared library for C, C++, Python (ctypes), Swift, Go (cgo) and Node (ffi-napi). Calls run in process, so a program does not start the CLI for each command.
+A C-ABI library over the [`PlatformAdapter`](../../crates/core/src/adapter/mod.rs) trait. It builds a shared library for C, C++, Python (ctypes), Swift, Go (cgo) and Node (ffi-napi). Calls execute in process; on Windows, a separate `acdesktop.exe` process renders the control indicator.
 
 The full guide is at https://agent-browser.dev/desktop/ffi. It covers linking, the API, ownership and threading. The agent-facing version is the [`acdesktop-ffi` skill](../../skills/acdesktop-ffi/SKILL.md).
 
@@ -14,7 +14,7 @@ The output is in `target/release-ffi/`: `libacdesktop_ffi.dylib` on macOS, `liba
 
 Use `--profile release-ffi`, not `--release`. The `release` profile sets `panic = "abort"`, which turns off the `catch_unwind` traps at the `extern "C"` boundary without any error. The `release-ffi` profile keeps `panic = "unwind"`.
 
-A source build also needs the platform helper beside the library: `acdesktop-macos-helper` on macOS, `acdesktop-linux-clipboard-owner` on Linux.
+A source build also needs the platform helper beside the library: `acdesktop-macos-helper` on macOS, `acdesktop-linux-clipboard-owner` on Linux, and `acdesktop.exe` on Windows. On Windows, build the executable with `cargo build --release -p acdesktop` and copy it beside the DLL; it renders the control indicator.
 
 For CI and tests that need no accessibility permission, build the stub adapter. It returns `PLATFORM_NOT_SUPPORTED` for every adapter call.
 

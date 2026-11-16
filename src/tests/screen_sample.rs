@@ -44,6 +44,26 @@ pub fn pixels_matching(red: u8, green: u8, blue: u8) -> Option<usize> {
     )
 }
 
+pub fn region_at(x: i32, y: i32, size: i32) -> Option<Vec<u8>> {
+    let width = unsafe { GetSystemMetrics(SM_CXSCREEN) };
+    let height = unsafe { GetSystemMetrics(SM_CYSCREEN) };
+    if x < 0 || y < 0 || size <= 0 || x + size > width || y + size > height {
+        return None;
+    }
+    let screen = capture(width, height)?;
+    let mut region = Vec::new();
+    for row in y..y + size {
+        let start = ((row * width + x) * 4) as usize;
+        let end = start + size as usize * 4;
+        region.extend_from_slice(screen.get(start..end)?);
+    }
+    Some(region)
+}
+
+pub fn primary_width() -> i32 {
+    unsafe { GetSystemMetrics(SM_CXSCREEN) }
+}
+
 fn capture(width: i32, height: i32) -> Option<Vec<u8>> {
     let screen = unsafe { GetDC(std::ptr::null_mut::<HWND>() as HWND) };
     if screen.is_null() {

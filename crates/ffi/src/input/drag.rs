@@ -22,6 +22,7 @@ pub unsafe extern "C" fn ad_drag(
         let p = &*params;
         let core_params = p.to_core();
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let _indicator = crate::indicator::begin_control!(adapter, "drag", None);
         let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
         if let Err(error) = core_params.validate(lease.deadline()) {
             error::set_last_error(&error);

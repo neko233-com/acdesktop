@@ -1,6 +1,6 @@
 # Installing acdesktop
 
-Install the native CLI from a [release archive](https://github.com/neko233-com/acdesktop/releases), or build it from source. The install scripts support macOS ARM64 and Windows ARM64:
+Install the native CLI from a [release archive](https://github.com/neko233-com/acdesktop/releases), or build it from source. The install scripts support macOS ARM64 and Windows x86, x64 and ARM64:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.sh | bash
@@ -12,7 +12,7 @@ irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install
 
 ## Release archives
 
-Download the archive for your OS and architecture from [GitHub Releases](https://github.com/neko233-com/acdesktop/releases). Extract the executable and its platform helper into one directory on your PATH. To upgrade, replace both files with the ones from the same release.
+Download the archive for your OS and architecture from [GitHub Releases](https://github.com/neko233-com/acdesktop/releases). Extract the executable and any included helper into one directory on your PATH. To upgrade, replace them with the files from the same release.
 
 The release's `checksums.txt` catches corrupted downloads but does not prove where the archive came from. Verify its origin with the build attestation:
 
@@ -25,11 +25,12 @@ gh attestation verify <downloaded-archive> --repo neko233-com/acdesktop
 You need the Rust toolchain pinned in `rust-toolchain.toml` (1.89.0). `rustup` installs it on first use. You also need a C toolchain: the Xcode command-line tools on macOS 13 or later, the MSVC build tools on Windows, or `build-essential` on Linux.
 
 ```bash
-git clone https://github.com/neko233-com/acdesktop && cd acdesktop
+git clone https://github.com/neko233-com/acdesktop
+cd acdesktop
 cargo build --release -p acdesktop
 ```
 
-Each platform crate builds only on its own OS. Build the helper for your platform. A source build puts it in `target/release/`, next to the CLI. Windows has no helper.
+Each platform crate builds only on its own OS. On macOS and Linux, build the platform helper; a source build puts it in `target/release/`, next to the CLI. The Windows CLI needs no separate helper.
 
 ```bash
 cargo build --release -p acdesktop-macos --bin acdesktop-macos-helper   # macOS

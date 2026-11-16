@@ -79,6 +79,8 @@ jobs:
             container: ubuntu:22.04@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956
           - target: x86_64-pc-windows-msvc
             runner: windows-latest
+          - target: i686-pc-windows-msvc
+            runner: windows-latest
           - target: aarch64-pc-windows-msvc
             runner: windows-11-arm
     steps:
@@ -399,6 +401,10 @@ jobs:
         shell: bash
         run: cargo build --locked --release -p acdesktop-linux --bins --target ${{ matrix.target }}
 
+      - name: Build Windows control indicator helper for FFI consumers
+        if: runner.os == 'Windows'
+        run: cargo build --locked --release -p acdesktop --target ${{ matrix.target }}
+
       - name: Check glibc floor (Linux)
         if: runner.os == 'Linux'
         shell: bash
@@ -438,6 +444,7 @@ jobs:
           fi
           if [ "$RUNNER_OS" = "Windows" ]; then
             cp "target/${{ matrix.target }}/release-ffi/acdesktop_ffi.dll.lib" "$STAGE/lib/"
+            cp "target/${{ matrix.target }}/release/acdesktop.exe" "$STAGE/lib/"
           fi
           cp crates/ffi/include/acdesktop.h "$STAGE/include/"
           cp LICENSE "$STAGE/"
@@ -467,7 +474,9 @@ jobs:
             cat >> "$STAGE/README.md" <<'WINEOF'
 
           `dlopen` / Python `ctypes` callers load
-          `lib/acdesktop_ffi.dll` by path and need nothing else. An MSVC
+          `lib/acdesktop_ffi.dll` by path. Keep `lib/acdesktop.exe` beside the
+          DLL: it renders the control indicator for Windows desktop actions.
+          An MSVC
           linking consumer (C++ or Rust) needs `lib/acdesktop_ffi.dll.lib`
           beside it — that import library is what you link against at build time.
           WINEOF
@@ -511,6 +520,8 @@ jobs:
             $names | ForEach-Object { Write-Output "  $_" }
             exit 1
           }
+          $helper = "${env:STAGE}/lib/acdesktop.exe"
+          if ($names -notcontains $helper) { throw "Windows FFI archive is missing $helper" }
           Write-Output "OK: archive contains $importLib"
           $hash = (Get-FileHash "${env:STAGE}.zip" -Algorithm SHA256).Hash.ToLower()
           "$hash  ${env:STAGE}.zip" | Out-File -Encoding ascii "${env:STAGE}.zip.sha256"

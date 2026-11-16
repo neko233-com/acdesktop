@@ -92,6 +92,12 @@ pub unsafe extern "C" fn ad_execute_action_with_policy(
                 }
             };
         let request = action_request(policy, core_action).with_expected_process(process);
+        let indicator =
+            crate::indicator::begin_control!(adapter, request.action.name(), Some(&request.action));
+        let click = matches!(
+            &request.action,
+            Action::Click | Action::DoubleClick | Action::RightClick | Action::TripleClick
+        );
         let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
         if let Action::Drag(params) = &request.action
             && let Err(error) = params.validate(lease.deadline())
@@ -106,10 +112,20 @@ pub unsafe extern "C" fn ad_execute_action_with_policy(
             &lease,
         ) {
             Ok(result) => {
+                if click && let Some(guard) = indicator.as_ref() {
+                    guard.click_on_element(
+                        native_handle.as_ref(),
+                        lease.deadline(),
+                        result.disposition(),
+                    );
+                }
                 *out = action_result_to_c(&result);
                 AdResult::Ok
             }
             Err(e) => {
+                if click && let Some(guard) = indicator.as_ref() {
+                    guard.click_on_element(native_handle.as_ref(), lease.deadline(), e.disposition);
+                }
                 error::set_last_error(&e);
                 error::last_error_code()
             }

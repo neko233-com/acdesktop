@@ -1,6 +1,7 @@
 pub(crate) mod adapter_factory;
 mod app_window;
 mod clipboard;
+mod control_indicator;
 mod cursor_overlay;
 mod disposition;
 mod interaction;
@@ -68,6 +69,13 @@ fn dispatch_command(
     } else {
         context.command_scope(cmd.name())?
     };
+    let _indicator = control_indicator::begin(&cmd, adapter, context)?;
+    let indicated_context = _indicator.as_ref().map(|guard| {
+        context
+            .clone()
+            .with_control_indicator_owner(Some(guard.owner().to_owned()))
+    });
+    let context = indicated_context.as_ref().unwrap_or(context);
     if let Some(session_id) = overlay_session.as_ref() {
         let _ = adapter.update_cursor_overlay(&CursorOverlayControl::hide(session_id.clone()));
     }

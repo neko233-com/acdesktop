@@ -175,6 +175,33 @@ fn start_renderer(
     imp::start_renderer(name, control, budget)
 }
 
+#[cfg(target_os = "windows")]
+pub(crate) fn start_indicator(
+    name: &str,
+    control: &CursorOverlayControl,
+    session: bool,
+) -> Result<(), AdapterError> {
+    let process = acdesktop_core::ProcessId::from(std::process::id());
+    let token = crate::system::process_identity::token_for_pid(process)?.ok_or_else(|| {
+        AdapterError::internal("The indicator owner identity could not be established")
+    })?;
+    let arguments = vec![
+        "--control-indicator-child".to_owned(),
+        control.session_id().to_owned(),
+        if session {
+            "session"
+        } else if super::hosted_lease::is_hosted_owner(control.session_id()) {
+            "hosted"
+        } else {
+            "process"
+        }
+        .to_owned(),
+        std::process::id().to_string(),
+        token,
+    ];
+    imp::start_indicator(name, control, &arguments)
+}
+
 #[cfg(not(target_os = "windows"))]
 fn start_renderer(
     _name: &str,
@@ -187,6 +214,7 @@ fn start_renderer(
 #[cfg(target_os = "windows")]
 mod imp {
     use super::{pipe_name, transport};
+    use crate::system::cursor_overlay::helper_image::HelperImage;
     use crate::system::cursor_overlay::image_identity;
     use crate::system::cursor_overlay::wide::{wide, win32_error};
     use acdesktop_core::{AdapterError, CursorOverlayControl};
@@ -197,9 +225,8 @@ mod imp {
         PROCESS_INFORMATION, STARTUPINFOW,
     };
 
-    /// Spawns only from the CLI's own image. Under an FFI host
-    /// `current_exe()` is the host process, which must never be re-launched
-    /// as a renderer, and a test binary must not fork one either.
+    /// Selects the CLI's own image for the cursor renderer. Hosted control
+    /// indicators locate their separate helper instead of relaunching a host.
     ///
     /// The refusal is an `Err` rather than macOS's `Ok(())`, because
     /// dispatch turns `Ok` into `rendered: true` - which would claim an
@@ -243,12 +270,41 @@ mod imp {
         control: &CursorOverlayControl,
         budget: Duration,
     ) -> Result<(), AdapterError> {
-        let image = executable()?;
-        let mut command_line = wide(&format!(
-            "\"{}\" {}",
-            image.display(),
-            pipe_name::child_arguments(control.session_id(), control.agent_id()).join(" ")
-        ));
+        let arguments = pipe_name::child_arguments(control.session_id(), control.agent_id());
+        start_with_arguments(name, control, budget, &arguments, None)
+    }
+
+    pub(super) fn start_indicator(
+        name: &str,
+        control: &CursorOverlayControl,
+        arguments: &[String],
+    ) -> Result<(), AdapterError> {
+        let helper = if super::super::helper_image::is_cli_image()? {
+            None
+        } else {
+            Some(HelperImage::locate()?)
+        };
+        start_with_arguments(
+            name,
+            control,
+            super::ENABLE_BUDGET,
+            arguments,
+            helper.as_ref(),
+        )
+    }
+
+    fn start_with_arguments(
+        name: &str,
+        control: &CursorOverlayControl,
+        budget: Duration,
+        arguments: &[String],
+        helper: Option<&HelperImage>,
+    ) -> Result<(), AdapterError> {
+        let image = match helper {
+            Some(helper) => helper.path.clone(),
+            None => executable()?,
+        };
+        let mut command_line = wide(&format!("\"{}\" {}", image.display(), arguments.join(" ")));
         let mut environment = child_environment();
 
         let mut startup: STARTUPINFOW = unsafe { std::mem::zeroed() };

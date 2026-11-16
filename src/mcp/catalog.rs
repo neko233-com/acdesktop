@@ -150,7 +150,8 @@ impl Tool {
 
     fn args(&self) -> impl Iterator<Item = &Arg> {
         self.command.get_arguments().filter(|arg| {
-            !arg.is_global_set()
+            (!arg.is_global_set()
+                || (arg.get_id().as_str() == "desc" && self.output == Output::Envelope))
                 && !arg.is_hide_set()
                 && arg.get_id().as_str() != "stdin"
                 && !matches!(

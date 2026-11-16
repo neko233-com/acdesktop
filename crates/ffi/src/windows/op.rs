@@ -92,6 +92,7 @@ fn perform_window_op(
             return crate::error::last_error_code();
         }
     };
+    let _indicator = crate::indicator::begin_control!(adapter, "window-operation", None);
     let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
     match adapter.inner.window_op(window, op, &lease) {
         Ok(_) => AdResult::Ok,
