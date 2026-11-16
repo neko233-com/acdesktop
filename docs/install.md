@@ -1,14 +1,16 @@
 # Installing acdesktop
 
-Install the native CLI from a [release archive](https://github.com/neko233-com/acdesktop/releases), or build it from source. The install scripts support macOS ARM64 and Windows x86, x64 and ARM64:
+Install the native CLI from a [release archive](https://github.com/neko233-com/acdesktop/releases), or build it from source. The current release includes Windows and Linux archives. The Windows installer supports x86, x64 and ARM64:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.sh | bash -s -- --version v1.3.0
 ```
 
 ```powershell
 irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.ps1 | iex
 ```
+
+The macOS ARM64 command installs the earlier v1.3.0 release. The current release does not include macOS archives; build from source if you need newer changes on macOS.
 
 ## Release archives
 

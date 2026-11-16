@@ -8,14 +8,9 @@ It ships as a native CLI and a C shared library. The optional update check conta
 
 ---
 
-## Install （macOS arm64 / Windows x86、x64、ARM64）
+## Install （Windows x86、x64、ARM64）
 
 **一键脚本 —— 最快、最轻量，原生安装：**
-
-```bash
-# macOS arm64
-curl -fsSL https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.sh | bash
-```
 
 ```powershell
 # Windows x86 / x64 / ARM64 (PowerShell 5.1 or 7)
@@ -25,8 +20,14 @@ irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install
 脚本做的事情：
 1. 从 GitHub Release 下载对应平台的原生二进制
 2. 用 `checksums.txt` 校验 SHA256
-3. 原子替换到 `~/.local/bin`（macOS）或 `$HOME\.local\bin`（Windows）
-4. Windows 自动更新用户 PATH；macOS 提示如何加入 PATH
+3. 原子替换到 `$HOME\.local\bin`
+4. 更新用户 PATH
+
+当前发行版提供 Windows 和 Linux 文件，不包含 macOS 文件。macOS arm64 用户可安装先前的 v1.3.0，或从源码构建；v1.3.0 不包含本次 Windows 控制提示：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.sh | bash -s -- --version v1.3.0
+```
 
 其他方式：
 

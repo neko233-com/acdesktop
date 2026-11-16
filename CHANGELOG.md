@@ -4,6 +4,8 @@
 
 ## [1.4.0] - 2026-11-16
 
+This release provides Windows and Linux archives. macOS archives remain available in earlier releases.
+
 ### Changes
 
 - Windows CLI、MCP 和 C 库在控制期间显示屏幕边缘提示、操作描述、按键状态和点击动画；普通输入文字默认隐藏。

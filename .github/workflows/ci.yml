@@ -32,14 +32,10 @@ jobs:
       - run: cargo fmt --all -- --check
       - name: Check E2E scripts without running native automation
         run: |
-          shellcheck -x -e SC2034,SC2154 tests/e2e/run.sh tests/e2e/electron-live.sh tests/e2e/permission-contract.sh tests/e2e/guard-command.sh tests/e2e-linux/run.sh scripts/*.sh .githooks/pre-commit
-          PYTHONPYCACHEPREFIX=/tmp/acdesktop-pycache python3 -m py_compile tests/e2e/*.py tests/e2e-linux/runner/*.py tests/e2e-linux/test_*.py tests/e2e-linux/scenarios/*.py
-          PYTHONPYCACHEPREFIX=/tmp/acdesktop-pycache python3 -m unittest discover -s tests/e2e -p 'test_*.py'
+          shellcheck -x -e SC2034,SC2154 tests/e2e-linux/run.sh scripts/*.sh .githooks/pre-commit
+          PYTHONPYCACHEPREFIX=/tmp/acdesktop-pycache python3 -m py_compile tests/e2e-linux/runner/*.py tests/e2e-linux/test_*.py tests/e2e-linux/scenarios/*.py
           ACDESKTOP_E2E_SKIP_LIVE=1 PYTHONPYCACHEPREFIX=/tmp/acdesktop-pycache python3 -I -m unittest discover -s tests/e2e-linux -p 'test_*.py'
           python3 scripts/check-linux-findings.py
-          shellcheck -x -e SC2034,SC2154 tests/real-apps/numbers-sheets.sh
-          PYTHONPYCACHEPREFIX=/tmp/acdesktop-pycache python3 -m unittest discover -s tests/real-apps -p '*_test.py'
-          PYTHONPYCACHEPREFIX=/tmp/acdesktop-pycache python3 scripts/perf_ab_probe_test.py
           python3 -I -B scripts/test-linux-live-gate.py
       - name: Validate GitHub Actions workflows
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.11
@@ -76,158 +72,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: rustup toolchain install 1.89.0 --profile minimal
       - run: cargo +1.89.0 check --locked -p acdesktop-core -p acdesktop-linux -p acdesktop --all-targets
-
-  test:
-    name: Test
-    runs-on: macos-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Install Rust toolchain
-        run: |
-          rustup show
-          rustup component add clippy
-
-      - name: Verify macOS Bash 3.2 compatibility
-        run: chmod +x scripts/*.sh && /bin/bash scripts/check-bash3-compat.sh
-
-      - name: Cache cargo registry
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'crates/**/Cargo.toml', 'src/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Cache build artifacts
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: target/
-          key: ${{ runner.os }}-build-ci-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'crates/**/Cargo.toml', 'src/Cargo.toml') }}-${{ hashFiles('crates/**/*.rs', 'src/**/*.rs', 'tests/**/*.rs') }}
-          restore-keys: |
-            ${{ runner.os }}-build-ci-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'crates/**/Cargo.toml', 'src/Cargo.toml') }}-
-            ${{ runner.os }}-build-ci-
-
-      - name: Check dependency isolation
-        run: |
-          TREE=$(cargo tree --locked -p acdesktop-core --edges normal,build)
-          if printf '%s\n' "$TREE" | grep -E 'acdesktop-(macos|windows|linux)'; then
-            echo "FAIL: core crate depends on platform crates"
-            exit 1
-          fi
-          echo "OK: core crate has no platform dependencies"
-
-      - name: Enforce Rust source rules
-        run: chmod +x scripts/*.sh && scripts/check-rust-file-size.sh
-
-      - name: Enforce architecture boundaries
-        run: chmod +x scripts/*.sh && scripts/check-architecture.sh
-
-      - name: Enforce no delivery-plan references in source
-        run: chmod +x scripts/*.sh && scripts/check-no-phase-references.sh
-
-      - name: Enforce the stale_ref constructors take only ref ids
-        run: chmod +x scripts/*.sh && scripts/check-stale-ref-constructor-misuse.sh
-
-      - name: Clippy
-        run: cargo clippy --locked -p acdesktop-core -p acdesktop-macos -p acdesktop -p acdesktop-ffi --all-targets -- -D warnings
-
-      - name: Core and macOS unit tests
-        run: chmod +x scripts/*.sh && scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-core -p acdesktop-macos --lib
-
-      - name: Native cursor trail lifecycle
-        run: |
-          clang -fobjc-arc -Werror -framework AppKit -framework QuartzCore -framework CoreGraphics tests/native/cursor_overlay_trail_test.m -o "$RUNNER_TEMP/cursor-trail-test"
-          "$RUNNER_TEMP/cursor-trail-test"
-
-      - name: Native cursor image rendering
-        run: |
-          clang -fobjc-arc -Werror -framework AppKit -framework QuartzCore -framework CoreGraphics tests/native/cursor_overlay_image_test.m -o "$RUNNER_TEMP/cursor-image-test"
-          "$RUNNER_TEMP/cursor-image-test"
-
-      - name: Native AppKit inventory names
-        run: |
-          clang -fobjc-arc -fblocks -Wall -Wextra -Werror -framework AppKit tests/native/appkit_workspace_name_test.m -o "$RUNNER_TEMP/appkit-workspace-name-test"
-          "$RUNNER_TEMP/appkit-workspace-name-test"
-
-      - name: macOS VM host compiles, signs, and refuses a missing command
-        run: |
-          VM_HOST_DIR="$RUNNER_TEMP/macos"
-          mkdir -p "$VM_HOST_DIR"
-          xcrun swiftc -O providers/macos/vmhost.swift -o "$VM_HOST_DIR/vmhost"
-          codesign -f -s - --entitlements providers/macos/vm.entitlements "$VM_HOST_DIR/vmhost"
-          codesign -d --entitlements - "$VM_HOST_DIR/vmhost" 2>&1 | grep -q com.apple.security.virtualization
-          set +e
-          "$VM_HOST_DIR/vmhost" > "$VM_HOST_DIR/usage.json" 2>&1
-          USAGE_STATUS=$?
-          set -e
-          test "$USAGE_STATUS" -eq 1
-          python3 - "$VM_HOST_DIR/usage.json" <<'PY'
-          import json, sys
-          reply = json.load(open(sys.argv[1]))
-          assert reply["ok"] is False, "vmhost accepted a missing command"
-          assert "install" in reply["message"] and "clone" in reply["message"], reply["message"]
-          PY
-
-      - name: Locator benchmark adapter contract
-        run: chmod +x scripts/*.sh && scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-core --example locator_benchmark
-
-      - name: Deterministic permission acceptance contract
-        run: bash tests/e2e/permission-contract.sh
-
-      - name: Binary command tests
-        run: chmod +x scripts/*.sh && scripts/cargo-test-isolated-home.sh test --locked -p acdesktop
-
-      # The FFI crate ships integration harnesses under crates/ffi/tests/ that
-      # exercise the C-ABI from outside the crate (raw extern "C" decls, enum
-      # fuzzing, out-param zeroing, last-error lifetimes). The workspace --lib
-      # run skips them, so wire them in explicitly so regressions fail PR CI.
-      - name: FFI integration tests
-        run: chmod +x scripts/*.sh && scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-ffi --tests
-
-      - name: Build stripped release binary
-        run: |
-          cargo build --locked --release -p acdesktop
-          cargo build --locked --release -p acdesktop-macos --bin acdesktop-macos-helper
-
-      - name: Verify shipped binary version flag
-        run: |
-          PACKAGE_ID=$(cargo pkgid -p acdesktop)
-          EXPECTED_VERSION=${PACKAGE_ID##*@}
-          EXPECTED_OUTPUT="acdesktop $EXPECTED_VERSION"
-          ACTUAL_OUTPUT=$(target/release/acdesktop --version)
-          if [ "$ACTUAL_OUTPUT" != "$EXPECTED_OUTPUT" ]; then
-            echo "FAIL: expected '$EXPECTED_OUTPUT', got '$ACTUAL_OUTPUT'"
-            exit 1
-          fi
-
-      - name: Check shipped binary size
-        run: |
-          SIZE=$(stat -f%z target/release/acdesktop)
-          HELPER_SIZE=$(stat -f%z target/release/acdesktop-macos-helper)
-          LIMIT=$((15 * 1024 * 1024))
-          echo "Binary size: $(du -sh target/release/acdesktop | cut -f1)"
-          echo "Helper size: $(du -sh target/release/acdesktop-macos-helper | cut -f1)"
-          if [ "$SIZE" -gt "$LIMIT" ] || [ "$HELPER_SIZE" -gt "$LIMIT" ]; then
-            echo "FAIL: shipped executable exceeds 15MB limit (binary=${SIZE}, helper=${HELPER_SIZE} bytes)"
-            exit 1
-          fi
-          echo "OK: shipped executables are within the 15MB per-file limit"
-
-      - name: FFI cdylib build (release-ffi profile)
-        run: cargo build --locked --profile release-ffi -p acdesktop-ffi
-
-      - name: FFI dylib-adjacent helper discovery smoke
-        run: |
-          scripts/ci-ffi-helper-discovery-smoke.sh
-
-      - name: Release preparation and archive tests
-        run: python3 -m unittest discover -s tests/release -p "test_*.py"
 
   test-linux:
     name: Test (Linux)
@@ -714,26 +558,19 @@ jobs:
   #     flip to "abort" defeats every trap_panic boundary in the dylib) and
   #     loads the feature-gated cdylib panic entrypoint to prove a panic at an
   #     exported boundary returns ErrInternal instead of aborting the host
-  #   - aarch64-apple-darwin also verifies the committed C header against what
-  #     the pinned cbindgen 0.29.4 generates, and runs the Python smoke harness
-  #     against a stub-adapter cdylib
   #   - x86_64-unknown-linux-gnu also runs the stub-adapter passthrough tests:
   #     each covered entrypoint must return PLATFORM_NOT_SUPPORTED, or the
   #     documented ErrPermDenied for ad_check_permissions
   ffi-panic-guard:
     name: FFI Panic Guard (${{ matrix.target }})
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: ${{ matrix.target == 'aarch64-apple-darwin' && 30 || 20 }}
+    timeout-minutes: 20
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
         include:
-          - target: aarch64-apple-darwin
-            runner: macos-latest
-          - target: x86_64-apple-darwin
-            runner: macos-latest
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-22.04
           - target: aarch64-unknown-linux-gnu
@@ -759,50 +596,6 @@ jobs:
             ~/.cargo/git/db/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'crates/**/Cargo.toml', 'src/Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Install pinned cbindgen 0.29.4
-        if: matrix.target == 'aarch64-apple-darwin'
-        run: cargo install cbindgen --version 0.29.4 --locked
-
-      - name: Verify header matches source (cbindgen --verify)
-        if: matrix.target == 'aarch64-apple-darwin'
-        run: >
-          cbindgen crates/ffi
-          --config crates/ffi/cbindgen.toml
-          --output crates/ffi/include/acdesktop.h
-          --verify
-
-      - name: Build FFI dylib (stub adapter)
-        if: matrix.target == 'aarch64-apple-darwin'
-        run: >
-          cargo build --locked --profile release-ffi
-          -p acdesktop-ffi --features stub-adapter
-
-      - name: Locate dylib
-        id: dylib
-        if: matrix.target == 'aarch64-apple-darwin'
-        run: |
-          DYLIB=$(find target/release-ffi -name 'libacdesktop_ffi.*' \
-                    \( -name '*.dylib' -o -name '*.so' -o -name '*.dll' \) | head -1)
-          if [ -z "$DYLIB" ]; then
-            echo "FAIL: dylib not found under target/release-ffi"
-            exit 1
-          fi
-          echo "path=$DYLIB" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        if: matrix.target == 'aarch64-apple-darwin'
-        with:
-          python-version: '3.12'
-
-      - name: Run FFI smoke harness
-        if: matrix.target == 'aarch64-apple-darwin'
-        env:
-          AD_EXPECT_STUB: "1"
-        run: >
-          python3 tests/ffi-python/smoke.py
-          "${{ steps.dylib.outputs.path }}"
-          crates/ffi/include/acdesktop.h
 
       - name: Run stub-adapter passthrough tests
         if: matrix.target == 'x86_64-unknown-linux-gnu'

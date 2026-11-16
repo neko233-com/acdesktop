@@ -67,10 +67,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: aarch64-apple-darwin
-            runner: macos-latest
-          - target: x86_64-apple-darwin
-            runner: macos-latest
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-24.04
             container: ubuntu:22.04@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956
@@ -301,14 +297,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: aarch64-apple-darwin
-            runner: macos-latest
-            archive: tar.gz
-            lib_name: libacdesktop_ffi.dylib
-          - target: x86_64-apple-darwin
-            runner: macos-latest
-            archive: tar.gz
-            lib_name: libacdesktop_ffi.dylib
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-24.04
             container: ubuntu:22.04@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956
@@ -537,13 +525,12 @@ jobs:
             acdesktop-ffi-v*.zip.sha256
           retention-days: 1
 
-  # Re-runs FFI integrity gates at release time. Header verification runs on
-  # macOS because cbindgen may omit macOS-gated symbols on Linux.
+  # Re-runs FFI integrity gates at release time on Windows.
   ffi-release-gates:
     name: FFI Release Gates
     needs: check-release
     if: needs.check-release.outputs.should_release == 'true' || needs.check-release.outputs.needs_github_release == 'true'
-    runs-on: macos-latest
+    runs-on: windows-latest
     timeout-minutes: 30
     permissions:
       contents: read
@@ -567,16 +554,13 @@ jobs:
       - name: Install pinned cbindgen 0.29.4
         run: cargo install cbindgen --version 0.29.4 --locked
 
-      - name: Header drift check (cbindgen --verify)
-        run: >
-          cbindgen crates/ffi
-          --config crates/ffi/cbindgen.toml
-          --output crates/ffi/include/acdesktop.h
-          --verify
+      - name: Header drift check
+        run: python scripts/check-ffi-header.py
 
       - name: Stub passthrough test
+        shell: bash
         run: >
-          scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-ffi
+          bash scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-ffi
           --features stub-adapter --test c_abi_passthrough
 
   ffi-release-panic-guard:
@@ -592,10 +576,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: aarch64-apple-darwin
-            runner: macos-latest
-          - target: x86_64-apple-darwin
-            runner: macos-latest
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-24.04
             container: ubuntu:22.04@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956

@@ -3,7 +3,6 @@ import re
 import sys
 
 TARGETS = {
-    "aarch64-apple-darwin", "x86_64-apple-darwin",
     "aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu",
     "aarch64-pc-windows-msvc", "x86_64-pc-windows-msvc",
 }
@@ -29,6 +28,12 @@ def violations(text):
     for required in ("Build Windows control indicator helper for FFI consumers", 'release/acdesktop.exe" "$STAGE/lib/"', 'FFI archive is missing $helper'):
         if required not in ffi:
             errors.append(f"build-ffi: missing Windows indicator helper: {required}")
+    gate = job(text, "ffi-release-gates")
+    for required in ("runs-on: windows-latest", "scripts/check-ffi-header.py", "c_abi_passthrough"):
+        if required not in gate:
+            errors.append(f"ffi-release-gates: missing {required}")
+    if re.search(r"(?m)^\s*runner: macos-", text) or re.search(r"(?m)^\s*runs-on: macos-", text):
+        errors.append("release workflow must not run macOS jobs")
     publish = job(text, "publish-github")
     needs = re.search(r"(?m)^    needs: \[([^\]]+)\]", publish)
     if not needs or set(needs.group(1).replace(" ", "").split(",")) != GATES:
