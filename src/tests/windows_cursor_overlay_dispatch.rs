@@ -23,8 +23,8 @@ use super::support::{
     Scratch, enable, oracle_pixels, run, skip_unless_live_staging, start_session, wait_until,
 };
 use acdesktop_core::{
-    CURSOR_HIGHLIGHT_HOLD_MS, CursorOverlayConfig, CursorOverlayControl, CursorOverlayInstruction,
-    CursorOverlayStyle, CursorPhase, Point, SystemOps,
+    CURSOR_HIGHLIGHT_HOLD_MS, ControlIndicatorEvent, CursorOverlayConfig, CursorOverlayControl,
+    CursorOverlayInstruction, CursorOverlayStyle, CursorPhase, Point, SystemOps,
 };
 use std::time::{Duration, Instant};
 
@@ -46,6 +46,54 @@ const WORD_LIMIT: usize = 6;
 /// the hold is past what the flourish can deliver and still an order of
 /// magnitude above what a renderer that gives way actually takes.
 const BUDGET: Duration = Duration::from_millis(CURSOR_HIGHLIGHT_HOLD_MS / 2);
+
+#[test]
+fn control_click_effect_appears_and_fades_on_the_desktop() {
+    if skip_unless_live_staging("control indicator click effect") {
+        return;
+    }
+    let scratch = Scratch::create("control-click");
+    let session = start_session(&scratch);
+    let x = super::screen_sample::primary_width() / 2 + 100;
+    let y = 70;
+    let capture = || super::screen_sample::region_at(x - 25, y - 25, 50).expect("screen region");
+    let before = capture();
+    let point = Point {
+        x: f64::from(x),
+        y: f64::from(y),
+    };
+    let sent = with_state_root(&scratch, || {
+        acdesktop_windows::WindowsAdapter::new().present_control_indicator(
+            &ControlIndicatorEvent::Click {
+                owner: &session,
+                point: &point,
+            },
+        )
+    });
+    assert!(
+        sent.is_ok(),
+        "click event must reach the indicator: {sent:?}"
+    );
+    let changed = |after: &[u8]| {
+        before
+            .chunks_exact(4)
+            .zip(after.chunks_exact(4))
+            .filter(|(a, b)| a[..3] != b[..3])
+            .count()
+    };
+    let deadline = Instant::now() + Duration::from_millis(550);
+    let mut visible = false;
+    while Instant::now() < deadline {
+        if changed(&capture()) > 20 {
+            visible = true;
+            break;
+        }
+    }
+    assert!(visible, "the click must produce visible pixels");
+    wait_until("click effect fades", || changed(&capture()) < 10);
+    let ended = run(&scratch, &["session", "end", &session]);
+    assert_eq!(ended["ok"], true, "{ended}");
+}
 
 fn present(
     session: &str,

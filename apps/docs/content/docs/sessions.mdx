@@ -32,6 +32,7 @@ acdesktop session gc --ended                  # delete ended sessions nothing is
       "value": "run-1793352720537-17009-0"
     },
     "artifacts": "events",
+    "control_indicator": { "rendered": false },
     "created_at": 1793352720537,
     "name": "docs-example",
     "next": "export ACDESKTOP_SESSION=run-1793352720537-17009-0",
@@ -42,6 +43,8 @@ acdesktop session gc --ended                  # delete ended sessions nothing is
 ```
 
 `session list` returns `data.sessions`, one object per manifest with `session_id`, `name`, `created_at`, `ended_at` (`null` while the session is open), `trace` and `artifacts`. `session end` returns `session_id` and `ended_at`, and you can run it again on a session that already ended. `session gc` returns `data.removed`, the ids it deleted.
+
+On Windows, starting a session shows a screen-edge control indicator until the session ends. Its `control_indicator.rendered` field is `true` after the renderer acknowledges. The example shows `false` for platforms without this indicator. Pass `--desc "Opening settings"` to set its description, and pass a new description on each action to update it. A sessionless action shows the indicator during the action and for at least one second in total. The description is visible on the desktop and in display captures, so omit sensitive content. Windows refuses a control action before delivery if the indicator cannot start.
 
 Ending a session seals the manifest and stops its trace. After that, every other command that resolves to the ended session fails with `INVALID_ARGS` and `details.kind: "session_ended"`, except `version` and `skills`:
 

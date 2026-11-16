@@ -258,6 +258,15 @@ Every command prints one envelope. `docs/json-output.md` holds the full contract
   `CFRelease`.
 - Read attributes in batches with `AXUIElementCopyMultipleAttributeValues`, not one call per attribute.
 
+## Control indicator portability
+
+- The control indicator currently targets Windows. Keep its lifecycle, action descriptions, keyboard cues,
+  pointer effects and display geometry behind shared adapter contracts so the macOS arm64 adapter can implement
+  them without a Windows dependency. Do not present the macOS implementation as available before it exists.
+- A future macOS arm64 renderer must preserve non-activating, input-transparent windows, session and standalone
+  teardown, multiple displays, bounded descriptions and the privacy rules for keyboard input. This Windows work
+  does not implement or test the macOS renderer.
+
 ## Testing and CI
 
 - Unit tests use small purpose-built adapter stubs (see `crates/core/src/adapter/test_support.rs`). Golden JSON in

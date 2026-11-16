@@ -76,7 +76,10 @@ impl Drop for Scratch {
             let _ = std::fs::remove_dir_all(&self.root);
             return;
         }
-        for id in overlay_children(&session) {
+        for id in overlay_children(&session)
+            .into_iter()
+            .chain(indicator_children(&session))
+        {
             let _ = Command::new("taskkill")
                 .args(["/PID", &id.to_string(), "/F"])
                 .output();
@@ -154,6 +157,14 @@ pub(crate) fn enable(scratch: &Scratch, session: &str) -> serde_json::Value {
 /// and no window title to match on.
 pub(crate) fn overlay_children(session: &str) -> Vec<u32> {
     let flag = acdesktop_windows::CURSOR_OVERLAY_CHILD_FLAG;
+    children_with_flag(session, flag)
+}
+
+pub(crate) fn indicator_children(session: &str) -> Vec<u32> {
+    children_with_flag(session, "--control-indicator-child")
+}
+
+fn children_with_flag(session: &str, flag: &str) -> Vec<u32> {
     let script = format!(
         "Get-CimInstance Win32_Process -Filter \"Name='acdesktop.exe'\" | \
          Where-Object {{ $_.CommandLine -like '*{flag}*{session}*' }} | \

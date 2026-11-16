@@ -129,6 +129,26 @@ pub(crate) fn confirms_delivery(disposition: DeliverySemantics) -> bool {
     )
 }
 
+pub(crate) fn present_control_click(
+    adapter: &dyn PlatformAdapter,
+    context: &CommandContext,
+    point: &Point,
+    disposition: DeliverySemantics,
+) {
+    if !matches!(
+        disposition.delivery(),
+        DeliveryDisposition::DeliveredUnverified | DeliveryDisposition::DeliveredVerified
+    ) {
+        return;
+    }
+    if let Some(owner) = context.control_indicator_owner() {
+        let event = crate::ControlIndicatorEvent::Click { owner, point };
+        if let Err(error) = adapter.present_control_indicator(&event) {
+            tracing::warn!(code = %error.code.as_str(), "control click effect was skipped");
+        }
+    }
+}
+
 pub(crate) fn submit(
     adapter: &dyn PlatformAdapter,
     context: &CommandContext,
@@ -254,6 +274,12 @@ pub(crate) fn dispatch_mouse_event_with_cursor(
     let point = event.point.clone();
     crate::cursor_overlay::submit_travel(adapter, context, point.clone(), lease, click);
     let result = adapter.mouse_event(event, lease);
+    if click {
+        let disposition = result
+            .as_ref()
+            .map_or_else(|error| error.disposition, |report| report.disposition());
+        present_control_click(adapter, context, &point, disposition);
+    }
     if crate::cursor_overlay::input_was_delivered(&result) {
         crate::cursor_overlay::submit(
             adapter,
@@ -270,3 +296,7 @@ pub(crate) fn dispatch_mouse_event_with_cursor(
 #[cfg(test)]
 #[path = "submit_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "indicator_event_tests.rs"]
+mod indicator_tests;

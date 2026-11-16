@@ -80,6 +80,7 @@ pub unsafe extern "C" fn ad_notification_action(
             return crate::error::last_error_code();
         }
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let _indicator = crate::indicator::begin_control!(adapter, "notification-action", None);
         let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
         let request = acdesktop_core::NotificationActionRequest {
             index,

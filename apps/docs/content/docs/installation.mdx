@@ -6,15 +6,21 @@ description: Install acdesktop from a native release archive or build it from so
 
 Download the archive for your operating system and architecture from [GitHub Releases](https://github.com/neko233-com/acdesktop/releases). Extract the executable and its platform helper into the same directory on your PATH. The C library is distributed in a separate archive.
 
-The install scripts support macOS ARM64 and Windows ARM64:
+The current release includes Windows and Linux archives. On Windows x86, x64 or ARM64, the same installer works in PowerShell 5.1 and PowerShell 7:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.sh | bash -s -- --version v1.3.0
 ```
 
 ```powershell
 irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.ps1 | iex
 ```
+
+The macOS ARM64 command installs the earlier v1.3.0 release. The current release does not include macOS archives; build from source if you need newer changes on macOS.
+
+The Windows script selects the operating system architecture, verifies the release checksum, and adds the installation directory to your user PATH. To install to a different directory, download the script and run it with `-InstallDir`; add `-NoPath` to leave PATH unchanged.
+
+The 32-bit x86 release contains the CLI; the C library is distributed for 64-bit Windows targets.
 
 The scripts check the downloaded archive against the release checksum. Verify provenance separately:
 

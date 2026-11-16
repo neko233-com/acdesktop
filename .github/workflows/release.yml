@@ -67,10 +67,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: aarch64-apple-darwin
-            runner: macos-latest
-          - target: x86_64-apple-darwin
-            runner: macos-latest
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-24.04
             container: ubuntu:22.04@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956
@@ -78,6 +74,8 @@ jobs:
             runner: ubuntu-24.04-arm
             container: ubuntu:22.04@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956
           - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+          - target: i686-pc-windows-msvc
             runner: windows-latest
           - target: aarch64-pc-windows-msvc
             runner: windows-11-arm
@@ -299,14 +297,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: aarch64-apple-darwin
-            runner: macos-latest
-            archive: tar.gz
-            lib_name: libacdesktop_ffi.dylib
-          - target: x86_64-apple-darwin
-            runner: macos-latest
-            archive: tar.gz
-            lib_name: libacdesktop_ffi.dylib
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-24.04
             container: ubuntu:22.04@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956
@@ -399,6 +389,10 @@ jobs:
         shell: bash
         run: cargo build --locked --release -p acdesktop-linux --bins --target ${{ matrix.target }}
 
+      - name: Build Windows control indicator helper for FFI consumers
+        if: runner.os == 'Windows'
+        run: cargo build --locked --release -p acdesktop --target ${{ matrix.target }}
+
       - name: Check glibc floor (Linux)
         if: runner.os == 'Linux'
         shell: bash
@@ -438,6 +432,7 @@ jobs:
           fi
           if [ "$RUNNER_OS" = "Windows" ]; then
             cp "target/${{ matrix.target }}/release-ffi/acdesktop_ffi.dll.lib" "$STAGE/lib/"
+            cp "target/${{ matrix.target }}/release/acdesktop.exe" "$STAGE/lib/"
           fi
           cp crates/ffi/include/acdesktop.h "$STAGE/include/"
           cp LICENSE "$STAGE/"
@@ -467,7 +462,9 @@ jobs:
             cat >> "$STAGE/README.md" <<'WINEOF'
 
           `dlopen` / Python `ctypes` callers load
-          `lib/acdesktop_ffi.dll` by path and need nothing else. An MSVC
+          `lib/acdesktop_ffi.dll` by path. Keep `lib/acdesktop.exe` beside the
+          DLL: it renders the control indicator for Windows desktop actions.
+          An MSVC
           linking consumer (C++ or Rust) needs `lib/acdesktop_ffi.dll.lib`
           beside it — that import library is what you link against at build time.
           WINEOF
@@ -511,6 +508,8 @@ jobs:
             $names | ForEach-Object { Write-Output "  $_" }
             exit 1
           }
+          $helper = "${env:STAGE}/lib/acdesktop.exe"
+          if ($names -notcontains $helper) { throw "Windows FFI archive is missing $helper" }
           Write-Output "OK: archive contains $importLib"
           $hash = (Get-FileHash "${env:STAGE}.zip" -Algorithm SHA256).Hash.ToLower()
           "$hash  ${env:STAGE}.zip" | Out-File -Encoding ascii "${env:STAGE}.zip.sha256"
@@ -526,13 +525,12 @@ jobs:
             acdesktop-ffi-v*.zip.sha256
           retention-days: 1
 
-  # Re-runs FFI integrity gates at release time. Header verification runs on
-  # macOS because cbindgen may omit macOS-gated symbols on Linux.
+  # Re-runs FFI integrity gates at release time on Windows.
   ffi-release-gates:
     name: FFI Release Gates
     needs: check-release
     if: needs.check-release.outputs.should_release == 'true' || needs.check-release.outputs.needs_github_release == 'true'
-    runs-on: macos-latest
+    runs-on: windows-latest
     timeout-minutes: 30
     permissions:
       contents: read
@@ -556,16 +554,13 @@ jobs:
       - name: Install pinned cbindgen 0.29.4
         run: cargo install cbindgen --version 0.29.4 --locked
 
-      - name: Header drift check (cbindgen --verify)
-        run: >
-          cbindgen crates/ffi
-          --config crates/ffi/cbindgen.toml
-          --output crates/ffi/include/acdesktop.h
-          --verify
+      - name: Header drift check
+        run: python scripts/check-ffi-header.py
 
       - name: Stub passthrough test
+        shell: bash
         run: >
-          scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-ffi
+          bash scripts/cargo-test-isolated-home.sh test --locked -p acdesktop-ffi
           --features stub-adapter --test c_abi_passthrough
 
   ffi-release-panic-guard:
@@ -581,10 +576,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: aarch64-apple-darwin
-            runner: macos-latest
-          - target: x86_64-apple-darwin
-            runner: macos-latest
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-24.04
             container: ubuntu:22.04@sha256:0a9887931b0e38af2e3487ed39e29436b0535c4f3f52e57745baaf79d1898956

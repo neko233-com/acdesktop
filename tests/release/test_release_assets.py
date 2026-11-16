@@ -10,7 +10,7 @@ spec.loader.exec_module(assets)
 class ReleaseAssetsTest(unittest.TestCase):
     def test_exact_names_missing_extra_and_duplicates(self):
         names = sorted(assets.expected_assets("1.2.3"))
-        self.assertEqual(len(names), 15)
+        self.assertEqual(len(names), 12)
         self.assertEqual(assets.validate("1.2.3", names), ([], [], False))
         self.assertTrue(assets.validate("1.2.3", names[1:])[0])
         self.assertTrue(assets.validate("1.2.3", names + ["unexpected"])[1])

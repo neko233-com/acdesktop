@@ -28,9 +28,64 @@ mod support;
 mod dispatch;
 
 use support::{
-    PROMPTLY, Scratch, enable, oracle_pixels, overlay_children, run, skip_unless_live_staging,
-    start_session, wait_until, wait_within,
+    PROMPTLY, Scratch, enable, indicator_children, oracle_pixels, overlay_children, run,
+    skip_unless_live_staging, start_session, wait_until, wait_within,
 };
+
+#[test]
+fn session_control_indicator_is_visible_and_removed_on_end() {
+    if skip_unless_live_staging("control indicator lifecycle") {
+        return;
+    }
+    let scratch = Scratch::create("control-indicator");
+    let before = screen_sample::pixels_matching(0x17, 0x1c, 0x29).expect("screen capture");
+    let session = start_session(&scratch);
+    wait_until("control indicator appears", || {
+        screen_sample::pixels_matching(0x17, 0x1c, 0x29)
+            .is_some_and(|count| count > before + 20_000)
+    });
+    assert_eq!(indicator_children(&session).len(), 1);
+    let ended = run(&scratch, &["session", "end", &session]);
+    assert_eq!(ended["ok"], true, "{ended}");
+    wait_until("control indicator process exits", || {
+        indicator_children(&session).is_empty()
+    });
+    wait_until("control indicator pixels disappear", || {
+        screen_sample::pixels_matching(0x17, 0x1c, 0x29)
+            .is_some_and(|count| count < before + 10_000)
+    });
+}
+
+#[test]
+fn sessionless_control_indicator_remains_briefly_after_a_fast_action() {
+    if skip_unless_live_staging("sessionless control indicator") {
+        return;
+    }
+    let scratch = Scratch::create("control-indicator-once");
+    let before = screen_sample::pixels_matching(0x17, 0x1c, 0x29).expect("screen capture");
+    let result = run(
+        &scratch,
+        &[
+            "--headed",
+            "--desc",
+            "Testing input",
+            "press",
+            "a",
+            "--app",
+            "acdesktop-no-such-app.exe",
+        ],
+    );
+    assert_eq!(result["error"]["code"], "APP_NOT_FOUND", "{result}");
+    let shown = screen_sample::pixels_matching(0x17, 0x1c, 0x29).expect("screen capture");
+    assert!(
+        shown > before + 20_000,
+        "indicator should remain visible after the command"
+    );
+    wait_until("sessionless indicator disappears", || {
+        screen_sample::pixels_matching(0x17, 0x1c, 0x29)
+            .is_some_and(|count| count < before + 10_000)
+    });
+}
 
 #[test]
 fn disabling_leaves_no_process_no_held_name_and_no_pixels() {

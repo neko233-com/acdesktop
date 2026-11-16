@@ -111,7 +111,7 @@ acdesktop session gc [--older-than SECONDS] [--ended]
   </tbody>
 </table>
 
-`start` returns `session_id`, `name`, `trace`, `artifacts`, `created_at`, `next` (the shell line that exports the id), and `activation`; [Sessions](/desktop/sessions#start-list-end-and-clean-up) shows a full result. `end` returns `session_id` and `ended_at`, `list` returns `data.sessions`, and `gc` returns `data.removed`. `--screenshots` with `--no-trace` is `INVALID_ARGS`, and `--multi-agent` without `--cursor` is a parse error.
+`start` returns `session_id`, `name`, `trace`, `artifacts`, `created_at`, `next` (the shell line that exports the id), `activation`, and `control_indicator.rendered`; [Sessions](/desktop/sessions#start-list-end-and-clean-up) shows a full result. On Windows, the control indicator stays visible until `end`; use the global `--desc` flag to describe the current operation. `end` returns `session_id` and `ended_at`, `list` returns `data.sessions`, and `gc` returns `data.removed`. `--screenshots` with `--no-trace` is `INVALID_ARGS`, and `--multi-agent` without `--cursor` is a parse error.
 
 ## cursor-overlay
 

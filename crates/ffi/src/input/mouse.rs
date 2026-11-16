@@ -138,10 +138,24 @@ pub unsafe extern "C" fn ad_mouse_event(
             }
         };
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let indicator = crate::indicator::begin_control!(adapter, "mouse-input", None);
+        let click_point = matches!(
+            &core_event.kind,
+            acdesktop_core::MouseEventKind::Click { .. } | acdesktop_core::MouseEventKind::Down
+        )
+        .then(|| core_event.point.clone());
         let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
         match adapter.inner.mouse_event(core_event, &lease) {
-            Ok(_) => AdResult::Ok,
+            Ok(report) => {
+                if let (Some(guard), Some(point)) = (indicator.as_ref(), click_point.as_ref()) {
+                    guard.click(point, report.disposition());
+                }
+                AdResult::Ok
+            }
             Err(e) => {
+                if let (Some(guard), Some(point)) = (indicator.as_ref(), click_point.as_ref()) {
+                    guard.click(point, e.disposition);
+                }
                 error::set_last_error(&e);
                 error::last_error_code()
             }
@@ -192,10 +206,24 @@ pub unsafe extern "C" fn ad_mouse_event_with_modifiers(
             }
         };
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let indicator = crate::indicator::begin_control!(adapter, "mouse-input", None);
+        let click_point = matches!(
+            &core_event.kind,
+            acdesktop_core::MouseEventKind::Click { .. } | acdesktop_core::MouseEventKind::Down
+        )
+        .then(|| core_event.point.clone());
         let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
         match adapter.inner.mouse_event(core_event, &lease) {
-            Ok(_) => AdResult::Ok,
+            Ok(report) => {
+                if let (Some(guard), Some(point)) = (indicator.as_ref(), click_point.as_ref()) {
+                    guard.click(point, report.disposition());
+                }
+                AdResult::Ok
+            }
             Err(e) => {
+                if let (Some(guard), Some(point)) = (indicator.as_ref(), click_point.as_ref()) {
+                    guard.click(point, e.disposition);
+                }
                 error::set_last_error(&e);
                 error::last_error_code()
             }
@@ -250,6 +278,7 @@ pub unsafe extern "C" fn ad_mouse_wheel(
             modifiers,
         };
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let _indicator = crate::indicator::begin_control!(adapter, "mouse-wheel", None);
         let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
         match adapter.inner.mouse_event(event, &lease) {
             Ok(_) => AdResult::Ok,

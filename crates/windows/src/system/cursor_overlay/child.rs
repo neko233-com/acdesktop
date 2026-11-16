@@ -23,6 +23,10 @@ pub(crate) fn entry_from_env() -> Option<Result<(), AdapterError>> {
         )));
     }
     let arguments: Vec<String> = std::env::args().collect();
+    #[cfg(target_os = "windows")]
+    if let Some(result) = super::indicator::entry(&arguments) {
+        return Some(result);
+    }
     let (session_id, _, agent_id) = pipe_name::parse_child_arguments(&arguments)?;
     Some(run(&session_id, agent_id.as_deref()))
 }

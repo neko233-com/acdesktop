@@ -47,6 +47,7 @@ pub(crate) mod displays;
 pub(crate) mod enum_validation;
 pub mod error;
 pub(crate) mod ffi_try;
+pub(crate) mod indicator;
 pub(crate) mod input;
 pub(crate) mod log_callback;
 pub(crate) mod notifications;

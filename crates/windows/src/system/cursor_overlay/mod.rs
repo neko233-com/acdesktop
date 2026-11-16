@@ -24,7 +24,15 @@ pub(crate) mod display_probe;
 pub(crate) mod fade;
 pub(crate) mod framing;
 pub(crate) mod geometry;
+#[cfg(target_os = "windows")]
+pub(crate) mod helper_image;
+#[cfg(target_os = "windows")]
+pub(crate) mod hosted_lease;
+#[cfg(target_os = "windows")]
+pub(crate) mod hosted_watch;
 pub(crate) mod image_identity;
+#[cfg(target_os = "windows")]
+pub(crate) mod indicator;
 pub(crate) mod label;
 pub(crate) mod monitors;
 #[cfg(target_os = "windows")]

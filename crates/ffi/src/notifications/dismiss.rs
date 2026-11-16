@@ -36,6 +36,7 @@ pub unsafe extern "C" fn ad_dismiss_notification(
             }
         };
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let _indicator = crate::indicator::begin_control!(adapter, "dismiss-notification", None);
         let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
         let request = acdesktop_core::DismissNotificationRequest {
             index,

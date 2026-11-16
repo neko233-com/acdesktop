@@ -61,10 +61,10 @@ def parse_header_constants(header_path: str) -> dict:
     """
     Parse numeric #define constants from the header.
 
-    Returns a dict mapping macro name → int value.
+    Returns a dict mapping macro name -> int value.
     Only plain integer literals are handled (no expressions).
     """
-    text = Path(header_path).read_text()
+    text = Path(header_path).read_text(encoding="utf-8")
     result = {}
     for m in re.finditer(r"#define\s+(\w+)\s+(\d+)", text):
         result[m.group(1)] = int(m.group(2))
@@ -112,7 +112,7 @@ def main() -> None:
 
     ad_abi_version = bind(lib, "ad_abi_version", c_uint, [])
 
-    # Size getters — restype c_size_t, no args
+    # Size getters - restype c_size_t, no args
     ad_action_size        = bind(lib, "ad_action_size",        c_size_t, [])
     ad_action_result_size = bind(lib, "ad_action_result_size", c_size_t, [])
     ad_action_step_size   = bind(lib, "ad_action_step_size",   c_size_t, [])
@@ -137,7 +137,7 @@ def main() -> None:
         [c_void_p, c_char_p, c_int, c_uint8, c_bool, c_bool, POINTER(c_char_p)],
     )
 
-    print("\nLeg 1 — ABI version handshake")
+    print("\nLeg 1 - ABI version handshake")
     expected_major = constants.get("AD_ABI_VERSION_MAJOR")
     if expected_major is None:
         fail("AD_ABI_VERSION_MAJOR not found in header")
@@ -151,10 +151,10 @@ def main() -> None:
     ok(f"ad_abi_version() == AD_ABI_VERSION_MAJOR == {expected_major}")
 
     # ------------------------------------------------------------------
-    print("\nLeg 2 — struct size getters vs. header macros")
+    print("\nLeg 2 - struct size getters vs. header macros")
     # ------------------------------------------------------------------
 
-    # Explicit table: (getter_fn, macro_name) — no name-mangling magic.
+    # Explicit table: (getter_fn, macro_name) - no name-mangling magic.
     size_pairs = [
         (ad_action_size,        "AD_ACTION_SIZE"),
         (ad_action_result_size, "AD_ACTION_RESULT_SIZE"),
@@ -175,7 +175,7 @@ def main() -> None:
         ok(f"{macro}: {got} bytes")
 
     # ------------------------------------------------------------------
-    print("\nLeg 3 — ad_version returns parseable JSON with data.version")
+    print("\nLeg 3 - ad_version returns parseable JSON with data.version")
     # ------------------------------------------------------------------
 
     out = c_char_p()
@@ -185,7 +185,7 @@ def main() -> None:
     if out.value is None:
         fail("ad_version() returned OK but *out is null")
 
-    raw = out.value  # bytes — read before freeing
+    raw = out.value  # bytes - read before freeing
     ad_free_string(out)
 
     try:
@@ -203,7 +203,7 @@ def main() -> None:
     ok(f"ad_version() -> data.version = {data['version']!r}")
 
     # ------------------------------------------------------------------
-    print("\nLeg 4 — adapter leg: create → snapshot → assert PLATFORM_NOT_SUPPORTED → destroy")
+    print("\nLeg 4 - adapter leg: create -> snapshot -> assert PLATFORM_NOT_SUPPORTED -> destroy")
     # ------------------------------------------------------------------
 
     expect_stub = os.environ.get("AD_EXPECT_STUB") == "1"
@@ -240,7 +240,7 @@ def main() -> None:
             if expect_stub:
                 ad_adapter_destroy(adapter)
                 fail(
-                    "ad_snapshot() returned ok:true but AD_EXPECT_STUB=1 — "
+                    "ad_snapshot() returned ok:true but AD_EXPECT_STUB=1 - "
                     "the dylib appears to be built without --features stub-adapter; "
                     "a stub build cannot successfully complete a real snapshot"
                 )
@@ -258,7 +258,7 @@ def main() -> None:
                 )
             ok(f"ad_snapshot() -> ok:false, error.code = {code!r}")
     else:
-        # *out null means an argument/infrastructure error — rc is the code.
+        # *out null means an argument/infrastructure error - rc is the code.
         ad_adapter_destroy(adapter)
         fail(
             f"ad_snapshot() set *out=null (rc={rc}); "
@@ -266,10 +266,10 @@ def main() -> None:
         )
 
     ad_adapter_destroy(adapter)
-    ok("ad_adapter_destroy() — no crash, no leak")
+    ok("ad_adapter_destroy() - no crash, no leak")
 
     if os.environ.get("AD_EXPECT_REAL") == "1":
-        print("\nLeg 5 — real adapter snapshots a named app on the main and a worker thread")
+        print("\nLeg 5 - real adapter snapshots a named app on the main and a worker thread")
         app = os.environ.get("AD_APP", "gnome-calculator").encode()
         adapter = ad_adapter_create()
         if not adapter:
@@ -328,7 +328,7 @@ def main() -> None:
         ok("library-adjacent Linux owner set/read/clear with empty PATH")
 
     if os.environ.get("AD_EXPECT_MACOS_HELPER") == "1":
-        print("\nLeg 6 — non-colocated Python host discovers the dylib-adjacent packaged helper")
+        print("\nLeg 6 - non-colocated Python host discovers the dylib-adjacent packaged helper")
         adapter = ad_adapter_create()
         if not adapter:
             fail("ad_adapter_create() returned null for helper discovery leg")

@@ -4,7 +4,7 @@ navTitle: Overview
 description: Call acdesktop in process through libacdesktop_ffi, the C ABI over the same core and platform adapters as the CLI.
 ---
 
-The C library exposes acdesktop as a shared library: `libacdesktop_ffi.dylib` on macOS, `libacdesktop_ffi.so` on Linux, and `acdesktop_ffi.dll` on Windows. Your program calls `ad_*` functions instead of starting the CLI for each command. Any language with a C FFI can load it; `tests/ffi-python/smoke.py` is the tested reference. The header is `crates/ffi/include/acdesktop.h`.
+The C library exposes acdesktop as a shared library: `libacdesktop_ffi.dylib` on macOS, `libacdesktop_ffi.so` on Linux, and `acdesktop_ffi.dll` on Windows. Your program calls `ad_*` functions directly. Windows uses a colocated `acdesktop.exe` process to render the control indicator. Any language with a C FFI can load the library; `tests/ffi-python/smoke.py` is the tested reference. The header is `crates/ffi/include/acdesktop.h`.
 
 ## Relationship to the CLI
 

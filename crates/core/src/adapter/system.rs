@@ -9,6 +9,30 @@ use crate::{
 };
 
 pub trait SystemOps: Send + Sync {
+    fn requires_control_indicator(&self) -> bool {
+        false
+    }
+
+    fn show_control_indicator(
+        &self,
+        _owner: &str,
+        _session: bool,
+        _description: &str,
+    ) -> Result<(), AdapterError> {
+        Err(AdapterError::not_supported("control indicator"))
+    }
+
+    fn hide_control_indicator(&self, _owner: &str) -> Result<(), AdapterError> {
+        Err(AdapterError::not_supported("control indicator"))
+    }
+
+    fn present_control_indicator(
+        &self,
+        _event: &crate::ControlIndicatorEvent<'_>,
+    ) -> Result<(), AdapterError> {
+        Err(AdapterError::not_supported("control indicator event"))
+    }
+
     fn update_cursor_overlay(&self, _control: &CursorOverlayControl) -> Result<(), AdapterError> {
         Err(AdapterError::not_supported("update_cursor_overlay"))
     }
@@ -24,10 +48,7 @@ pub trait SystemOps: Send + Sync {
         Err(AdapterError::not_supported("acquire_interaction_lease"))
     }
 
-    /// An adapter that never overrides this has not probed permissions at all,
-    /// which is not the same fact as a user denying one. `Unknown` routes through
-    /// `unknown_accessibility_means_unsupported` to `PLATFORM_NOT_SUPPORTED`
-    /// rather than the misleading `PERM_DENIED`.
+    /// Unknown permissions mean no probe ran, not that the user denied access.
     fn permission_report(&self, _deadline: Deadline) -> Result<PermissionReport, AdapterError> {
         Ok(PermissionReport {
             accessibility: PermissionState::Unknown,
@@ -40,8 +61,7 @@ pub trait SystemOps: Send + Sync {
         true
     }
 
-    /// Performs one renderer-accessibility activation mutation and returns.
-    /// Readiness polling belongs to core after the interaction lease is dropped.
+    /// Activates renderer accessibility; core polls readiness after the lease is dropped.
     fn activate_renderer_accessibility(
         &self,
         _process: ProcessIdentity,
@@ -144,8 +164,7 @@ pub trait SystemOps: Send + Sync {
         Err(requested.unavailable_error(&supported))
     }
 
-    /// Registers caller-scoped wake hints before the initial predicate read.
-    /// Without a subscription the same predicates run with bounded polling.
+    /// Registers wake hints before the initial predicate read; the fallback is bounded polling.
     fn subscribe_wait(
         &self,
         _filter: &SignalFilter,
@@ -173,12 +192,7 @@ pub trait SystemOps: Send + Sync {
         Err(AdapterError::not_supported("open_system_surface"))
     }
 
-    /// Opens adapter-native connection affinity for a persistent host.
-    ///
-    /// The returned session may retain platform connection state, but never a
-    /// resolved element handle. Stateless command callers do not need to open a
-    /// session. Adapters without persistent native state return
-    /// `PLATFORM_NOT_SUPPORTED`.
+    /// Opens native connection affinity without retaining resolved element handles.
     fn open_session(
         &self,
         _affinity: &SessionAffinity,
@@ -212,10 +226,7 @@ pub trait SystemOps: Send + Sync {
         Err(AdapterError::not_supported("close_app"))
     }
 
-    /// Reports whether closing `identifier` would terminate a process the OS
-    /// depends on (window server, login session, shell). The set is
-    /// inherently platform-specific, so each adapter owns its own list;
-    /// core only asks. The default denies nothing.
+    /// Reports whether closing a process would terminate an OS dependency.
     fn is_protected_process(&self, _identifier: &str) -> bool {
         false
     }
