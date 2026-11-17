@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory)] [string] $OutputRoot
 )
 
+Import-Module (Join-Path $PSScriptRoot 'Harness.psm1') -Force
 $ErrorActionPreference = 'Stop'
 if (-not $IsWindows -or -not [Environment]::Is64BitProcess -or $PSVersionTable.PSVersion.Major -lt 7) {
     throw 'Run this fixture with 64-bit PowerShell 7 on Windows.'
@@ -53,9 +54,9 @@ while (-not $process.HasExited -and $watch.Elapsed.TotalSeconds -lt 10 -and $fou
 if ($found.Count -lt 5) { throw 'The indicator did not show its screen edges and status.' }
 if ([DragNoticeProbe]::GetForegroundWindow() -ne $foreground) { throw 'The indicator stole focus.' }
 if (-not $process.WaitForExit(15000)) { throw 'The drag command did not finish.' }
-$result = Get-Content -LiteralPath $stdout -Raw | ConvertFrom-Json
-if ($process.ExitCode -ne 0 -or -not $result.ok) { throw "Drag failed: $($result.error | ConvertTo-Json -Compress)" }
+$result = Get-Content -LiteralPath $stdout -Raw | ConvertFrom-AgentJson
+if ($process.ExitCode -ne 0 -or -not $result['ok']) { throw "Drag failed: $($result['error'] | ConvertTo-Json -Compress)" }
 $watch.Restart()
 while ((Get-Process -Id $indicatorId -ErrorAction SilentlyContinue) -and $watch.Elapsed.TotalSeconds -lt 5) { Start-Sleep -Milliseconds 25 }
 if (Get-Process -Id $indicatorId -ErrorAction SilentlyContinue) { throw 'The indicator remained after drag ended.' }
-[pscustomobject]@{ ok = $true; focused_window_preserved = $true; disappeared = $true; delivery = $result.data.delivery } | ConvertTo-Json -Compress
+[pscustomobject]@{ ok = $true; focused_window_preserved = $true; disappeared = $true; delivery = $result['data'].delivery } | ConvertTo-Json -Compress

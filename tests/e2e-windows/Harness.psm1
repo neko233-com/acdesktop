@@ -234,13 +234,42 @@ function Get-AgentJsonSerializer {
     return $script:AgentJsonSerializer
 }
 
+function ConvertFrom-AgentJsonElement {
+    param($Element)
+    switch ($Element.ValueKind.ToString()) {
+        'Object' {
+            $value = [System.Collections.Generic.Dictionary[string, object]]::new()
+            foreach ($property in $Element.EnumerateObject()) {
+                $value[$property.Name] = ConvertFrom-AgentJsonElement $property.Value
+            }
+            return ,$value
+        }
+        'Array' {
+            $value = [System.Collections.Generic.List[object]]::new()
+            foreach ($item in $Element.EnumerateArray()) {
+                $value.Add((ConvertFrom-AgentJsonElement $item))
+            }
+            return ,$value.ToArray()
+        }
+        'String' { return $Element.GetString() }
+        'Number' {
+            $integer = [long]0
+            if ($Element.TryGetInt64([ref]$integer)) { return $integer }
+            return $Element.GetDouble()
+        }
+        'True' { return $true }
+        'False' { return $false }
+        'Null' { return $null }
+        default { throw "Unsupported JSON value: $($Element.ValueKind)" }
+    }
+}
+
 function ConvertFrom-AgentJson {
     <#
     .SYNOPSIS
-        The one JSON parser this harness ever calls, built on
-        System.Web.Script.Serialization.JavaScriptSerializer with
-        RecursionLimit and MaxJsonLength raised past its 100/2,097,152
-        defaults. ConvertFrom-Json is never called anywhere else in the
+        The one JSON parser this harness ever calls. Windows PowerShell uses
+        JavaScriptSerializer and PowerShell 7 uses System.Text.Json, with
+        configurable nesting and length limits. ConvertFrom-Json is never called in the
         non-selftest harness (enforced by rule 11 of
         scripts/check-e2e-windows-contract.ps1) because it measures a
         RecursionLimit of 101 nesting levels on this host - a 102-deep
@@ -257,6 +286,14 @@ function ConvertFrom-AgentJson {
         [int]$RecursionLimit = 4096,
         [int]$MaxJsonLength = 67108864
     )
+    if ($Json.Length -gt $MaxJsonLength) { throw 'JSON exceeds the configured maximum length.' }
+    if ($PSVersionTable.PSVersion.Major -ge 7) {
+        $options = [System.Text.Json.JsonDocumentOptions]::new()
+        $options.MaxDepth = $RecursionLimit
+        $document = [System.Text.Json.JsonDocument]::Parse($Json, $options)
+        try { return (ConvertFrom-AgentJsonElement $document.RootElement) }
+        finally { $document.Dispose() }
+    }
     $serializer = Get-AgentJsonSerializer -RecursionLimit $RecursionLimit -MaxJsonLength $MaxJsonLength
     return $serializer.DeserializeObject($Json)
 }

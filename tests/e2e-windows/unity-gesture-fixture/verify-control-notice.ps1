@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory)] [string] $Binary
 )
 
+Import-Module (Join-Path $PSScriptRoot '../Harness.psm1') -Force
 $ErrorActionPreference = 'Stop'
 if (-not $IsWindows -or -not [Environment]::Is64BitProcess -or $PSVersionTable.PSVersion.Major -lt 7) {
     throw 'Run this fixture with 64-bit PowerShell 7 on Windows.'
@@ -63,8 +64,8 @@ foreach ($window in $windows) {
     if ([GameIndicatorProbe]::GetForegroundWindow() -eq $window) { throw 'An indicator window stole foreground focus.' }
 }
 if (-not $process.WaitForExit(15000)) { throw 'The game command did not finish.' }
-$result = Get-Content -LiteralPath $out -Raw | ConvertFrom-Json
-if ($process.ExitCode -ne 0 -or -not $result.ok) { throw "Game command failed: $($result.error | ConvertTo-Json -Compress)" }
+$result = Get-Content -LiteralPath $out -Raw | ConvertFrom-AgentJson
+if ($process.ExitCode -ne 0 -or -not $result['ok']) { throw "Game command failed: $($result['error'] | ConvertTo-Json -Compress)" }
 $watch.Restart()
 while ((Get-Process -Id $indicatorId -ErrorAction SilentlyContinue) -and $watch.Elapsed.TotalSeconds -lt 5) { Start-Sleep -Milliseconds 25 }
 if (Get-Process -Id $indicatorId -ErrorAction SilentlyContinue) { throw 'The control indicator remained after the command ended.' }
@@ -83,6 +84,6 @@ while (-not $observe.HasExited -and $watch.Elapsed.TotalSeconds -lt 10) {
     Start-Sleep -Milliseconds 25
 }
 if (-not $observe.HasExited) { throw 'The observation-only command did not finish.' }
-$observation = Get-Content -LiteralPath $observeOut -Raw | ConvertFrom-Json
-if ($observe.ExitCode -ne 0 -or -not $observation.ok) { throw 'The observation-only session failed.' }
+$observation = Get-Content -LiteralPath $observeOut -Raw | ConvertFrom-AgentJson
+if ($observe.ExitCode -ne 0 -or -not $observation['ok']) { throw 'The observation-only session failed.' }
 [pscustomobject]@{ ok = $true; indicator_windows = $windows.Count; click_through = $true; disappeared = $true; observation_has_no_indicator = $true } | ConvertTo-Json -Compress

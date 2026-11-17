@@ -4,6 +4,7 @@ param(
     [string] $Binary = (Join-Path $PSScriptRoot '../../../target/release/acdesktop.exe')
 )
 
+Import-Module (Join-Path $PSScriptRoot '../Harness.psm1') -Force
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7 -or -not [Environment]::Is64BitProcess) {
     throw 'Run this fixture with 64-bit PowerShell 7.'
@@ -16,9 +17,9 @@ if (-not (Test-Path -LiteralPath $log)) {
     throw 'The Unity touch log does not exist; start the fixture first.'
 }
 $before = @(Import-Csv -LiteralPath $log).Count
-$result = & $Binary game --window-id $WindowId --plan (Join-Path $PSScriptRoot 'plan.json') --out $OutputRoot --headed | ConvertFrom-Json
-if (-not $result.ok) {
-    throw "The gesture session failed: $($result.error | ConvertTo-Json -Compress)"
+$result = & $Binary game --window-id $WindowId --plan (Join-Path $PSScriptRoot 'plan.json') --out $OutputRoot --headed | ConvertFrom-AgentJson
+if (-not $result['ok']) {
+    throw "The gesture session failed: $($result['error'] | ConvertTo-Json -Compress)"
 }
 $rows = @(Import-Csv -LiteralPath $log | Select-Object -Skip $before)
 $begins = @($rows | Where-Object phase -eq 'Began')

@@ -4,6 +4,7 @@ param(
     [string] $Binary = (Join-Path $PSScriptRoot '../../../target/release/acdesktop.exe')
 )
 
+Import-Module (Join-Path $PSScriptRoot '../Harness.psm1') -Force
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7 -or -not [Environment]::Is64BitProcess) {
     throw 'Run this fixture with 64-bit PowerShell 7.'
@@ -19,9 +20,9 @@ New-Item -ItemType Directory -Path $OutputRoot | Out-Null
 $checks = @()
 foreach ($name in @('gameplay-negative', 'gameplay')) {
     $before = @(Import-Csv -LiteralPath $log).Count
-    $result = & $Binary game --window-id $WindowId --plan (Join-Path $PSScriptRoot "$name.json") --out (Join-Path $OutputRoot $name) --headed | ConvertFrom-Json
-    if (-not $result.ok) {
-        throw "The $name session failed: $($result.error | ConvertTo-Json -Compress)"
+    $result = & $Binary game --window-id $WindowId --plan (Join-Path $PSScriptRoot "$name.json") --out (Join-Path $OutputRoot $name) --headed | ConvertFrom-AgentJson
+    if (-not $result['ok']) {
+        throw "The $name session failed: $($result['error'] | ConvertTo-Json -Compress)"
     }
     $rows = @(Import-Csv -LiteralPath $log | Select-Object -Skip $before)
     if ($name -eq 'gameplay-negative') {
@@ -44,6 +45,6 @@ foreach ($name in @('gameplay-negative', 'gameplay')) {
     if (@($intervals | Where-Object { $_ -lt 0.6 -or $_ -gt 1.5 }).Count -ne 0) {
         throw "Unity recorded unexpected action intervals: $($intervals -join ', ')"
     }
-    $checks += [pscustomobject]@{ test = $name; scores = $scores; intervals_seconds = $intervals; input_metrics = $result.data.summary.input_metrics }
+    $checks += [pscustomobject]@{ test = $name; scores = $scores; intervals_seconds = $intervals; input_metrics = $result['data'].summary.input_metrics }
 }
 [pscustomobject]@{ ok = $true; checks = $checks; log = $log; output = $OutputRoot } | ConvertTo-Json -Depth 8

@@ -4,6 +4,7 @@ param(
     [string] $Binary = (Join-Path $PSScriptRoot '../../../target/debug/acdesktop.exe')
 )
 
+Import-Module (Join-Path $PSScriptRoot '../Harness.psm1') -Force
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7 -or -not [Environment]::Is64BitProcess) {
     throw 'Run this fixture with 64-bit PowerShell 7.'
@@ -17,15 +18,15 @@ $runs = @{}
 foreach ($mode in @('off', 'on')) {
     $directory = Join-Path $OutputRoot $mode
     $plan = Join-Path $PSScriptRoot "cursor-$mode.json"
-    $result = & $Binary game --window-id $WindowId --plan $plan --out $directory --headed --save-frames | ConvertFrom-Json
-    if (-not $result.ok) {
-        throw "The $mode session failed: $($result.error | ConvertTo-Json -Compress)"
+    $result = & $Binary game --window-id $WindowId --plan $plan --out $directory --headed --save-frames | ConvertFrom-AgentJson
+    if (-not $result['ok']) {
+        throw "The $mode session failed: $($result['error'] | ConvertTo-Json -Compress)"
     }
-    $manifest = @(Get-Content -LiteralPath (Join-Path $directory 'frames/frames.jsonl') | ForEach-Object { $_ | ConvertFrom-Json })
-    if ($manifest.Count -ne $result.data.frames_saved -or $manifest.Count -lt 3) {
+    $manifest = @(Get-Content -LiteralPath (Join-Path $directory 'frames/frames.jsonl') | ForEach-Object { $_ | ConvertFrom-AgentJson })
+    if ($manifest.Count -ne $result['data'].frames_saved -or $manifest.Count -lt 3) {
         throw "The $mode frame manifest does not match the saved-frame count."
     }
-    if ($result.data.summary.cursor_in_saved_frames -ne ($mode -eq 'on')) {
+    if ($result['data'].summary.cursor_in_saved_frames -ne ($mode -eq 'on')) {
         throw "The $mode session reported the wrong cursor setting."
     }
     $runs[$mode] = @{ directory = $directory; manifest = $manifest; result = $result }

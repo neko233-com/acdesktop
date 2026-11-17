@@ -4,6 +4,7 @@ param(
     [string] $Binary = (Join-Path $PSScriptRoot '../../../target/x86_64-pc-windows-msvc/release/acdesktop.exe')
 )
 
+Import-Module (Join-Path $PSScriptRoot '../Harness.psm1') -Force
 $ErrorActionPreference = 'Stop'
 if ($PSVersionTable.PSVersion.Major -lt 7 -or -not [Environment]::Is64BitProcess) {
     throw 'Run this fixture with 64-bit PowerShell 7.'
@@ -12,8 +13,8 @@ if (Test-Path -LiteralPath $OutputRoot) { throw 'Choose a new OutputRoot.' }
 $log = Join-Path $env:TEMP 'acdesktop-unity-gesture-input.csv'
 if (-not (Test-Path -LiteralPath $log)) { throw 'Start the Unity fixture first.' }
 $before = @(Import-Csv -LiteralPath $log).Count
-$result = & $Binary game --window-id $WindowId --plan (Join-Path $PSScriptRoot 'pinch-rotate.json') --out $OutputRoot --headed | ConvertFrom-Json
-if (-not $result.ok) { throw "Game session failed: $($result.error | ConvertTo-Json -Depth 6 -Compress)" }
+$result = & $Binary game --window-id $WindowId --plan (Join-Path $PSScriptRoot 'pinch-rotate.json') --out $OutputRoot --headed | ConvertFrom-AgentJson
+if (-not $result['ok']) { throw "Game session failed: $($result['error'] | ConvertTo-Json -Depth 6 -Compress)" }
 $rows = @(Import-Csv -LiteralPath $log | Select-Object -Skip $before)
 $begins = @($rows | Where-Object phase -eq 'Began')
 if ($begins.Count -ne 8 -or @($rows | Where-Object phase -eq 'Ended').Count -ne 8) {
