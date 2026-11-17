@@ -357,7 +357,13 @@ jobs:
 
       - name: Windows E2E contract gate (scan and self-test halves)
         shell: pwsh
-        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-e2e-windows-contract.ps1 -SelfTest
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\check-e2e-windows-contract.ps1 -SelfTest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\e2e-windows\selftest\JsonParserSelfTest.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pwsh -NoProfile -ExecutionPolicy Bypass -File .\tests\e2e-windows\selftest\JsonParserSelfTest.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Seeded-failure run asserts a non-zero exit code
         shell: pwsh

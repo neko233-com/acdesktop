@@ -5,7 +5,9 @@ Guidance for AI coding agents working in this repository.
 acdesktop is a tool that AI agents invoke, not an agent. It is a Rust CLI and C library that reads native
 accessibility trees and returns structured JSON with ref-based element ids. The observe-act loop lives in the
 calling agent. It never embeds an LLM and has no GUI or interactive prompt. It does not automate web pages (use
-agent-browser). It cannot see UIs that expose no accessibility tree.
+agent-browser). It cannot identify UI elements in applications that expose no accessibility tree. The Windows
+`game` command can sample a window and report visual changes while sending explicitly planned coordinates; it does
+not interpret pixels to locate UI elements.
 
 ## Critical: fixes must be application-agnostic
 
@@ -279,10 +281,10 @@ Every command prints one envelope. `docs/json-output.md` holds the full contract
 
 ## Command surface
 
-63 commands spanning App/Window, Observation, Interaction, Scroll, Keyboard, Mouse, Notifications, Clipboard, Wait,
+64 commands spanning App/Window, Observation, Interaction, Scroll, Keyboard, Mouse, Notifications, Clipboard, Wait,
 System (including `session`, `trace`, `skills`), Sandboxes (`sandbox`) and Batch.
-59 of the 63 command names are operational on macOS; the four held-input names (`key-down`, `key-up`, `mouse-down`,
-`mouse-up`) fail closed. Windows and Linux expose the same command names. Each platform's limits are in its skill
+59 of the 64 command names are operational on macOS; the four held-input names (`key-down`, `key-up`, `mouse-down`,
+`mouse-up`) fail closed, and `game` is Windows-only. Windows and Linux expose the same command names. Each platform's limits are in its skill
 (`skills/acdesktop-macos/`, `skills/acdesktop-windows/`, `skills/acdesktop-linux/`).
 
 ## Definition of done

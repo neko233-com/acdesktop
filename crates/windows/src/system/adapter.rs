@@ -1,10 +1,11 @@
 use acdesktop_core::{
     ActionResult, AdapterError, AdapterSession, AppInfo, Deadline, DismissAllNotificationsRequest,
-    DismissNotificationRequest, DisplayInfo, ImageBuffer, InteractionLease, InteractionPolicy,
-    KeyCombo, NotificationActionRequest, NotificationFilter, NotificationInfo, ObservationOps,
-    OperationReport, PermissionReport, ProcessIdentity, ScreenshotTarget, SessionAffinity,
-    SignalBaseline, SignalFilter, SnapshotSurface, SystemOps, WindowFilter, WindowInfo, WindowOp,
-    system::launch_options::LaunchOptions, system::process_state::ProcessState,
+    DismissNotificationRequest, DisplayInfo, GameSessionLog, GameSessionRequest, ImageBuffer,
+    InteractionLease, InteractionPolicy, KeyCombo, NotificationActionRequest, NotificationFilter,
+    NotificationInfo, ObservationOps, OperationReport, PermissionReport, ProcessIdentity,
+    ScreenshotTarget, SessionAffinity, SignalBaseline, SignalFilter, SnapshotSurface, SystemOps,
+    WindowFilter, WindowInfo, WindowOp, system::launch_options::LaunchOptions,
+    system::process_state::ProcessState,
 };
 
 use crate::adapter::WindowsAdapter;
@@ -277,9 +278,19 @@ impl SystemOps for WindowsAdapter {
         crate::system::capture::screenshot::capture_window(window, deadline)
     }
 
-    /// Verify-only composition over the keyboard primitive. Core's headed
-    /// path already activated; this never raises (A9-3: SendInput has no
-    /// per-pid targeting).
+    fn supports_game_session(&self) -> bool {
+        true
+    }
+
+    fn run_game_session(
+        &self,
+        request: &GameSessionRequest<'_>,
+        deadline: Deadline,
+    ) -> Result<GameSessionLog, AdapterError> {
+        crate::system::game::session::run(request, deadline)
+    }
+
+    /// Core activates first; this verifies without raising (A9-3).
     fn press_key_for_app(
         &self,
         process: ProcessIdentity,
@@ -305,9 +316,7 @@ impl SystemOps for WindowsAdapter {
         Ok(Box::new(crate::system::runtime::session::open(deadline)?))
     }
 
-    /// The other half of `wait`'s menu surface: a bounded poll over the
-    /// two-source menu predicate, structured as a port of the macOS poll
-    /// loop.
+    /// Polls the menu predicate within the deadline.
     fn wait_for_menu(
         &self,
         process: ProcessIdentity,
@@ -317,10 +326,7 @@ impl SystemOps for WindowsAdapter {
         crate::system::wait::wait_for_menu(process, open, deadline)
     }
 
-    /// The other half of `wait`'s baseline surface: the single-pass
-    /// windows+apps inventory composed with the app-scoped surface scan
-    /// under one shared deadline, with `completeness` derived from whether
-    /// each pass ran to completion.
+    /// Captures inventory and surface completeness within one deadline.
     fn capture_signal_baseline(
         &self,
         filter: &SignalFilter,
@@ -329,12 +335,7 @@ impl SystemOps for WindowsAdapter {
         crate::system::signal::signals::capture_signal_baseline_impl(filter, deadline)
     }
 
-    /// Listing carries the same lease-consistency check the macOS adapter
-    /// runs - a headed observation must hold the cross-process lease - and
-    /// then delegates. The focus-steal floor itself is the notifications
-    /// module's: it refuses only when the closed center would have to be
-    /// raised, so an already-present center stays listable headlessly, which
-    /// is the same conditional shape macOS's own listing floor has.
+    /// Headed observation requires the interaction lease.
     fn list_notifications(
         &self,
         filter: &NotificationFilter,
@@ -350,10 +351,7 @@ impl SystemOps for WindowsAdapter {
         crate::notifications::list::list_notifications(filter, policy, deadline)
     }
 
-    /// Every mutation receives the caller's policy beside the lease's
-    /// deadline, so the module's foreground floor answers before the session
-    /// raises anything. The identity travels as-is and is verified against a
-    /// fresh read inside the module, never against the index alone.
+    /// Mutations preserve the caller's policy, deadline and identity.
     fn dismiss_notification(
         &self,
         request: DismissNotificationRequest<'_>,

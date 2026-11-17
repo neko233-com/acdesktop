@@ -24,6 +24,7 @@ const FFI_HEADER: &str = include_str!("../../crates/ffi/include/acdesktop.h");
 const README: &str = include_str!("../../README.md");
 const AGENTS_MD: &str = include_str!("../../AGENTS.md");
 const HELD_INPUT_COMMANDS: &[&str] = &["key-down", "key-up", "mouse-down", "mouse-up"];
+const MACOS_UNSUPPORTED_COMMANDS: &[&str] = &["game"];
 
 fn quoted_values_after<'a>(text: &'a str, marker: &str) -> Vec<&'a str> {
     text.match_indices(marker)
@@ -95,7 +96,7 @@ fn documented_command_counts_match_the_cli() {
         .iter()
         .filter(|name| name.as_str() != "help")
         .count();
-    let operational = total - HELD_INPUT_COMMANDS.len();
+    let operational = total - HELD_INPUT_COMMANDS.len() - MACOS_UNSUPPORTED_COMMANDS.len();
     assert!(
         README.contains(&format!(
             "{total} command names, {operational} operational commands"

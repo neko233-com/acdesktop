@@ -51,7 +51,7 @@ pub(crate) fn capture_display(
     capture_item(item, display.scale, deadline)
 }
 
-fn ensure_supported() -> Result<(), AdapterError> {
+pub(in crate::system) fn ensure_supported() -> Result<(), AdapterError> {
     if modern_is_supported() {
         Ok(())
     } else {
@@ -162,7 +162,9 @@ pub(crate) fn interop_is_available() -> bool {
     item_interop().is_ok()
 }
 
-fn item_for_window(handle: WindowHandle) -> Result<GraphicsCaptureItem, AdapterError> {
+pub(in crate::system) fn item_for_window(
+    handle: WindowHandle,
+) -> Result<GraphicsCaptureItem, AdapterError> {
     let interop = item_interop()?;
     unsafe {
         interop
@@ -198,14 +200,14 @@ fn monitor_handle_from_id(id: &str) -> Result<HMONITOR, AdapterError> {
     Ok(HMONITOR(raw as *mut core::ffi::c_void))
 }
 
-fn wgc_error(hresult: i32, context: &str) -> AdapterError {
+pub(in crate::system) fn wgc_error(hresult: i32, context: &str) -> AdapterError {
     crate::system::runtime::hresult::hresult_error("WGC", hresult, context)
 }
 
-struct PoolGuard(Direct3D11CaptureFramePool);
+pub(in crate::system) struct PoolGuard(pub(in crate::system) Direct3D11CaptureFramePool);
 
 impl PoolGuard {
-    fn create(
+    pub(in crate::system) fn create(
         device: &windows::Graphics::DirectX::Direct3D11::IDirect3DDevice,
         size: SizeInt32,
     ) -> Result<Self, AdapterError> {
@@ -228,10 +230,13 @@ impl Drop for PoolGuard {
     }
 }
 
-struct SessionGuard(GraphicsCaptureSession);
+pub(in crate::system) struct SessionGuard(pub(in crate::system) GraphicsCaptureSession);
 
 impl SessionGuard {
-    fn create(pool: &PoolGuard, item: &GraphicsCaptureItem) -> Result<Self, AdapterError> {
+    pub(in crate::system) fn create(
+        pool: &PoolGuard,
+        item: &GraphicsCaptureItem,
+    ) -> Result<Self, AdapterError> {
         let session = pool
             .0
             .CreateCaptureSession(item)
@@ -248,10 +253,10 @@ impl Drop for SessionGuard {
     }
 }
 
-struct FrameGuard(Direct3D11CaptureFrame);
+pub(in crate::system) struct FrameGuard(pub(in crate::system) Direct3D11CaptureFrame);
 
 impl FrameGuard {
-    fn new(frame: Direct3D11CaptureFrame) -> Self {
+    pub(in crate::system) fn new(frame: Direct3D11CaptureFrame) -> Self {
         resource_balance::acquire();
         Self(frame)
     }
@@ -264,7 +269,7 @@ impl Drop for FrameGuard {
     }
 }
 
-struct TextureGuard;
+pub(in crate::system) struct TextureGuard;
 
 impl Drop for TextureGuard {
     fn drop(&mut self) {

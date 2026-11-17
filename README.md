@@ -2,7 +2,7 @@
 
 > **acdesktop** — Give your AI agent reliable desktop control through the OS accessibility tree.
 
-Agent Control Desktop (acdesktop) lets an AI agent see and operate desktop apps on macOS and Windows — without screenshots, pixel matching, or coordinate guessing. It reads the native accessibility tree, returns it as JSON with a stable ref for every actionable element, and lets the agent act on refs to click, type, drag, scroll, or read values. The observation–action loop lives in your agent; acdesktop ships no model.
+Agent Control Desktop (acdesktop) lets an AI agent inspect and operate desktop apps through the native accessibility tree. It returns JSON with a stable ref for every actionable element, and lets the agent act on refs to click, type, drag, scroll, or read values. On Windows, `game` can also execute explicitly planned input and measure changes in captured window frames; it does not locate controls from pixels. The observation–action loop lives in your agent; acdesktop ships no model.
 
 It ships as a native CLI and a C shared library. The optional update check contacts GitHub; disable it with `ACDESKTOP_NO_AUTO_UPDATE=1`.
 
@@ -45,6 +45,8 @@ acdesktop permissions --guide      # macOS: 引导你授予辅助功能权限
 
 Windows 用户也可以在开始菜单搜索并打开 PowerShell，复制上面的 Windows 安装命令，按回车运行。安装完成后输入 `acdesktop version` 检查；如果新开的终端找不到命令，请关闭后重新打开 PowerShell。若 AI 助手已经在运行，请重新启动它以读取新的 PATH。然后把 [项目地址](https://github.com/neko233-com/acdesktop) 发给能在本机运行命令的 AI 助手，并告诉它：“请按照 acdesktop 的使用说明操作我的电脑，执行操作时写清楚正在做什么。”
 
+Windows x64 用户也可以从 [发行页](https://github.com/neko233-com/acdesktop/releases/latest)下载安装 MSI；安装范围为当前用户。
+
 ---
 
 ## 快速上手
@@ -78,7 +80,7 @@ acdesktop snapshot --app Finder -i
 
 ---
 
-The CLI exposes 63 command names, 59 operational commands on macOS. The C ABI major is 7.
+The CLI exposes 64 command names, 59 operational commands on macOS. The C ABI major is 7.
 
 ## 命令总览
 

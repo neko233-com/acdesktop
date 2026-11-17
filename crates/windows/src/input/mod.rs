@@ -37,6 +37,7 @@ pub(crate) mod elevation;
 pub(crate) mod keyboard;
 pub(crate) mod mouse;
 mod release_state;
+pub(crate) mod touch;
 
 #[cfg(all(test, target_os = "windows"))]
 pub(crate) use drag_state::DragReleaseGuard;

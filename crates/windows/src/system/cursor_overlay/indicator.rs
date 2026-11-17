@@ -58,6 +58,13 @@ pub(crate) fn hide(owner: &str) -> Result<(), AdapterError> {
 }
 
 pub(crate) fn present(event: &ControlIndicatorEvent<'_>) -> Result<(), AdapterError> {
+    present_with_budget(event, BUDGET)
+}
+
+pub(crate) fn present_with_budget(
+    event: &ControlIndicatorEvent<'_>,
+    budget: Duration,
+) -> Result<(), AdapterError> {
     let (owner, point, text, phase) = match event {
         ControlIndicatorEvent::Keys { owner, display } => (
             *owner,
@@ -73,7 +80,7 @@ pub(crate) fn present(event: &ControlIndicatorEvent<'_>) -> Result<(), AdapterEr
     let instruction = CursorOverlayInstruction::new(point, &config, phase == CursorPhase::Effect)?
         .with_phase(phase);
     let control = CursorOverlayControl::present(owner.to_owned(), instruction);
-    match transport::reach(&name(owner)?, &control, BUDGET) {
+    match transport::reach(&name(owner)?, &control, budget) {
         transport::ReachOutcome::Delivered => Ok(()),
         transport::ReachOutcome::NoRenderer => Err(AdapterError::internal(
             "The control indicator is unavailable",

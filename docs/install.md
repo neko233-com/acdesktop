@@ -12,6 +12,8 @@ irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install
 
 The macOS ARM64 command installs the earlier v1.3.0 release. The current release does not include macOS archives; build from source if you need newer changes on macOS.
 
+The release also includes an MSI for Windows x64. It installs per user and adds the installation directory to the user PATH.
+
 ## Release archives
 
 Download the archive for your OS and architecture from [GitHub Releases](https://github.com/neko233-com/acdesktop/releases). Extract the executable and any included helper into one directory on your PATH. To upgrade, replace them with the files from the same release.

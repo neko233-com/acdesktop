@@ -17,6 +17,7 @@ use crate::cli_args::{
     config::ConfigArgs,
     cursor_overlay::CursorOverlayArgs,
     drag::DragCliArgs,
+    game::GameArgs,
     mouse_wheel::MouseWheelArgs,
     notifications::{
         DismissAllNotificationsCliArgs, DismissNotificationCliArgs, ListNotificationsCliArgs,
@@ -174,6 +175,10 @@ pub(crate) enum Commands {
         about = "Install providers and create, run, and remove local sandboxes (install, create, start, stop, status, list, rm, exec)"
     )]
     Sandbox(SandboxArgs),
+    #[command(
+        about = "Run a game session from a JSON plan: capture the window, play the input timeline, and report latency, cadence, and flow"
+    )]
+    Game(GameArgs),
     #[command(about = "版本检查与自更新 (check, apply, auto on/off/status)")]
     Update(UpdateArgs),
     #[command(about = "查看或修改用户配置 (~/.acdesktop/config.json)")]
@@ -261,6 +266,7 @@ impl Commands {
             Self::CursorOverlay(_) => CommandMetadata::new("cursor-overlay", false),
             Self::Trace(_) => CommandMetadata::new("trace", false),
             Self::Sandbox(_) => CommandMetadata::new("sandbox", false),
+            Self::Game(_) => CommandMetadata::new("game", false),
             Self::Update(_) => CommandMetadata::new("update", false),
             Self::Config(_) => CommandMetadata::new("config", false),
         }
@@ -316,6 +322,7 @@ impl Commands {
             | Self::NotificationAction(_)
             | Self::ClipboardSet(_)
             | Self::ClipboardClear
+            | Self::Game(_)
             | Self::Batch(_) => true,
             Self::Screenshot(args) => args.output_path.is_some(),
             Self::ClipboardGet(args) => args.out.is_some(),

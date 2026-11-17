@@ -107,6 +107,15 @@ try {
     if ($ffiResult.TimedOut -or $ffiResult.ExitCode -ne 0) { throw "the FFI indicator desktop test failed with exit code $($ffiResult.ExitCode)" }
     Write-Host 'run-windows-e2e-ci.ps1: hosted FFI control indicator tests passed'
 
+    Write-Host 'run-windows-e2e-ci.ps1: testing game feedback against a real window'
+    $gameResult = Invoke-GuardedAgent -FilePath 'python' `
+        -ArgumentList @('tests/e2e-windows/test_game_indicator.py', $releaseBinary) `
+        -TimeoutSeconds 90 -MaxCaptureBytes 5242880
+    if ($gameResult.StdOut) { Write-Host $gameResult.StdOut }
+    if ($gameResult.StdErr) { Write-Host $gameResult.StdErr }
+    if ($gameResult.TimedOut -or $gameResult.ExitCode -ne 0) { throw "the game indicator desktop test failed with exit code $($gameResult.ExitCode)" }
+    Write-Host 'run-windows-e2e-ci.ps1: game feedback test passed'
+
     Write-Host 'run-windows-e2e-ci.ps1: releasing the desktop lease so the U6 self-test tier can manage its own lease lifecycle'
     Exit-DesktopLease
     $leaseHeld = $false

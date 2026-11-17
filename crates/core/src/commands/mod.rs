@@ -18,6 +18,7 @@ pub mod expand;
 pub mod find;
 pub mod focus;
 pub mod focus_window;
+pub mod game;
 pub mod get;
 pub mod helpers;
 pub mod hover;

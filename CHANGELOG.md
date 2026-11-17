@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-17
+
+### Features
+
+- 新增 `game` 命令（Windows）：按 JSON 计划捕获窗口，执行定时键鼠、多点触摸和手势轨迹，报告采样时间、输入调度和画面变化。画面变化不能证明输入效果或玩家心流。
+- Windows x64 新增按用户安装的 MSI，发布前验证安装、PATH 和卸载。
+- 游戏输入复用屏幕边缘提示，并显示按键状态和点击效果；纯观察会话不显示控制提示。
+- 升级文档站 Next.js，修复受影响版本的信息泄露问题。
+
 ## [1.4.0] - 2026-11-16
 
 This release provides Windows and Linux archives. macOS archives remain available in earlier releases.

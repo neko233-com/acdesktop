@@ -1,6 +1,7 @@
 mod caret_follow;
 mod config;
 mod control;
+pub(crate) mod control_guard;
 mod cursor_hold;
 mod hand_path;
 mod image;

@@ -141,9 +141,15 @@ if [ "$HAS_FFI_CHANGES" -eq 1 ]; then
     if [ -n "${_cbindgen_cmd}" ]; then
         _cbindgen_ver=$("${_cbindgen_cmd}" --version 2>&1 | head -1)
         if [[ "${_cbindgen_ver}" == "cbindgen 0.29.4" ]]; then
-            run "FFI header drift (cbindgen --verify)" \
-                "${_cbindgen_cmd}" crates/ffi --config crates/ffi/cbindgen.toml \
-                --output crates/ffi/include/acdesktop.h --verify
+            if command -v python3 >/dev/null 2>&1 && python3 -c 'import sys; assert sys.version_info >= (3, 7)' >/dev/null 2>&1; then
+                _header_python=python3
+            elif command -v python >/dev/null 2>&1 && python -c 'import sys; assert sys.version_info >= (3, 7)' >/dev/null 2>&1; then
+                _header_python=python
+            else
+                echo "pre-commit: Python 3.7 or later is required to check the FFI header" >&2
+                exit 1
+            fi
+            run "FFI header drift" "${_header_python}" scripts/check-ffi-header.py
         else
             printf 'pre-commit: cbindgen version mismatch (want 0.29.4, got: %s) — skipping header drift check (CI gate)\n' "${_cbindgen_ver}"
         fi

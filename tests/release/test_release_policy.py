@@ -23,6 +23,7 @@ class ReleasePolicyTest(unittest.TestCase):
         for old, new in (("- target: i686-pc-windows-msvc", "- target: missing"),
                          ("ffi-release-panic-guard, linux-archive-contents]", "linux-archive-contents]"),
                          ("check-release-assets.py local", "missing-asset-check.py local"),
+                         ("windows-msi-selftest.ps1", "missing-msi-selftest.ps1"),
                          ("actions/attest-build-provenance@", "invalid-attestation@"),
                          ("Build Windows control indicator helper for FFI consumers", "missing helper build"),
                          ("scripts/check-ffi-header.py", "scripts/missing-header-check.py"),
