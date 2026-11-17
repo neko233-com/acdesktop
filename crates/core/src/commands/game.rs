@@ -42,6 +42,15 @@ pub fn execute(
         .timeout_ms
         .unwrap_or_else(|| plan.duration_ms.saturating_add(SESSION_ALLOWANCE_MS));
     let deadline = crate::Deadline::after(timeout_ms)?;
+    let indicator = if plan.events.is_empty() {
+        None
+    } else {
+        crate::ControlIndicatorGuard::begin(
+            adapter,
+            context,
+            context.description().unwrap_or("game"),
+        )?
+    };
     let lease = adapter.acquire_interaction_lease(deadline)?;
     let frames_dir = prepare_output(&args)?;
     if !plan.events.is_empty() {
@@ -52,6 +61,7 @@ pub fn execute(
         plan: &plan,
         lease: &lease,
         frames_dir: frames_dir.as_deref(),
+        indicator_owner: indicator.as_ref().map(crate::ControlIndicatorGuard::owner),
     };
     let log = adapter.run_game_session(&request, deadline)?;
     let report = GameReport::from_log(&log, &plan);
@@ -216,3 +226,7 @@ mod delivery_tests;
 #[cfg(test)]
 #[path = "game_brief_tests.rs"]
 mod brief_tests;
+
+#[cfg(test)]
+#[path = "game_indicator_tests.rs"]
+mod indicator_tests;

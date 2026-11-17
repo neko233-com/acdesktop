@@ -3,14 +3,13 @@ import json
 import sys
 
 TARGETS = (
-    "aarch64-apple-darwin", "x86_64-apple-darwin",
     "aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu",
     "aarch64-pc-windows-msvc", "x86_64-pc-windows-msvc",
 )
 
 
 def expected_assets(version):
-    cli = {f"acdesktop-v{version}-{target}.tar.gz" for target in TARGETS}
+    cli = {f"acdesktop-v{version}-{target}.tar.gz" for target in (*TARGETS, "i686-pc-windows-msvc")}
     ffi = {f"acdesktop-ffi-v{version}-{target}.{'zip' if 'windows' in target else 'tar.gz'}" for target in TARGETS}
     msi = {f"acdesktop-v{version}-x86_64-pc-windows-msvc.msi"}
     return cli | ffi | msi | {"checksums.txt", "install.sh", "install.ps1"}

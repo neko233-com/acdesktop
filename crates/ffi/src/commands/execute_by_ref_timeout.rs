@@ -87,6 +87,10 @@ pub unsafe extern "C" fn ad_execute_by_ref_timeout(
             }
         };
 
+        let indicator =
+            crate::indicator::begin_control!(adapter_ref, core_action.name(), Some(&core_action));
+        let context = context
+            .with_control_indicator_owner(indicator.as_ref().map(|guard| guard.owner().to_owned()));
         let scope = crate::commands::mutating_command_scope!(context, "execute_by_ref");
 
         let result = acdesktop_core::commands::execute_by_ref::execute_with_timeout(

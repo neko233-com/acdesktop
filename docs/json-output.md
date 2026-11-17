@@ -40,6 +40,8 @@ Errors include machine-readable codes and recovery hints:
 
 `error.code`, `error.message` and `error.disposition` are always present. `suggestion`, `recovery`, `platform_detail` and `details` are omitted when empty. `recovery` appears only when `disposition.retry` is `safe`, and its `retry_after_ms` is set only for `TIMEOUT` and `APP_UNRESPONSIVE`.
 
+`session start` includes `data.control_indicator.rendered`. Windows returns `true` after its screen-edge indicator acknowledges; platforms without an implementation return `false`. Windows reports an error if the indicator cannot start.
+
 Version 2.2 replaces the 2.1 `TIMEOUT` error for a budget-exhausted snapshot
 with a successful, explicitly partial response, and adds `data.complete`.
 Snapshot data always carries `complete`. A snapshot that runs out of budget now

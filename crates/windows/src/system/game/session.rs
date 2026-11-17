@@ -69,15 +69,6 @@ pub(crate) fn run(
             "Every input step must finish before the session duration",
         ));
     }
-    let _notice = if steps.is_empty() {
-        None
-    } else {
-        Some(
-            crate::system::cursor_overlay::notice::ControlNotice::start().map_err(|error| {
-                error.with_disposition(acdesktop_core::DeliverySemantics::not_delivered())
-            })?,
-        )
-    };
     let fps = request.plan.fps.clamp(1, MAX_FPS);
     let frame_span_us = 1_000_000u64 / u64::from(fps);
 
@@ -92,6 +83,7 @@ pub(crate) fn run(
     let mut frames: Vec<FrameSample> = Vec::new();
     let mut inputs: Vec<InputSample> = Vec::new();
     let mut guard = InputGuard::new(origin);
+    let feedback = super::indicator_feedback::FeedbackWorker::start(request.indicator_owner);
     let mut writer = match request.frames_dir {
         Some(dir) => Some(FrameWriter::open(dir)?),
         None => None,
@@ -122,6 +114,9 @@ pub(crate) fn run(
                 super::target::verify_step(handle, origin, &step.action)?;
                 let dispatched_ms = start.elapsed().as_micros() as u64 / 1_000;
                 dispatch(&step.action, deadline, &mut guard)?;
+                if let Some(feedback) = feedback.as_ref() {
+                    feedback.present(&step.action, origin);
+                }
                 inputs.push(InputSample {
                     event: step.event,
                     scheduled_ms: step.at_ms,

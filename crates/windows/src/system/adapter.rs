@@ -16,6 +16,30 @@ use crate::system::close_outcome::CloseOutcome;
 pub(crate) mod tcp_listener;
 
 impl SystemOps for WindowsAdapter {
+    fn requires_control_indicator(&self) -> bool {
+        true
+    }
+
+    fn show_control_indicator(
+        &self,
+        owner: &str,
+        session: bool,
+        description: &str,
+    ) -> Result<(), AdapterError> {
+        crate::system::cursor_overlay::indicator::show(owner, session, description)
+    }
+
+    fn hide_control_indicator(&self, owner: &str) -> Result<(), AdapterError> {
+        crate::system::cursor_overlay::indicator::hide(owner)
+    }
+
+    fn present_control_indicator(
+        &self,
+        event: &acdesktop_core::ControlIndicatorEvent<'_>,
+    ) -> Result<(), AdapterError> {
+        crate::system::cursor_overlay::indicator::present(event)
+    }
+
     fn update_cursor_overlay(
         &self,
         control: &acdesktop_core::CursorOverlayControl,
@@ -33,8 +57,7 @@ impl SystemOps for WindowsAdapter {
     /// both the handle's identity and its exclusivity before trusting it,
     /// because a handle's share mode cannot be read back on Windows and
     /// identity alone proves naming rather than exclusion - when it is set.
-    /// Mirrors `MacOSAdapter`'s two-branch override over
-    /// `acquire_unix_interaction_lease` / `adopt_inherited_unix_interaction_lease`.
+    /// Mirrors the macOS acquire-or-adopt lease contract.
     #[cfg(target_os = "windows")]
     fn acquire_interaction_lease(
         &self,
@@ -267,9 +290,7 @@ impl SystemOps for WindowsAdapter {
         crate::system::game::session::run(request, deadline)
     }
 
-    /// Verify-only composition over the keyboard primitive. Core's headed
-    /// path already activated; this never raises (A9-3: SendInput has no
-    /// per-pid targeting).
+    /// Core activates first; this verifies without raising (A9-3).
     fn press_key_for_app(
         &self,
         process: ProcessIdentity,
@@ -295,9 +316,7 @@ impl SystemOps for WindowsAdapter {
         Ok(Box::new(crate::system::runtime::session::open(deadline)?))
     }
 
-    /// The other half of `wait`'s menu surface: a bounded poll over the
-    /// two-source menu predicate, structured as a port of the macOS poll
-    /// loop.
+    /// Polls the menu predicate within the deadline.
     fn wait_for_menu(
         &self,
         process: ProcessIdentity,
@@ -307,10 +326,7 @@ impl SystemOps for WindowsAdapter {
         crate::system::wait::wait_for_menu(process, open, deadline)
     }
 
-    /// The other half of `wait`'s baseline surface: the single-pass
-    /// windows+apps inventory composed with the app-scoped surface scan
-    /// under one shared deadline, with `completeness` derived from whether
-    /// each pass ran to completion.
+    /// Captures inventory and surface completeness within one deadline.
     fn capture_signal_baseline(
         &self,
         filter: &SignalFilter,
@@ -319,12 +335,7 @@ impl SystemOps for WindowsAdapter {
         crate::system::signal::signals::capture_signal_baseline_impl(filter, deadline)
     }
 
-    /// Listing carries the same lease-consistency check the macOS adapter
-    /// runs - a headed observation must hold the cross-process lease - and
-    /// then delegates. The focus-steal floor itself is the notifications
-    /// module's: it refuses only when the closed center would have to be
-    /// raised, so an already-present center stays listable headlessly, which
-    /// is the same conditional shape macOS's own listing floor has.
+    /// Headed observation requires the interaction lease.
     fn list_notifications(
         &self,
         filter: &NotificationFilter,
@@ -340,10 +351,7 @@ impl SystemOps for WindowsAdapter {
         crate::notifications::list::list_notifications(filter, policy, deadline)
     }
 
-    /// Every mutation receives the caller's policy beside the lease's
-    /// deadline, so the module's foreground floor answers before the session
-    /// raises anything. The identity travels as-is and is verified against a
-    /// fresh read inside the module, never against the index alone.
+    /// Mutations preserve the caller's policy, deadline and identity.
     fn dismiss_notification(
         &self,
         request: DismissNotificationRequest<'_>,

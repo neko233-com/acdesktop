@@ -9,6 +9,8 @@ pub(super) struct CommandOptions {
     pub event_baseline: Option<Result<SignalBaseline, AdapterError>>,
     pub cursor_overlay: CursorOverlayConfig,
     pub agent_id: Option<String>,
+    pub description: Option<String>,
+    pub indicator_owner: Option<String>,
 }
 
 impl CommandOptions {
@@ -19,6 +21,8 @@ impl CommandOptions {
             event_baseline: None,
             cursor_overlay,
             agent_id: self.agent_id.clone(),
+            description: self.description.clone(),
+            indicator_owner: None,
         }
     }
 }

@@ -30,6 +30,7 @@ pub unsafe extern "C" fn ad_close_app(
             }
         };
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let _indicator = crate::indicator::begin_control!(adapter, "close-app", None);
         match acdesktop_core::commands::close_app::execute(
             acdesktop_core::commands::close_app::CloseAppArgs { app: id_str, force },
             adapter.inner.as_ref(),

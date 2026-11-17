@@ -2,13 +2,24 @@
 
 ## [Unreleased]
 
-## [1.4.0] - 2026-11-13
+## [1.5.0] - 2026-11-17
 
 ### Features
 
 - 新增 `game` 命令（Windows）：按 JSON 计划捕获窗口，执行定时键鼠、多点触摸和手势轨迹，报告采样时间、输入调度和画面变化。画面变化不能证明输入效果或玩家心流。
-- Windows 控制期间显示跟随系统显示语言的提示，纯观察游戏会话不显示。
 - Windows x64 新增按用户安装的 MSI，发布前验证安装、PATH 和卸载。
+- 游戏输入复用屏幕边缘提示，并显示按键状态和点击效果；纯观察会话不显示控制提示。
+- 升级文档站 Next.js，修复受影响版本的信息泄露问题。
+
+## [1.4.0] - 2026-11-16
+
+This release provides Windows and Linux archives. macOS archives remain available in earlier releases.
+
+### Changes
+
+- Windows CLI、MCP 和 C 库在控制期间显示屏幕边缘提示、操作描述、按键状态和点击动画；普通输入文字默认隐藏。
+- Windows 安装脚本支持 PowerShell 5.1 和 7，并按系统架构选择下载；新增 32 位 x86 CLI 发行包。
+- 多显示器提示支持不同缩放比例；真实多显示器环境尚未验证。32 位 x86 不提供 C 库。
 
 ## [1.3.0] - 2026-11-12
 

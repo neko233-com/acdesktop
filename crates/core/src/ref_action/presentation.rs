@@ -6,6 +6,7 @@ use crate::{Action, CommandContext, PlatformAdapter};
 
 const SAME_POINT: f64 = 1.5;
 const FOCUS_READ_MS: u64 = 150;
+const INDICATOR_BOUNDS_MS: u64 = 100;
 
 thread_local! {
     static TRAVELLED_BEFORE_LEASE: Cell<Option<(f64, f64)>> = const { Cell::new(None) };
@@ -134,6 +135,43 @@ fn center_of(bounds: &crate::Rect) -> Option<crate::Point> {
     })
 }
 
+pub(super) fn live_indicator_point(
+    adapter: &dyn PlatformAdapter,
+    handle: &crate::NativeHandle,
+    deadline: crate::Deadline,
+) -> Option<crate::Point> {
+    let deadline = deadline.capped(std::time::Duration::from_millis(INDICATOR_BOUNDS_MS));
+    adapter
+        .get_element_bounds(handle, deadline)
+        .ok()
+        .flatten()
+        .as_ref()
+        .and_then(center_of)
+}
+
+pub(super) fn refresh_point(
+    target: &ResolvedRefAction<'_>,
+    preflight: &mut ActionabilityPreflight,
+    ripples: bool,
+    result: &Result<crate::ActionResult, crate::AdapterError>,
+) {
+    if ripples
+        && preflight.presentation_point.is_none()
+        && preflight.verified_point.is_none()
+        && matches!(
+            target.entry.geometry.bounds_space,
+            None | Some(crate::BoundsSpace::Screen)
+        )
+        && target.context.control_indicator_owner().is_some()
+        && result
+            .as_ref()
+            .is_ok_and(|value| crate::cursor_overlay::confirms_delivery(value.disposition()))
+    {
+        preflight.presentation_point =
+            live_indicator_point(target.adapter, target.handle, target.deadline);
+    }
+}
+
 /// A pressable control shows the pointer however it is reached; any other element shows it
 /// only when clicked, and text entry never does.
 pub(super) fn shows_pointer(role: &str, action: &Action) -> bool {
@@ -155,6 +193,11 @@ pub(super) fn after_dispatch(
     let travelled = TRAVELLED_BEFORE_LEASE.take();
     if !crate::cursor_overlay::confirms_delivery(disposition) {
         return;
+    }
+    let indicator_destination =
+        destination(preflight).or_else(|| travelled.map(|(x, y)| crate::Point { x, y }));
+    if ripples && let Some(point) = indicator_destination.as_ref() {
+        crate::cursor_overlay::present_control_click(adapter, context, point, disposition);
     }
     let Some(destination) = travelled
         .map(|(x, y)| crate::Point { x, y })

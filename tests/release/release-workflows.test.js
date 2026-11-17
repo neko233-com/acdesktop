@@ -131,7 +131,7 @@ test('the Linux CLI archive is built from both executables and listed exactly', 
   }
 });
 
-test('the release publishes sixteen assets and waits for the archive contents check', () => {
+test('the release verifies its assets and waits for the archive contents check', () => {
   assert.match(releaseWorkflow, /check-release-assets\.py local/);
   assert.match(releaseWorkflow, /check-release-assets\.py remote/);
   const publish = releaseWorkflow.match(/publish-github:\n[\s\S]*?needs: \[([^\]]*)\]/);

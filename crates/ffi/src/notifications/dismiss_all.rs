@@ -38,6 +38,7 @@ pub unsafe extern "C" fn ad_dismiss_all_notifications(
         crate::pointer_guard::guard_non_null!(adapter, c"adapter is null");
         let filter = decode_optional_filter!(app_filter, "app_filter");
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let _indicator = crate::indicator::begin_control!(adapter, "dismiss-notifications", None);
         let filter_ref = filter.as_deref();
         let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
         let request = acdesktop_core::DismissAllNotificationsRequest {

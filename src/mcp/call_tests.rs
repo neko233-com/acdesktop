@@ -34,6 +34,31 @@ fn ordinary_tools_keep_server_globals_before_their_command() {
 }
 
 #[test]
+fn per_call_description_replaces_the_server_description() {
+    let tool = tool_at(&["press"]);
+    let args = child_args(
+        &tool,
+        json!({"combo":"a", "desc":"Typing"}),
+        &["--desc=Waiting", "--headed"],
+    );
+    assert!(args.contains(&"--desc=Typing".to_string()));
+    assert!(!args.contains(&"--desc=Waiting".to_string()));
+    assert!(args.contains(&"--headed".to_string()));
+}
+
+#[test]
+fn description_shaped_text_does_not_replace_the_server_description() {
+    let tool = tool_at(&["type"]);
+    let args = child_args(
+        &tool,
+        json!({"ref_id": "@s12345678:e1", "text": "--desc=literal"}),
+        &["--desc=Typing"],
+    );
+    assert!(args.contains(&"--desc=Typing".to_string()));
+    assert!(args.contains(&"--desc=literal".to_string()));
+}
+
+#[test]
 fn a_tool_without_an_envelope_reports_its_stderr() {
     let tool = tool_at(&["version"]);
     let result = tool_result(

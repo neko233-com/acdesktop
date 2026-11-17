@@ -19,7 +19,7 @@ description: >
 This file covers only what differs on Windows. The observe-act loop, refs, JSON
 envelope, sessions and tracing are the same on every platform.
 
-Requires Windows 10 1809+ / Windows Server 2019+ (x64 or ARM64). Run it in the
+Requires Windows 10 1809+ (x86, x64 or ARM64) or Windows Server 2019+ (x64 or ARM64). The x86 CLI has been tested under WoW64, not on a native 32-bit Windows installation. Run it in the
 interactive desktop session of the signed-in user. Session 0 (services and
 SYSTEM tasks), Server Core, the secure desktop (UAC prompts, the sign-in
 screen), a locked desktop and another user's session are not supported:
@@ -43,6 +43,7 @@ observation, actions and capture there fail or return nothing.
 | Game session | `game` | Works on Windows 10 version 2004 or newer. Runs a timed input and capture plan. Any input requires `--headed`; reports describe capture timing and visual changes. |
 | Notifications | `list-notifications`, `dismiss-notification`, `dismiss-all-notifications`, `notification-action` | Works over the Action Center. Pass `--headed` when the center is closed |
 | Cursor overlay | `cursor-overlay` | Works. `enable` returns `data.rendered: true` only after the renderer acknowledges over its pipe. See `references/shell-and-overlay.md` |
+| Control indicator | `session`, desktop actions | Works. A screen-edge glow and description appear automatically. The indicator stays visible during keyboard input and does not take focus. See `references/shell-and-overlay.md` |
 | System | `status`, `permissions`, `version`, `batch`, `skills`, `session`, `trace` | Works |
 
 ## First Contact
@@ -96,7 +97,7 @@ observation, actions and capture there fail or return nothing.
 - Ref actions are semantic UI Automation calls in headless and `--headed` mode, except `right-click`, `double-click`, `triple-click`, `type` and `focus`, which are physical or take focus and need `--headed`.
 - A ref resolves only when it was the only element in the window its snapshot captured with its role, native id, name and description, and exactly one live element still matches. Uniqueness counts the whole window, not the shallow tree a `--skeleton` or `--max-depth` snapshot presents, so a twin below the cut still refuses the ref. Identical twins, such as several identical `Delete` buttons, are refused with `AMBIGUOUS_TARGET`, `details.kind: identity_not_unique`, before anything reaches the app; a live second match is `saved_ref_ambiguous`, and a removed element is `STALE_REF`, `saved_ref_absent`. Take a fresh snapshot after a list changes, and use `--headed mouse-click --xy` when you must pick one of two identical controls.
 - The cursor overlay plays its per-action travel only for headless semantic actions. A `--headed` action moves the real cursor instead.
-- Windows CLI control commands show a click-through notice while they run. Its text follows the Windows display language, with English as the fallback. A `game` session shows it only when its plan contains input. If the notice cannot be displayed, control fails before input is sent.
+- Windows CLI control commands and `game` sessions with input show a click-through screen-edge indicator while they run. Keyboard and click feedback appears during input, with printable character keys hidden. Observation-only game sessions do not show it. If the indicator cannot be displayed, control fails before input is sent.
 
 ## Game sessions
 

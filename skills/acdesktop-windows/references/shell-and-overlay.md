@@ -76,6 +76,24 @@ shape when none are, and a top-level `ClearAllButton`.
   products, and `list-notifications` returns titles and bodies verbatim.
   Nothing is redacted.
 
+## Control indicator
+
+The Windows CLI and MCP server automatically show a screen-edge glow and a two-line status during a
+control session. `session start` reports `data.control_indicator.rendered`;
+`session end` removes the indicator. An action without a session shows it for
+at least one second, including during the action. The indicator stays visible for headed actions, including `type`
+and `press`, and does not take focus or intercept mouse input.
+
+Pass `--desc "Opening settings"` on `session start` or an action to set the
+second line. Without it, actions show the command name. The renderer limits
+the description to 512 UTF-8 bytes and 12 words. Do not put sensitive text in
+the description: it is visible on the desktop and in display captures. If the
+indicator cannot start, Windows refuses the action before input is delivered.
+Each ordinary MCP tool also accepts a per-call `desc` argument.
+The indicator shows requested shortcuts and input state without displaying ordinary typed text. Clicks with known screen coordinates have a short animation. It draws on each display; mixed-DPI and multi-monitor layout is unit-tested but has not been verified on a live multi-monitor desktop.
+
+The Windows C library also shows the indicator. Keep the release's `acdesktop.exe` beside `acdesktop_ffi.dll`; a control operation fails before delivery if the helper cannot start.
+
 ## Cursor Overlay
 
 `cursor-overlay enable` renders on Windows: a detached renderer process paints a

@@ -10,7 +10,7 @@ Output:
 
 - macOS: `target/release-ffi/libacdesktop_ffi.dylib`
 - Linux: `target/release-ffi/libacdesktop_ffi.so`
-- Windows: `target/release-ffi/acdesktop_ffi.dll`
+- Windows: `target/release-ffi/acdesktop_ffi.dll`; build `acdesktop.exe` with `cargo build --release -p acdesktop` and copy it beside the DLL.
 
 The generated header is `crates/ffi/include/acdesktop.h`.
 
@@ -31,8 +31,7 @@ Windows), with `<target>` the Rust target triple. Each archive unpacks to a dire
 the same name holding `lib/` (the dylib, so, or dll), `include/acdesktop.h`,
 `LICENSE`, and a `README.md`. `lib/` also holds a helper that must stay beside the library:
 `acdesktop-macos-helper` on macOS, `acdesktop-linux-clipboard-owner` on
-Linux. On Windows it holds the `acdesktop_ffi.dll.lib` import library, which an
-MSVC linking consumer links against. Integrity: compare against `checksums.txt` in
+Linux. Windows includes `acdesktop.exe` for the control indicator; keep it beside the DLL. It also includes the `acdesktop_ffi.dll.lib` import library, which an MSVC linking consumer links against. Windows control operations fail before delivery if the indicator cannot start. Integrity: compare against `checksums.txt` in
 the release assets. Supply-chain verification: each release carries a Sigstore
 attestation; verify with `gh attestation verify <file> --repo neko233-com/acdesktop`
 before deploying.
@@ -109,7 +108,7 @@ Python standard library. Legs:
 - Leg 4: `ad_adapter_create`, `ad_snapshot`, `ad_free_string`, `ad_adapter_destroy`.
   A stub-adapter build yields a `PLATFORM_NOT_SUPPORTED` envelope.
 
-Run it:
+Run it on macOS:
 
 ```bash
 python3 tests/ffi-python/smoke.py \
@@ -117,7 +116,14 @@ python3 tests/ffi-python/smoke.py \
   crates/ffi/include/acdesktop.h
 ```
 
-Or with environment variables:
+On Windows, after building the CLI and FFI library, use PowerShell 5.1 or 7:
+
+```powershell
+Copy-Item target/release/acdesktop.exe target/release-ffi/acdesktop.exe
+python tests/ffi-python/smoke.py target/release-ffi/acdesktop_ffi.dll crates/ffi/include/acdesktop.h
+```
+
+On macOS, the same test can use environment variables:
 
 ```bash
 AD_DYLIB_PATH=target/release-ffi/libacdesktop_ffi.dylib \

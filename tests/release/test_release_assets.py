@@ -10,7 +10,7 @@ spec.loader.exec_module(assets)
 class ReleaseAssetsTest(unittest.TestCase):
     def test_exact_names_missing_extra_and_duplicates(self):
         names = sorted(assets.expected_assets("1.2.3"))
-        self.assertEqual(len(names), 16)
+        self.assertEqual(len(names), 13)
         msi = "acdesktop-v1.2.3-x86_64-pc-windows-msvc.msi"
         self.assertIn(msi, names)
         self.assertEqual(assets.validate("1.2.3", [name for name in names if name != msi])[0], [msi])

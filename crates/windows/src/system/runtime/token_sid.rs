@@ -24,10 +24,8 @@ use windows_sys::Win32::Security::{
 };
 use windows_sys::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
 
-const TOKEN_OWNER_SIZE: usize = 8;
-const _: () = assert!(size_of::<TOKEN_OWNER>() == TOKEN_OWNER_SIZE);
-const TOKEN_USER_SIZE: usize = 16;
-const _: () = assert!(size_of::<TOKEN_USER>() == TOKEN_USER_SIZE);
+const _: () = assert!(size_of::<TOKEN_OWNER>() == size_of::<PSID>());
+const _: () = assert!(size_of::<TOKEN_USER>() == 2 * size_of::<usize>());
 
 #[derive(Clone)]
 pub(crate) struct SidBuffer {
@@ -225,3 +223,7 @@ fn read_token_information(
     }
     Ok(buffer)
 }
+
+#[cfg(test)]
+#[path = "token_sid_tests.rs"]
+mod tests;

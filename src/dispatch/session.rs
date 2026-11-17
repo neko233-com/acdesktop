@@ -23,12 +23,42 @@ pub(crate) fn dispatch(
             if show_cursor {
                 show_default_cursor(adapter, &mut value, s.multi_agent)?;
             }
+            if let Some(id) = value.get("session_id").and_then(Value::as_str) {
+                let description = context
+                    .description()
+                    .unwrap_or("Waiting for the next operation");
+                let rendered = match adapter.show_control_indicator(id, true, description) {
+                    Ok(()) => true,
+                    Err(error) if adapter.requires_control_indicator() => {
+                        let _ = acdesktop_core::session::end_session(id);
+                        return Err(error
+                            .with_disposition(acdesktop_core::DeliverySemantics::not_delivered())
+                            .into());
+                    }
+                    Err(_) => false,
+                };
+                value["control_indicator"] = serde_json::json!({"rendered": rendered});
+            }
             Ok(value)
         }
         SessionAction::End(e) => {
             let id = resolve_end_session_id(e.id, context.session_id())?;
             let value = session::execute(session::SessionAction::End { id: id.clone() })?;
-            super::cursor_overlay::tear_down(adapter, &CursorOverlayControl::disable(id))?;
+            let indicator = adapter.hide_control_indicator(&id);
+            let cursor =
+                super::cursor_overlay::tear_down(adapter, &CursorOverlayControl::disable(id));
+            if let Err(mut error) = indicator
+                && adapter.requires_control_indicator()
+            {
+                error.message = format!(
+                    "Session state was saved, but control indicator teardown was not confirmed: {}",
+                    error.message
+                );
+                return Err(error
+                    .with_disposition(acdesktop_core::DeliverySemantics::uncertain())
+                    .into());
+            }
+            cursor?;
             Ok(value)
         }
         SessionAction::List => session::execute(session::SessionAction::List),

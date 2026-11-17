@@ -225,6 +225,24 @@ fn global_flags_cannot_be_set_per_call() {
 }
 
 #[test]
+fn description_is_a_per_call_argument_for_regular_tools() {
+    let tool = tool_at(&["press"]);
+    assert_eq!(
+        tool.definition()["inputSchema"]["properties"]["desc"]["type"],
+        "string"
+    );
+    let arguments = serde_json::json!({"combo": "a", "desc": "Entering text"});
+    let argv = tool.argv(arguments.as_object().unwrap()).unwrap();
+    let cli = Cli::try_parse_from(std::iter::once("acdesktop".to_string()).chain(argv)).unwrap();
+    assert_eq!(cli.interaction.desc.as_deref(), Some("Entering text"));
+    assert!(
+        tool_at(&["sandbox", "exec"]).definition()["inputSchema"]["properties"]
+            .get("desc")
+            .is_none()
+    );
+}
+
+#[test]
 fn stdin_input_is_not_exposed_to_mcp_calls() {
     for path in [["type"], ["set-value"], ["clipboard-set"]] {
         let tool = tool_at(&path);

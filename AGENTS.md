@@ -5,7 +5,9 @@ Guidance for AI coding agents working in this repository.
 acdesktop is a tool that AI agents invoke, not an agent. It is a Rust CLI and C library that reads native
 accessibility trees and returns structured JSON with ref-based element ids. The observe-act loop lives in the
 calling agent. It never embeds an LLM and has no GUI or interactive prompt. It does not automate web pages (use
-agent-browser). It cannot see UIs that expose no accessibility tree.
+agent-browser). It cannot identify UI elements in applications that expose no accessibility tree. The Windows
+`game` command can sample a window and report visual changes while sending explicitly planned coordinates; it does
+not interpret pixels to locate UI elements.
 
 ## Critical: fixes must be application-agnostic
 
@@ -257,6 +259,15 @@ Every command prints one envelope. `docs/json-output.md` holds the full contract
 - `AXElement` keeps its pointer `pub(crate)` to prevent a double free. `Clone` must `CFRetain` and `Drop` must
   `CFRelease`.
 - Read attributes in batches with `AXUIElementCopyMultipleAttributeValues`, not one call per attribute.
+
+## Control indicator portability
+
+- The control indicator currently targets Windows. Keep its lifecycle, action descriptions, keyboard cues,
+  pointer effects and display geometry behind shared adapter contracts so the macOS arm64 adapter can implement
+  them without a Windows dependency. Do not present the macOS implementation as available before it exists.
+- A future macOS arm64 renderer must preserve non-activating, input-transparent windows, session and standalone
+  teardown, multiple displays, bounded descriptions and the privacy rules for keyboard input. This Windows work
+  does not implement or test the macOS renderer.
 
 ## Testing and CI
 

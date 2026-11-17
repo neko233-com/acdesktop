@@ -4,7 +4,7 @@ navTitle: Introduction
 description: A CLI and C library that lets AI agents read and operate desktop apps on macOS, Windows, and Linux through the OS accessibility tree.
 ---
 
-acdesktop reads the accessibility tree of a desktop app and returns it as JSON. Every element an agent can act on gets a ref. The agent acts on a ref, reads the UI again to check the result, and repeats. It ships as a CLI and as a C library for macOS, Windows, and Linux.
+acdesktop reads the accessibility tree of a desktop app and returns it as JSON. Every element an agent can act on gets a ref. The agent acts on a ref, reads the UI again to check the result, and repeats. The current CLI and C library release includes Windows and Linux; macOS archives are available in earlier releases.
 
 Install the native binary using the [installation guide](/desktop/installation), then run:
 
@@ -18,7 +18,7 @@ acdesktop skills get desktop    # the guide your agent should load first
 - **A tool that agents call.** It is not an agent. The observe, act, and verify loop lives in the calling agent or script.
 - **No model inside.** It never embeds an LLM, has no GUI, and has no interactive prompt. Every command prints one JSON envelope and exits.
 - **Desktop apps only.** It does not automate web pages; use [agent-browser](https://agent-browser.dev) for those. For the web contents of a Chromium or Electron app you launch, acdesktop opens a DevTools port that agent-browser connects to. See [Chromium and Electron apps](/desktop/guides/chromium-and-electron).
-- **Limited to what apps expose.** It reads accessibility trees and does not match pixels, so it cannot see a UI that publishes no accessibility tree.
+- **Limited to what apps expose.** Element inspection reads accessibility trees and cannot identify controls that publish no tree. On Windows, `game` can measure changes in captured frames and send explicitly planned coordinates; it does not locate controls from pixels.
 
 ## The loop in four commands
 
@@ -57,7 +57,7 @@ Core never imports a platform crate, and platform crates never import each other
   </thead>
   <tbody>
     <tr><td><a href="/desktop/platforms/macos">macOS</a></td><td>macOS 13 or later, Intel or Apple Silicon. Accessibility permission for the app that runs acdesktop.</td><td>AX API</td></tr>
-    <tr><td><a href="/desktop/platforms/windows">Windows</a></td><td>Windows 10 1809 or later, or Windows Server 2019 or later, on x64 or ARM64, in the signed-in user's interactive desktop.</td><td>UI Automation</td></tr>
+    <tr><td><a href="/desktop/platforms/windows">Windows</a></td><td>Windows 10 1809 or later on x86, x64 or ARM64, or Windows Server 2019 or later on x64 or ARM64, in the signed-in user's interactive desktop. The x86 CLI has been tested under WoW64.</td><td>UI Automation</td></tr>
     <tr><td><a href="/desktop/platforms/linux">Linux</a></td><td>Ubuntu 24.04 or later on x86_64 or aarch64 (glibc 2.35 floor), in the user's graphical session with a running AT-SPI bus.</td><td>AT-SPI</td></tr>
   </tbody>
 </table>

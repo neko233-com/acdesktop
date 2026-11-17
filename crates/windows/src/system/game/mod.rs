@@ -2,6 +2,7 @@
 //! timeline, and the per-sample observation the report is built from.
 
 pub(in crate::system) mod frames;
+pub(in crate::system) mod indicator_feedback;
 pub(in crate::system) mod input;
 pub(in crate::system) mod keys;
 pub(in crate::system) mod observe;

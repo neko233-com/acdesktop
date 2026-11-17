@@ -36,6 +36,7 @@ fn focus_core_window(adapter: *const AdAdapter, window: &acdesktop_core::WindowI
             return crate::error::last_error_code();
         }
     };
+    let _indicator = crate::indicator::begin_control!(adapter, "focus-window", None);
     let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
     match adapter.inner.focus_window(window, &lease) {
         Ok(()) => AdResult::Ok,

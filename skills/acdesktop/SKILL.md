@@ -78,6 +78,8 @@ Action results carry `data.disposition` and errors carry `error.disposition`, ea
 
 Ref actions are headless by default. They use semantic accessibility calls and do not take focus, move the cursor, synthesize keys or use the clipboard. If no semantic path exists, the action fails closed. Use the global `--headed` flag only when the user explicitly permits physical input, such as double-click, hover, drag, or focus. Never switch to headed mode to recover from a headless failure. Raw coordinates (`--xy`) never imply focus. Which actions need `--headed` differs by OS: read the platform skill.
 
+On Windows, CLI, MCP and C-library desktop control shows a screen-edge indicator. Pass `--desc "Opening settings"` on the CLI or `desc` on an MCP tool call to describe an operation; omit sensitive text. C-library calls show the action name and need `acdesktop.exe` beside the DLL. The indicator stays visible throughout a session and during a sessionless action, including keyboard input. End the session to remove it. macOS and Linux do not yet render this indicator.
+
 ## Sandboxes
 
 A sandbox is a desktop a provider manages on your machine. The provider is `macos`: a macOS VM on an Apple Silicon Mac running macOS 13 or later. Linux and Windows have no provider; to run acdesktop in a container you manage yourself there, follow `agent-browser.dev/desktop/guides/docker-container`.

@@ -72,6 +72,7 @@ pub unsafe extern "C" fn ad_set_clipboard(
             }
         };
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let _indicator = crate::indicator::begin_control!(adapter, "set-clipboard", None);
         let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
         match adapter
             .inner
@@ -95,6 +96,7 @@ pub unsafe extern "C" fn ad_clear_clipboard(adapter: *const AdAdapter) -> AdResu
     trap_panic(|| {
         crate::pointer_guard::guard_non_null!(adapter, c"adapter is null");
         let adapter = crate::adapter::acquire_adapter!(adapter);
+        let _indicator = crate::indicator::begin_control!(adapter, "clear-clipboard", None);
         let lease = crate::operation::interaction_lease!(adapter.inner.as_ref());
         match adapter.inner.clear_clipboard(&lease) {
             Ok(_) => AdResult::Ok,

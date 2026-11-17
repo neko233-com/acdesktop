@@ -9,14 +9,24 @@ spec.loader.exec_module(policy)
 
 
 class ReleasePolicyTest(unittest.TestCase):
+    def test_macos_jobs_are_disabled(self):
+        ci = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        self.assertNotIn("runner: macos-", ci)
+        self.assertNotIn("runs-on: macos-", ci)
+        dry_run = (ROOT / ".github/workflows/release-dry-run.yml").read_text(encoding="utf-8")
+        self.assertNotIn("runner: macos-", dry_run)
+        self.assertNotIn("runs-on: macos-", dry_run)
+
     def test_current_policy_and_mutations(self):
         source = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
         self.assertEqual(policy.violations(source), [])
-        for old, new in (("- target: aarch64-apple-darwin", "- target: missing"),
+        for old, new in (("- target: i686-pc-windows-msvc", "- target: missing"),
                          ("ffi-release-panic-guard, linux-archive-contents]", "linux-archive-contents]"),
                          ("check-release-assets.py local", "missing-asset-check.py local"),
                          ("windows-msi-selftest.ps1", "missing-msi-selftest.ps1"),
                          ("actions/attest-build-provenance@", "invalid-attestation@"),
+                         ("Build Windows control indicator helper for FFI consumers", "missing helper build"),
+                         ("scripts/check-ffi-header.py", "scripts/missing-header-check.py"),
                          ("--draft=false", "--draft=true"),
                          ("scripts/checkout-release-source.sh", "scripts/missing.sh")):
             with self.subTest(rule=old):

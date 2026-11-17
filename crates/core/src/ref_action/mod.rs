@@ -21,7 +21,6 @@ pub(crate) mod ref_action_wait_support;
 
 const TRACE_CAPTURE_BUDGET_MS: u64 = 1_000;
 const PRE_CAPTURE_DISPATCH_RESERVE_MS: u64 = 100;
-
 /// A strictly resolved ref-action target plus the tracing identity for it.
 pub(crate) struct ResolvedRefAction<'a> {
     target: RefActionContext<'a>,
@@ -147,6 +146,7 @@ pub(crate) fn dispatch_resolved_landing(
     let dispatch_result =
         crate::execute_verified_action(final_target.adapter, final_target.handle, request, lease);
     let mut preflight = preflight;
+    presentation::refresh_point(&final_target, &mut preflight, ripples, &dispatch_result);
     if presentation::after_text_entry(&final_target, &presentation_action, &dispatch_result) {
         preflight.presentation_bounds = None;
     }

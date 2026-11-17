@@ -2,31 +2,32 @@
 
 > **acdesktop** — Give your AI agent reliable desktop control through the OS accessibility tree.
 
-Agent Control Desktop (acdesktop) lets an AI agent see and operate desktop apps on macOS and Windows — without screenshots, pixel matching, or coordinate guessing. It reads the native accessibility tree, returns it as JSON with a stable ref for every actionable element, and lets the agent act on refs to click, type, drag, scroll, or read values. The observation–action loop lives in your agent; acdesktop ships no model.
+Agent Control Desktop (acdesktop) lets an AI agent inspect and operate desktop apps through the native accessibility tree. It returns JSON with a stable ref for every actionable element, and lets the agent act on refs to click, type, drag, scroll, or read values. On Windows, `game` can also execute explicitly planned input and measure changes in captured window frames; it does not locate controls from pixels. The observation–action loop lives in your agent; acdesktop ships no model.
 
 It ships as a native CLI and a C shared library. The optional update check contacts GitHub; disable it with `ACDESKTOP_NO_AUTO_UPDATE=1`.
 
 ---
 
-## Install （macOS arm64 / Windows arm64）
+## Install （Windows x86、x64、ARM64）
 
 **一键脚本 —— 最快、最轻量，原生安装：**
 
-```bash
-# macOS arm64
-curl -fsSL https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.sh | bash
-```
-
 ```powershell
-# Windows arm64 (PowerShell)
+# Windows x86 / x64 / ARM64 (PowerShell 5.1 or 7)
 irm https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.ps1 | iex
 ```
 
 脚本做的事情：
 1. 从 GitHub Release 下载对应平台的原生二进制
 2. 用 `checksums.txt` 校验 SHA256
-3. 原子替换到 `~/.local/bin`（macOS）或 `$HOME\.local\bin`（Windows）
-4. Windows 自动更新用户 PATH；macOS 提示如何加入 PATH
+3. 原子替换到 `$HOME\.local\bin`
+4. 更新用户 PATH
+
+当前发行版提供 Windows 和 Linux 文件，不包含 macOS 文件。macOS arm64 用户可安装先前的 v1.3.0，或从源码构建；v1.3.0 不包含本次 Windows 控制提示：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/neko233-com/acdesktop/main/scripts/install.sh | bash -s -- --version v1.3.0
+```
 
 其他方式：
 
@@ -42,9 +43,17 @@ acdesktop status                   # platform, permissions, supported surfaces
 acdesktop permissions --guide      # macOS: 引导你授予辅助功能权限
 ```
 
+Windows 用户也可以在开始菜单搜索并打开 PowerShell，复制上面的 Windows 安装命令，按回车运行。安装完成后输入 `acdesktop version` 检查；如果新开的终端找不到命令，请关闭后重新打开 PowerShell。若 AI 助手已经在运行，请重新启动它以读取新的 PATH。然后把 [项目地址](https://github.com/neko233-com/acdesktop) 发给能在本机运行命令的 AI 助手，并告诉它：“请按照 acdesktop 的使用说明操作我的电脑，执行操作时写清楚正在做什么。”
+
+Windows x64 用户也可以从 [发行页](https://github.com/neko233-com/acdesktop/releases/latest)下载安装 MSI；安装范围为当前用户。
+
 ---
 
 ## 快速上手
+
+Windows 的 CLI、MCP 和 C 库控制时会自动显示屏幕边缘提示和状态文字，显示快捷键或输入状态，并在已知屏幕坐标的点击处显示动画。普通输入文字默认隐藏。CLI 可用 `--desc "Opening settings"` 描述当前操作；会话结束后提示消失，无会话操作结束后也会自动清除。描述会显示在屏幕上，请勿包含敏感内容。C 库发行包里的 `acdesktop.exe` 需要与 DLL 放在同一目录。
+
+下面的示例使用 macOS 的 Finder。Windows 用户可以先打开要操作的程序，再让 AI 助手通过 `acdesktop list-apps` 查找程序名称。
 
 ```bash
 # 1. 观察 —— 拿到 app 的可交互元素
@@ -227,10 +236,9 @@ gh attestation verify acdesktop-v<version>-<target>.tar.gz --repo neko233-com/ac
 ```bash
 cargo build --release -p acdesktop
 # 产物: target/release/acdesktop (macOS/Linux) 或 target/release/acdesktop.exe (Windows)
-
-# 构建 CLI + 所有平台 adapter：
-cargo build --release -p acdesktop --workspace --exclude acdesktop-linux
 ```
+
+构建会自动选择当前系统的平台适配器。
 
 ---
 

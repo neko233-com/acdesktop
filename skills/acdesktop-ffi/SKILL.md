@@ -27,6 +27,10 @@ The output is `target/release-ffi/libacdesktop_ffi.dylib` (`.so` on Linux,
 `crates/ffi/include/acdesktop.h`. The default `release` profile uses
 `panic = "abort"`: a Rust panic inside an `extern "C"` function would `SIGABRT`
 the host. `release-ffi` keeps `panic = "unwind"`, which the panic traps need.
+On Windows, keep the release's `acdesktop.exe` beside the DLL for the control
+indicator. Build it separately with `cargo build --release -p acdesktop` when
+building from source; a desktop control operation fails before delivery if the
+indicator cannot start.
 
 Four reference topics, loaded as needed:
 

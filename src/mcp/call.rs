@@ -73,8 +73,16 @@ fn child_command(exe: &Path, tool: &Tool, argv: Vec<String>, globals: &[String])
         false => globals,
     };
     let mut command = Command::new(exe);
+    let per_call_desc = argv
+        .iter()
+        .take_while(|arg| arg.as_str() != "--")
+        .any(|arg| arg.starts_with("--desc="));
     command
-        .args(globals)
+        .args(
+            globals
+                .iter()
+                .filter(|arg| !(per_call_desc && arg.starts_with("--desc="))),
+        )
         .args(argv)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())

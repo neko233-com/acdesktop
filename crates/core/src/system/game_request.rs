@@ -15,4 +15,5 @@ pub struct GameSessionRequest<'a> {
     pub plan: &'a GameSessionPlan,
     pub lease: &'a InteractionLease,
     pub frames_dir: Option<&'a Path>,
+    pub indicator_owner: Option<&'a str>,
 }
